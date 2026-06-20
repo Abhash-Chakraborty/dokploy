@@ -161,10 +161,5 @@ export const getTrustedOrigins = async () => {
 };
 
 export const getTrustedProviders = async () => {
-	try {
-		const providers = await db.query.ssoProvider.findMany();
-		return providers.map((provider) => provider.providerId);
-	} catch (error) {
-		return [];
-	}
+	return [];
 };

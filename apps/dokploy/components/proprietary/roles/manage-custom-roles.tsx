@@ -3,7 +3,6 @@ import {
 	Loader2,
 	PlusIcon,
 	ShieldCheck,
-	Sparkles,
 	TrashIcon,
 	Users,
 } from "lucide-react";
@@ -707,7 +706,6 @@ function HandleCustomRole({
 				{!isEdit && (
 					<div className="space-y-2 mt-4">
 						<p className="text-sm font-medium flex items-center gap-1.5">
-							<Sparkles className="size-3.5 text-muted-foreground" />
 							Start from a preset
 						</p>
 						<div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
