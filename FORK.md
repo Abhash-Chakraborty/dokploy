@@ -11,10 +11,11 @@ The goal is to keep the fork close to upstream while carrying a small number of 
 
 ## Branches
 
-- `canary`: upstream tracking base from Dokploy.
-- `abhash-dokploy`: personal customization branch.
+- `master`: integration branch. The upstream sync workflow merges `dokploy/dokploy:canary` here and opens a PR into `main` when it succeeds.
+- `main`: production branch. Merging a release PR here publishes the production GHCR image tagged `latest` and with the Dokploy version.
+- `abhash-dokploy`: setup branch used to bootstrap this fork.
 
-When you are ready to make this the long-lived branch in GitHub, push it and set it as the repository default branch.
+Set `main` as the repository default branch once it is pushed.
 
 ## Local Setup
 
@@ -41,7 +42,7 @@ git config rerere.autoupdate true
 
 `rerere` lets Git remember conflict resolutions. It will not solve every conflict, but it helps when upstream repeatedly touches the same areas.
 
-The GitHub workflow `.github/workflows/sync-upstream.yml` can periodically merge `upstream/canary` into your personal branch. If conflicts happen, the workflow opens an issue so you can fix them manually.
+The GitHub workflow `.github/workflows/sync-upstream.yml` periodically merges `upstream/canary` into `master`. If the merge succeeds and `master` is ahead of `main`, it opens a release PR into `main`. If conflicts happen, the workflow opens an issue so you can fix them manually.
 
 ## Licensing Note
 

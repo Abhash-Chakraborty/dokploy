@@ -8,9 +8,11 @@ on:
 permissions:
   contents: write
   issues: write
+  pull-requests: write
 
 env:
-  PERSONAL_BRANCH: abhash-dokploy
+  INTEGRATION_BRANCH: master
+  PRODUCTION_BRANCH: main
   UPSTREAM_BRANCH: canary
 
 jobs:
@@ -20,7 +22,7 @@ jobs:
       - name: Checkout personal branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.PERSONAL_BRANCH }}
+          ref: ${{ env.INTEGRATION_BRANCH }}
           fetch-depth: 0
 
       - name: Configure Git
@@ -33,6 +35,7 @@ jobs:
       - name: Add upstream
         run: |
           git remote add upstream https://github.com/dokploy/dokploy.git
+          git fetch origin $PRODUCTION_BRANCH
           git fetch upstream $UPSTREAM_BRANCH
 
       - name: Merge upstream
@@ -43,14 +46,64 @@ jobs:
 
       - name: Push merged branch
         if: steps.merge.outcome == 'success'
-        run: git push origin HEAD:${{ env.PERSONAL_BRANCH }}
+        run: git push origin HEAD:${{ env.INTEGRATION_BRANCH }}
+
+      - name: Check for production changes
+        if: steps.merge.outcome == 'success'
+        id: changes
+        run: |
+          if [ "$(git rev-list --count origin/$PRODUCTION_BRANCH..HEAD)" -gt 0 ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open production PR
+        if: steps.merge.outcome == 'success' && steps.changes.outputs.has_changes == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const head = process.env.INTEGRATION_BRANCH;
+            const base = process.env.PRODUCTION_BRANCH;
+            const version = require(`${process.env.GITHUB_WORKSPACE}/apps/dokploy/package.json`).version;
+
+            const existing = await github.rest.pulls.list({
+              owner,
+              repo,
+              state: 'open',
+              head: `${owner}:${head}`,
+              base,
+            });
+
+            if (existing.data.length > 0) {
+              core.info(`Production PR already exists: #${existing.data[0].number}`);
+              return;
+            }
+
+            await github.rest.pulls.create({
+              owner,
+              repo,
+              title: `Release ${version}`,
+              head,
+              base,
+              body: [
+                `This PR promotes the synced integration branch \`${head}\` into production branch \`${base}\`.`,
+                ``,
+                `Version: \`${version}\``,
+                `Upstream branch: \`dokploy/dokploy:${process.env.UPSTREAM_BRANCH}\``,
+                ``,
+                `After this PR is merged, the personal GHCR workflow will publish the production image tagged \`latest\` and \`${version}\`.`,
+              ].join('\n'),
+            });
 
       - name: Open conflict issue
         if: steps.merge.outcome == 'failure'
         uses: actions/github-script@v7
         with:
           script: |
-            const title = `Upstream sync conflict: ${process.env.UPSTREAM_BRANCH} into ${process.env.PERSONAL_BRANCH}`;
+            const title = `Upstream sync conflict: ${process.env.UPSTREAM_BRANCH} into ${process.env.INTEGRATION_BRANCH}`;
             const body = [
               `Automated upstream sync failed on ${new Date().toISOString()}.`,
               ``,
@@ -58,12 +111,12 @@ jobs:
               ``,
               '```bash',
               `git fetch upstream ${process.env.UPSTREAM_BRANCH}`,
-              `git switch ${process.env.PERSONAL_BRANCH}`,
+              `git switch ${process.env.INTEGRATION_BRANCH}`,
               `git merge upstream/${process.env.UPSTREAM_BRANCH}`,
               `# resolve conflicts, then:`,
               `git add -A`,
               `git commit`,
-              `git push origin ${process.env.PERSONAL_BRANCH}`,
+              `git push origin ${process.env.INTEGRATION_BRANCH}`,
               '```',
             ].join('\n');
             await github.rest.issues.create({
