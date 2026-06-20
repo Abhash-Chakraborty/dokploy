@@ -29,6 +29,35 @@ export const getDokployImageTag = () => {
 	return process.env.RELEASE_TAG || "latest";
 };
 
+/** Returns the image repository used for this fork's self-update flow. */
+export const getDokployImageRepository = () => {
+	const configured =
+		process.env.DOKPLOY_UPDATE_IMAGE ||
+		process.env.DOKPLOY_IMAGE_REPOSITORY ||
+		"ghcr.io/abhash-chakraborty/dokploy";
+
+	return configured.replace(/:[^/:]+$/, "");
+};
+
+const getImageTagDigest = async (image: string) => {
+	try {
+		const { stdout } = await execAsync(`docker manifest inspect ${image}`);
+		const manifest = JSON.parse(stdout) as {
+			config?: { digest?: string };
+			manifests?: { digest?: string }[];
+		};
+		return new Set(
+			[
+				manifest.config?.digest,
+				...(manifest.manifests?.map((entry) => entry.digest) ?? []),
+			].filter(Boolean),
+		);
+	} catch (error) {
+		console.error("Error reading image manifest:", error);
+		return new Set<string>();
+	}
+};
+
 /** Returns Dokploy docker service image digest */
 export const getServiceImageDigest = async () => {
 	const { stdout } = await execAsync(
@@ -49,6 +78,23 @@ export const getUpdateData = async (
 	currentVersion: string,
 ): Promise<IUpdateData> => {
 	try {
+		const imageRepository = getDokployImageRepository();
+		if (imageRepository !== "dokploy/dokploy") {
+			const currentDigest = await getServiceImageDigest();
+			const latestDigestSet = await getImageTagDigest(
+				`${imageRepository}:latest`,
+			);
+
+			if (latestDigestSet.size === 0) {
+				return DEFAULT_UPDATE_DATA;
+			}
+
+			return {
+				latestVersion: "latest",
+				updateAvailable: !latestDigestSet.has(currentDigest),
+			};
+		}
+
 		const baseUrl =
 			"https://hub.docker.com/v2/repositories/dokploy/dokploy/tags";
 		let url: string | null = `${baseUrl}?page_size=100`;
@@ -295,7 +341,7 @@ export const reloadDockerResource = async (
 				imageTag = currentImageTag;
 			}
 
-			command = `docker service update --force --image dokploy/dokploy:${imageTag} ${resourceName}`;
+			command = `docker service update --force --image ${getDokployImageRepository()}:${imageTag} ${resourceName}`;
 		} else {
 			command = `docker service update --force ${resourceName}`;
 		}

@@ -62,8 +62,12 @@ type LoginForm = z.infer<typeof LoginSchema>;
 interface Props {
 	IS_CLOUD: boolean;
 	enforceSSO: boolean;
+	socialProviders: {
+		github: boolean;
+		google: boolean;
+	};
 }
-export default function Home({ IS_CLOUD, enforceSSO }: Props) {
+export default function Home({ IS_CLOUD, enforceSSO, socialProviders }: Props) {
 	const router = useRouter();
 	const { config: whitelabeling } = useWhitelabelingPublic();
 	const { data: showSignInWithSSO } = api.sso.showSignInWithSSO.useQuery();
@@ -183,8 +187,8 @@ export default function Home({ IS_CLOUD, enforceSSO }: Props) {
 
 	const loginContent = (
 		<>
-			{IS_CLOUD && <SignInWithGithub />}
-			{IS_CLOUD && <SignInWithGoogle />}
+			{socialProviders.github && <SignInWithGithub />}
+			{socialProviders.google && <SignInWithGoogle />}
 			<Form {...loginForm}>
 				<form
 					method="post"
@@ -447,6 +451,14 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			props: {
 				IS_CLOUD: IS_CLOUD,
 				enforceSSO: false,
+				socialProviders: {
+					github: !!(
+						process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
+					),
+					google: !!(
+						process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+					),
+				},
 			},
 		};
 	}
@@ -478,6 +490,14 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 		props: {
 			hasAdmin,
 			enforceSSO: webServerSettings?.enforceSSO ?? false,
+			socialProviders: {
+				github: !!(
+					process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
+				),
+				google: !!(
+					process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+				),
+			},
 		},
 	};
 }

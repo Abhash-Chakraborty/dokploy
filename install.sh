@@ -5,6 +5,7 @@ IMAGE="${DOKPLOY_IMAGE:-ghcr.io/abhash-chakraborty/dokploy:latest}"
 STACK_NAME="${DOKPLOY_STACK_NAME:-dokploy}"
 APP_PORT="${DOKPLOY_PORT:-3000}"
 AUTH_SECRET_NAME="${DOKPLOY_AUTH_SECRET_NAME:-dokploy_better_auth_secret}"
+UPDATE_IMAGE="${DOKPLOY_UPDATE_IMAGE:-ghcr.io/abhash-chakraborty/dokploy}"
 
 if ! command -v docker >/dev/null 2>&1; then
 	echo "Docker is required before installing this Dokploy fork."
@@ -41,6 +42,18 @@ if ! docker secret inspect "$AUTH_SECRET_NAME" >/dev/null 2>&1; then
 	printf "%s" "$AUTH_SECRET" | docker secret create "$AUTH_SECRET_NAME" - >/dev/null
 fi
 
+ENV_ARGS=(
+	--env "NODE_ENV=production"
+	--env "BETTER_AUTH_URL=$BETTER_AUTH_URL"
+	--env "BETTER_AUTH_SECRET_FILE=/run/secrets/$AUTH_SECRET_NAME"
+	--env "DOKPLOY_UPDATE_IMAGE=$UPDATE_IMAGE"
+)
+
+[ -n "${GITHUB_CLIENT_ID:-}" ] && ENV_ARGS+=(--env "GITHUB_CLIENT_ID=$GITHUB_CLIENT_ID")
+[ -n "${GITHUB_CLIENT_SECRET:-}" ] && ENV_ARGS+=(--env "GITHUB_CLIENT_SECRET=$GITHUB_CLIENT_SECRET")
+[ -n "${GOOGLE_CLIENT_ID:-}" ] && ENV_ARGS+=(--env "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID")
+[ -n "${GOOGLE_CLIENT_SECRET:-}" ] && ENV_ARGS+=(--env "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET")
+
 docker service rm "$STACK_NAME" >/dev/null 2>&1 || true
 
 docker service create \
@@ -49,9 +62,7 @@ docker service create \
 	--publish "${APP_PORT}:3000" \
 	--mount type=volume,source=dokploy-data,target=/app/apps/dokploy/.docker \
 	--secret source="$AUTH_SECRET_NAME",target="$AUTH_SECRET_NAME" \
-	--env NODE_ENV=production \
-	--env BETTER_AUTH_URL="$BETTER_AUTH_URL" \
-	--env BETTER_AUTH_SECRET_FILE="/run/secrets/$AUTH_SECRET_NAME" \
+	"${ENV_ARGS[@]}" \
 	"$IMAGE"
 
 echo "Abhash Dokploy fork is starting on port ${APP_PORT}."
