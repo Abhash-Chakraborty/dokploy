@@ -1,4 +1,8 @@
 import { createTRPCRouter } from "../api/trpc";
+import { abhashAuditLogRouter } from "./routers/abhash/audit-log";
+import { abhashLicenseKeyRouter } from "./routers/abhash/license-key";
+import { abhashSsoRouter } from "./routers/abhash/sso";
+import { abhashWhitelabelingRouter } from "./routers/abhash/whitelabeling";
 import { adminRouter } from "./routers/admin";
 import { aiRouter } from "./routers/ai";
 import { applicationRouter } from "./routers/application";
@@ -28,12 +32,8 @@ import { portRouter } from "./routers/port";
 import { postgresRouter } from "./routers/postgres";
 import { previewDeploymentRouter } from "./routers/preview-deployment";
 import { projectRouter } from "./routers/project";
-import { abhashAuditLogRouter } from "./routers/abhash/audit-log";
 import { customRoleRouter } from "./routers/proprietary/custom-role";
 import { forwardAuthRouter } from "./routers/proprietary/forward-auth";
-import { licenseKeyRouter } from "./routers/proprietary/license-key";
-import { ssoRouter } from "./routers/proprietary/sso";
-import { whitelabelingRouter } from "./routers/proprietary/whitelabeling";
 import { redirectsRouter } from "./routers/redirects";
 import { redisRouter } from "./routers/redis";
 import { registryRouter } from "./routers/registry";
@@ -92,10 +92,10 @@ export const appRouter = createTRPCRouter({
 	user: userRouter,
 	ai: aiRouter,
 	organization: organizationRouter,
-	licenseKey: licenseKeyRouter,
-	sso: ssoRouter,
+	licenseKey: abhashLicenseKeyRouter,
+	sso: abhashSsoRouter,
 	forwardAuth: forwardAuthRouter,
-	whitelabeling: whitelabelingRouter,
+	whitelabeling: abhashWhitelabelingRouter,
 	customRole: customRoleRouter,
 	auditLog: abhashAuditLogRouter,
 	schedule: scheduleRouter,

@@ -277,17 +277,23 @@ export const ShowAbhashAuditLogs = () => {
 										</div>
 									</TableCell>
 									<TableCell>
-										<Badge variant={actionVariant(row.action)}>{row.action}</Badge>
+										<Badge variant={actionVariant(row.action)}>
+											{row.action}
+										</Badge>
 									</TableCell>
 									<TableCell>
-										<div className="font-medium text-sm">{row.resourceType}</div>
+										<div className="font-medium text-sm">
+											{row.resourceType}
+										</div>
 										<div className="max-w-[260px] truncate text-muted-foreground text-xs">
-											{row.resourceName || row.resourceId || "No resource detail"}
+											{row.resourceName ||
+												row.resourceId ||
+												"No resource detail"}
 										</div>
 									</TableCell>
 									<TableCell>
 										<pre className="max-h-24 max-w-[420px] overflow-auto whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-xs">
-											{formatMetadata(row.metadata) || "No metadata"}
+											{formatMetadata(row.metadata) || "No metadata recorded"}
 										</pre>
 									</TableCell>
 								</TableRow>
@@ -320,9 +326,7 @@ export const ShowAbhashAuditLogs = () => {
 					<Button
 						type="button"
 						variant="outline"
-						disabled={
-							logs.isFetching || page >= (logs.data?.totalPages ?? 1)
-						}
+						disabled={logs.isFetching || page >= (logs.data?.totalPages ?? 1)}
 						onClick={() => setPage((current) => current + 1)}
 					>
 						Next

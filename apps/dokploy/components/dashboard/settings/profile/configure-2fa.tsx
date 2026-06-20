@@ -58,6 +58,23 @@ const PasswordSchema = z.object({
 type PasswordForm = z.infer<typeof PasswordSchema>;
 type Step = "password" | "actions" | "backup-codes";
 
+const getAuthErrorMessage = (error: unknown, fallback: string) => {
+	if (error instanceof Error) {
+		return error.message === "Failed to fetch"
+			? "Connection error. Please check your network and server URL."
+			: error.message;
+	}
+	if (
+		error &&
+		typeof error === "object" &&
+		"message" in error &&
+		typeof error.message === "string"
+	) {
+		return error.message;
+	}
+	return fallback;
+};
+
 export const Configure2FA = () => {
 	const utils = api.useUtils();
 	const { data: currentUser } = api.user.get.useQuery();
@@ -104,10 +121,11 @@ export const Configure2FA = () => {
 			setPassword(formData.password);
 			setStep("actions");
 		} catch (error) {
+			const message = getAuthErrorMessage(error, "Incorrect password");
 			form.setError("password", {
-				message: error instanceof Error ? error.message : "Incorrect password",
+				message,
 			});
-			toast.error("Incorrect password");
+			toast.error(message);
 		} finally {
 			setIsRegenerating(false);
 		}
@@ -158,7 +176,7 @@ export const Configure2FA = () => {
 			setIsDialogOpen(false);
 			setShowDisableConfirm(false);
 		} catch (error) {
-			toast.error("Failed to disable 2FA. Please try again.");
+			toast.error(getAuthErrorMessage(error, "Failed to disable 2FA"));
 		} finally {
 			setIsDisabling(false);
 		}
