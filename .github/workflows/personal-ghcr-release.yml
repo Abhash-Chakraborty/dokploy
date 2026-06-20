@@ -3,7 +3,7 @@ name: Personal GHCR Release
 on:
   push:
     branches:
-      - abhash-dokploy
+      - master
       - main
   workflow_dispatch:
 
