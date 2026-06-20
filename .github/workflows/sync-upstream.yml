@@ -38,18 +38,18 @@ jobs:
           git fetch origin $PRODUCTION_BRANCH
           git fetch upstream $UPSTREAM_BRANCH
 
-      - name: Merge upstream
-        id: merge
+      - name: Rebase on upstream
+        id: rebase
         continue-on-error: true
         run: |
-          git merge --no-edit upstream/$UPSTREAM_BRANCH
+          git rebase -X theirs upstream/$UPSTREAM_BRANCH
 
       - name: Push merged branch
-        if: steps.merge.outcome == 'success'
-        run: git push origin HEAD:${{ env.INTEGRATION_BRANCH }}
+        if: steps.rebase.outcome == 'success'
+        run: git push --force-with-lease origin HEAD:${{ env.INTEGRATION_BRANCH }}
 
       - name: Check for production changes
-        if: steps.merge.outcome == 'success'
+        if: steps.rebase.outcome == 'success'
         id: changes
         run: |
           if [ "$(git rev-list --count origin/$PRODUCTION_BRANCH..HEAD)" -gt 0 ]; then
@@ -59,7 +59,7 @@ jobs:
           fi
 
       - name: Open production PR
-        if: steps.merge.outcome == 'success' && steps.changes.outputs.has_changes == 'true'
+        if: steps.rebase.outcome == 'success' && steps.changes.outputs.has_changes == 'true'
         uses: actions/github-script@v7
         with:
           script: |
@@ -89,7 +89,7 @@ jobs:
               head,
               base,
               body: [
-                `This PR promotes the synced integration branch \`${head}\` into production branch \`${base}\`.`,
+                `This PR promotes the rebased integration branch \`${head}\` into production branch \`${base}\`.`,
                 ``,
                 `Version: \`${version}\``,
                 `Upstream branch: \`dokploy/dokploy:${process.env.UPSTREAM_BRANCH}\``,
@@ -99,7 +99,7 @@ jobs:
             });
 
       - name: Open conflict issue
-        if: steps.merge.outcome == 'failure'
+        if: steps.rebase.outcome == 'failure'
         uses: actions/github-script@v7
         with:
           script: |
@@ -112,11 +112,11 @@ jobs:
               '```bash',
               `git fetch upstream ${process.env.UPSTREAM_BRANCH}`,
               `git switch ${process.env.INTEGRATION_BRANCH}`,
-              `git merge upstream/${process.env.UPSTREAM_BRANCH}`,
+              `git rebase upstream/${process.env.UPSTREAM_BRANCH}`,
               `# resolve conflicts, then:`,
               `git add -A`,
-              `git commit`,
-              `git push origin ${process.env.INTEGRATION_BRANCH}`,
+              `git rebase --continue`,
+              `git push --force-with-lease origin ${process.env.INTEGRATION_BRANCH}`,
               '```',
             ].join('\n');
             await github.rest.issues.create({
