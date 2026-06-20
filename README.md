@@ -12,6 +12,8 @@
 <br />
 
 
+This repository is Abhash's personal fork of Dokploy. It tracks the upstream [Dokploy](https://github.com/dokploy/dokploy) project while carrying a small set of self-hosted personal customizations.
+
 Dokploy is a free, self-hostable Platform as a Service (PaaS) that simplifies the deployment and management of applications and databases.
 
 ## ✨ Features
@@ -38,11 +40,21 @@ To get started, run the following command on a VPS:
 
 Want to skip the installation process? [Try the Dokploy Cloud](https://app.dokploy.com).
 
+Official Dokploy installer:
+
 ```bash
 curl -sSL https://dokploy.com/install.sh | bash
 ```
 
+Abhash fork installer, after the personal domain is configured to serve this repository's `install.sh`:
+
+```bash
+curl -sSL https://abhashchakraborty.tech/install.sh | bash
+```
+
 For detailed documentation, visit [docs.dokploy.com](https://docs.dokploy.com).
+
+For fork-specific notes, see [FORK.md](FORK.md).
 
 
 [Github Sponsors](https://github.com/sponsors/Siumauricio)

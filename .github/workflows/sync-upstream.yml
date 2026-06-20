@@ -1,0 +1,75 @@
+name: Sync Upstream
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"
+
+permissions:
+  contents: write
+  issues: write
+
+env:
+  PERSONAL_BRANCH: abhash-dokploy
+  UPSTREAM_BRANCH: canary
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout personal branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.PERSONAL_BRANCH }}
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "abhash-dokploy-sync"
+          git config user.email "actions@github.com"
+          git config rerere.enabled true
+          git config rerere.autoupdate true
+
+      - name: Add upstream
+        run: |
+          git remote add upstream https://github.com/dokploy/dokploy.git
+          git fetch upstream $UPSTREAM_BRANCH
+
+      - name: Merge upstream
+        id: merge
+        continue-on-error: true
+        run: |
+          git merge --no-edit upstream/$UPSTREAM_BRANCH
+
+      - name: Push merged branch
+        if: steps.merge.outcome == 'success'
+        run: git push origin HEAD:${{ env.PERSONAL_BRANCH }}
+
+      - name: Open conflict issue
+        if: steps.merge.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `Upstream sync conflict: ${process.env.UPSTREAM_BRANCH} into ${process.env.PERSONAL_BRANCH}`;
+            const body = [
+              `Automated upstream sync failed on ${new Date().toISOString()}.`,
+              ``,
+              `Manual fix:`,
+              ``,
+              '```bash',
+              `git fetch upstream ${process.env.UPSTREAM_BRANCH}`,
+              `git switch ${process.env.PERSONAL_BRANCH}`,
+              `git merge upstream/${process.env.UPSTREAM_BRANCH}`,
+              `# resolve conflicts, then:`,
+              `git add -A`,
+              `git commit`,
+              `git push origin ${process.env.PERSONAL_BRANCH}`,
+              '```',
+            ].join('\n');
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ['upstream-sync'],
+            });
