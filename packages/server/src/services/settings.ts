@@ -29,16 +29,58 @@ export const getDokployImageTag = () => {
 	return process.env.RELEASE_TAG || "latest";
 };
 
+/** Returns the image repository used for this fork's self-update flow. */
+export const getDokployImageRepository = () => {
+	const configured =
+		process.env.DOKPLOY_UPDATE_IMAGE ||
+		process.env.DOKPLOY_IMAGE_REPOSITORY ||
+		"ghcr.io/abhash-chakraborty/dokploy";
+
+	return configured.replace(/:[^/:]+$/, "");
+};
+
+const getImageTagDigest = async (image: string) => {
+	try {
+		const { stdout } = await execAsync(`docker manifest inspect ${image}`);
+		const manifest = JSON.parse(stdout) as {
+			config?: { digest?: string };
+			manifests?: { digest?: string }[];
+		};
+		return new Set(
+			[
+				manifest.config?.digest,
+				...(manifest.manifests?.map((entry) => entry.digest) ?? []),
+			].filter(Boolean),
+		);
+	} catch (error) {
+		console.error("Error reading image manifest:", error);
+		return new Set<string>();
+	}
+};
+
 /** Returns Dokploy docker service image digest */
 export const getServiceImageDigest = async () => {
-	const { stdout } = await execAsync(
-		"docker service inspect dokploy --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}'",
-	);
+	let stdout = "";
+	try {
+		const result = await execAsync(
+			"docker service inspect dokploy --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}'",
+		);
+		stdout = result.stdout;
+	} catch (error) {
+		if (
+			error instanceof Error &&
+			(error.message.includes("no such service: dokploy") ||
+				error.message.includes("This node is not a swarm manager"))
+		) {
+			return null;
+		}
+		throw error;
+	}
 
 	const currentDigest = stdout.trim().split("@")[1];
 
 	if (!currentDigest) {
-		throw new Error("Could not get current service image digest");
+		return null;
 	}
 
 	return currentDigest;
@@ -49,6 +91,26 @@ export const getUpdateData = async (
 	currentVersion: string,
 ): Promise<IUpdateData> => {
 	try {
+		const imageRepository = getDokployImageRepository();
+		if (imageRepository !== "dokploy/dokploy") {
+			const currentDigest = await getServiceImageDigest();
+			if (!currentDigest) {
+				return DEFAULT_UPDATE_DATA;
+			}
+			const latestDigestSet = await getImageTagDigest(
+				`${imageRepository}:latest`,
+			);
+
+			if (latestDigestSet.size === 0) {
+				return DEFAULT_UPDATE_DATA;
+			}
+
+			return {
+				latestVersion: "latest",
+				updateAvailable: !latestDigestSet.has(currentDigest),
+			};
+		}
+
 		const baseUrl =
 			"https://hub.docker.com/v2/repositories/dokploy/dokploy/tags";
 		let url: string | null = `${baseUrl}?page_size=100`;
@@ -78,6 +140,9 @@ export const getUpdateData = async (
 		// branches are expected to manually manage updates
 		if (currentImageTag === "canary" || currentImageTag === "feature") {
 			const currentDigest = await getServiceImageDigest();
+			if (!currentDigest) {
+				return DEFAULT_UPDATE_DATA;
+			}
 			const latestDigest = allResults.find(
 				(t) => t.name === currentImageTag,
 			)?.digest;
@@ -295,7 +360,7 @@ export const reloadDockerResource = async (
 				imageTag = currentImageTag;
 			}
 
-			command = `docker service update --force --image dokploy/dokploy:${imageTag} ${resourceName}`;
+			command = `docker service update --force --image ${getDokployImageRepository()}:${imageTag} ${resourceName}`;
 		} else {
 			command = `docker service update --force ${resourceName}`;
 		}

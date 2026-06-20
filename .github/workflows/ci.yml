@@ -21,4 +21,6 @@ jobs:
           node-version: 24.17.0
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter=@dokploy/server run typecheck
+      - run: pnpm --filter=@dokploy/server run build
       - run: pnpm --filter=dokploy run typecheck

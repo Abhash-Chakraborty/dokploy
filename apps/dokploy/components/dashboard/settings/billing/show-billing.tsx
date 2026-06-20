@@ -1065,7 +1065,6 @@ export const ShowBilling = () => {
 													"Up to Unlimited Organizations",
 													"Fine-grained RBAC",
 													"Complete Hosting Flexibility",
-													"SSO / SAML (Azure, OKTA, etc)",
 													"Audit Logs",
 													"MSA/SLA",
 													"White Labeling",

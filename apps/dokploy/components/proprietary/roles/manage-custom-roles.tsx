@@ -3,7 +3,6 @@ import {
 	Loader2,
 	PlusIcon,
 	ShieldCheck,
-	Sparkles,
 	TrashIcon,
 	Users,
 } from "lucide-react";
@@ -11,7 +10,6 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { EnterpriseFeatureGate } from "@/components/proprietary/enterprise-feature-gate";
 import { AlertBlock } from "@/components/shared/alert-block";
 import { DialogAction } from "@/components/shared/dialog-action";
 import { Button } from "@/components/ui/button";
@@ -561,16 +559,7 @@ export const ManageCustomRoles = () => {
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="border-t pt-6">
-					<EnterpriseFeatureGate
-						lockedProps={{
-							title: "Custom Roles",
-							description:
-								"Custom roles with fine-grained permissions are part of Dokploy Enterprise. Add a valid license to create and assign custom roles.",
-							ctaLabel: "Go to License",
-						}}
-					>
-						<CustomRolesContent />
-					</EnterpriseFeatureGate>
+					<CustomRolesContent />
 				</CardContent>
 			</div>
 		</Card>
@@ -717,7 +706,6 @@ function HandleCustomRole({
 				{!isEdit && (
 					<div className="space-y-2 mt-4">
 						<p className="text-sm font-medium flex items-center gap-1.5">
-							<Sparkles className="size-3.5 text-muted-foreground" />
 							Start from a preset
 						</p>
 						<div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
