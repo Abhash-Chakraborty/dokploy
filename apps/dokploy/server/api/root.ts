@@ -28,7 +28,7 @@ import { portRouter } from "./routers/port";
 import { postgresRouter } from "./routers/postgres";
 import { previewDeploymentRouter } from "./routers/preview-deployment";
 import { projectRouter } from "./routers/project";
-import { auditLogRouter } from "./routers/proprietary/audit-log";
+import { abhashAuditLogRouter } from "./routers/abhash/audit-log";
 import { customRoleRouter } from "./routers/proprietary/custom-role";
 import { forwardAuthRouter } from "./routers/proprietary/forward-auth";
 import { licenseKeyRouter } from "./routers/proprietary/license-key";
@@ -99,7 +99,7 @@ export const appRouter = createTRPCRouter({
 	forwardAuth: forwardAuthRouter,
 	whitelabeling: whitelabelingRouter,
 	customRole: customRoleRouter,
-	auditLog: auditLogRouter,
+	auditLog: abhashAuditLogRouter,
 	schedule: scheduleRouter,
 	rollback: rollbackRouter,
 	volumeBackups: volumeBackupsRouter,

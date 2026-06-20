@@ -11,7 +11,7 @@ The goal is to keep the fork close to upstream while carrying a small number of 
 
 ## Branches
 
-- `master`: integration branch. The upstream sync workflow merges `dokploy/dokploy:canary` here and opens a PR into `main` when it succeeds.
+- `master`: integration branch. The upstream sync workflow rebases this branch onto `dokploy/dokploy:canary` and opens a PR into `main` when it succeeds.
 - `main`: production branch. Merging a release PR here publishes the production GHCR image tagged `latest` and with the Dokploy version.
 - `abhash-dokploy`: setup branch used to bootstrap this fork.
 
@@ -42,7 +42,7 @@ git config rerere.autoupdate true
 
 `rerere` lets Git remember conflict resolutions. It will not solve every conflict, but it helps when upstream repeatedly touches the same areas.
 
-The GitHub workflow `.github/workflows/sync-upstream.yml` periodically merges `upstream/canary` into `master`. If the merge succeeds and `master` is ahead of `main`, it opens a release PR into `main`. If conflicts happen, the workflow opens an issue so you can fix them manually.
+The GitHub workflow `.github/workflows/sync-upstream.yml` periodically rebases `master` onto `upstream/canary` with Git's `rerere` conflict memory enabled and a `-X theirs` retry preference for replaying fork changes. If the rebase succeeds and `master` is ahead of `main`, it opens a release PR into `main`. If conflicts remain, the workflow opens an issue so you can fix them manually.
 
 ## Licensing Note
 
