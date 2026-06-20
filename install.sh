@@ -4,6 +4,7 @@ set -euo pipefail
 IMAGE="${DOKPLOY_IMAGE:-ghcr.io/abhash-chakraborty/dokploy:latest}"
 STACK_NAME="${DOKPLOY_STACK_NAME:-dokploy}"
 APP_PORT="${DOKPLOY_PORT:-3000}"
+AUTH_SECRET_NAME="${DOKPLOY_AUTH_SECRET_NAME:-dokploy_better_auth_secret}"
 
 if ! command -v docker >/dev/null 2>&1; then
 	echo "Docker is required before installing this Dokploy fork."
@@ -22,6 +23,24 @@ fi
 
 docker network create --driver overlay dokploy-network >/dev/null 2>&1 || true
 
+if [ -z "${BETTER_AUTH_URL:-}" ]; then
+	if [ -n "${DOKPLOY_URL:-}" ]; then
+		BETTER_AUTH_URL="$DOKPLOY_URL"
+	else
+		SERVER_IP="$(curl -fsS https://api.ipify.org 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}')"
+		BETTER_AUTH_URL="http://${SERVER_IP:-localhost}:${APP_PORT}"
+	fi
+fi
+
+if ! docker secret inspect "$AUTH_SECRET_NAME" >/dev/null 2>&1; then
+	if command -v openssl >/dev/null 2>&1; then
+		AUTH_SECRET="$(openssl rand -base64 48 | tr -d '\n')"
+	else
+		AUTH_SECRET="$(head -c 48 /dev/urandom | base64 | tr -d '\n')"
+	fi
+	printf "%s" "$AUTH_SECRET" | docker secret create "$AUTH_SECRET_NAME" - >/dev/null
+fi
+
 docker service rm "$STACK_NAME" >/dev/null 2>&1 || true
 
 docker service create \
@@ -29,8 +48,12 @@ docker service create \
 	--replicas 1 \
 	--publish "${APP_PORT}:3000" \
 	--mount type=volume,source=dokploy-data,target=/app/apps/dokploy/.docker \
+	--secret source="$AUTH_SECRET_NAME",target="$AUTH_SECRET_NAME" \
 	--env NODE_ENV=production \
+	--env BETTER_AUTH_URL="$BETTER_AUTH_URL" \
+	--env BETTER_AUTH_SECRET_FILE="/run/secrets/$AUTH_SECRET_NAME" \
 	"$IMAGE"
 
 echo "Abhash Dokploy fork is starting on port ${APP_PORT}."
+echo "Better Auth URL: ${BETTER_AUTH_URL}"
 echo "Image: ${IMAGE}"
