@@ -48,7 +48,6 @@
 		"@ai-sdk/openai": "^3.0.29",
 		"@ai-sdk/openai-compatible": "^2.0.30",
 		"@better-auth/api-key": "1.5.4",
-		"@better-auth/sso": "1.5.4",
 		"@codemirror/autocomplete": "^6.18.6",
 		"@codemirror/lang-css": "^6.3.1",
 		"@codemirror/lang-json": "^6.0.1",
