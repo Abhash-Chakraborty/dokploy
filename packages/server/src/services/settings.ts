@@ -60,14 +60,27 @@ const getImageTagDigest = async (image: string) => {
 
 /** Returns Dokploy docker service image digest */
 export const getServiceImageDigest = async () => {
-	const { stdout } = await execAsync(
-		"docker service inspect dokploy --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}'",
-	);
+	let stdout = "";
+	try {
+		const result = await execAsync(
+			"docker service inspect dokploy --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}'",
+		);
+		stdout = result.stdout;
+	} catch (error) {
+		if (
+			error instanceof Error &&
+			(error.message.includes("no such service: dokploy") ||
+				error.message.includes("This node is not a swarm manager"))
+		) {
+			return null;
+		}
+		throw error;
+	}
 
 	const currentDigest = stdout.trim().split("@")[1];
 
 	if (!currentDigest) {
-		throw new Error("Could not get current service image digest");
+		return null;
 	}
 
 	return currentDigest;
@@ -81,6 +94,9 @@ export const getUpdateData = async (
 		const imageRepository = getDokployImageRepository();
 		if (imageRepository !== "dokploy/dokploy") {
 			const currentDigest = await getServiceImageDigest();
+			if (!currentDigest) {
+				return DEFAULT_UPDATE_DATA;
+			}
 			const latestDigestSet = await getImageTagDigest(
 				`${imageRepository}:latest`,
 			);
@@ -124,6 +140,9 @@ export const getUpdateData = async (
 		// branches are expected to manually manage updates
 		if (currentImageTag === "canary" || currentImageTag === "feature") {
 			const currentDigest = await getServiceImageDigest();
+			if (!currentDigest) {
+				return DEFAULT_UPDATE_DATA;
+			}
 			const latestDigest = allResults.find(
 				(t) => t.name === currentImageTag,
 			)?.digest;
