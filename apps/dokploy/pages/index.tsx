@@ -2,6 +2,7 @@ import { IS_CLOUD, isAdminPresent } from "@dokploy/server";
 import { validateRequest } from "@dokploy/server/lib/auth";
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
+import { Fingerprint } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import Link from "next/link";
 import { type ReactElement, useState } from "react";
@@ -176,6 +177,27 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 		<>
 			{socialProviders.github && <SignInWithGithub />}
 			{socialProviders.google && <SignInWithGoogle />}
+			<Button
+				type="button"
+				variant="outline"
+				className="w-full"
+				onClick={async () => {
+					try {
+						const res = await authClient.signIn.passkey();
+						if (res?.error) {
+							toast.error(res.error.message || "Passkey sign-in failed");
+							return;
+						}
+						toast.success("Logged in successfully");
+						window.location.href = "/dashboard/home";
+					} catch {
+						toast.error("Passkey sign-in failed");
+					}
+				}}
+			>
+				<Fingerprint className="size-4" />
+				Sign in with a passkey
+			</Button>
 			<Form {...loginForm}>
 				<form
 					onSubmit={loginForm.handleSubmit(onSubmit)}
