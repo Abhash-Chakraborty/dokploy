@@ -231,8 +231,8 @@ const Service = (
 										router.push(newPath);
 									}}
 								>
-									<div className="flex flex-row items-center justify-between w-full overflow-auto">
-										<TabsList className="flex gap-8 max-md:gap-4 justify-start">
+									<div className="flex flex-row items-center justify-between w-full">
+										<TabsList className="flex flex-wrap h-auto gap-x-8 gap-y-1 max-md:gap-x-4 justify-start">
 											<TabsTrigger value="general">General</TabsTrigger>
 											{permissions?.envVars.read && (
 												<TabsTrigger value="environment">
