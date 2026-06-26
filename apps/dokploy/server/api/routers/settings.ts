@@ -680,9 +680,12 @@ export const settingsRouter = createTRPCRouter({
 		async ({ ctx }): Promise<unknown> => {
 			const protocol = ctx.req.headers["x-forwarded-proto"];
 			const url = `${protocol}://${ctx.req.headers.host}/api`;
+			// OpenAPI `info.version` must be plain semver; the package version is
+			// prefixed with "v" (e.g. "v0.29.8") which breaks the spec parser.
+			const specVersion = String(packageInfo.version).replace(/^v/, "");
 			const openApiDocument = generateOpenApiDocument(appRouter, {
 				title: "tRPC OpenAPI",
-				version: packageInfo.version,
+				version: specVersion,
 				baseUrl: url,
 				docsUrl: `${url}/settings.getOpenApiDocument`,
 				tags: [
@@ -734,7 +737,7 @@ export const settingsRouter = createTRPCRouter({
 			openApiDocument.info = {
 				title: "Dokploy API",
 				description: "Endpoints for dokploy",
-				version: packageInfo.version,
+				version: specVersion,
 			};
 
 			// Add security schemes configuration

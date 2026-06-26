@@ -172,9 +172,9 @@ export const Configure2FA = () => {
 			}
 
 			toast.success("2FA disabled successfully");
-			utils.user.get.invalidate();
 			setIsDialogOpen(false);
 			setShowDisableConfirm(false);
+			await utils.user.get.invalidate();
 		} catch (error) {
 			toast.error(getAuthErrorMessage(error, "Failed to disable 2FA"));
 		} finally {

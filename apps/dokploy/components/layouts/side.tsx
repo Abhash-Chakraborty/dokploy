@@ -23,7 +23,7 @@ import {
 	Key,
 	KeyRound,
 	Loader2,
-		type LucideIcon,
+	type LucideIcon,
 	Package,
 	Palette,
 	PieChart,
@@ -87,6 +87,7 @@ import { api } from "@/utils/api";
 import { AddOrganization } from "../dashboard/organization/handle-organization";
 import { DialogAction } from "../shared/dialog-action";
 import { Logo } from "../shared/logo";
+import { VersionFooter } from "../shared/version-footer";
 import { Button } from "../ui/button";
 import { TimeBadge } from "../ui/time-badge";
 import { UpdateServerButton } from "./update-server";
@@ -1203,6 +1204,7 @@ export default function Page({ children }: Props) {
 				)}
 
 				<div className="flex flex-col w-full p-4 pt-0">{children}</div>
+				<VersionFooter />
 			</SidebarInset>
 		</SidebarProvider>
 	);

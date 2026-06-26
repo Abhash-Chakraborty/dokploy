@@ -1,13 +1,9 @@
-import {
-	IS_CLOUD,
-	isAdminPresent,
-} from "@dokploy/server";
+import { IS_CLOUD, isAdminPresent } from "@dokploy/server";
 import { validateRequest } from "@dokploy/server/lib/auth";
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import type { GetServerSidePropsContext } from "next";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import { type ReactElement, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -59,7 +55,6 @@ interface Props {
 	};
 }
 export default function Home({ IS_CLOUD, socialProviders }: Props) {
-	const router = useRouter();
 	const { config: whitelabeling } = useWhitelabelingPublic();
 	const [isLoginLoading, setIsLoginLoading] = useState(false);
 	const [isTwoFactorLoading, setIsTwoFactorLoading] = useState(false);
@@ -110,7 +105,9 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 			}
 
 			toast.success("Logged in successfully");
-			router.push("/dashboard/home");
+			// Hard navigation so the freshly-set session cookie is sent on the
+			// server request for /dashboard/home (router.push can race the cookie).
+			window.location.href = "/dashboard/home";
 		} catch {
 			toast.error("An error occurred while logging in");
 		} finally {
@@ -137,7 +134,7 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 			}
 
 			toast.success("Logged in successfully");
-			router.push("/dashboard/home");
+			window.location.href = "/dashboard/home";
 		} catch {
 			toast.error("An error occurred while verifying 2FA code");
 		} finally {
@@ -167,7 +164,7 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 			}
 
 			toast.success("Logged in successfully");
-			router.push("/dashboard/home");
+			window.location.href = "/dashboard/home";
 		} catch {
 			toast.error("An error occurred while verifying backup code");
 		} finally {
