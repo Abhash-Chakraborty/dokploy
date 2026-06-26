@@ -400,6 +400,13 @@ const MENU: Menu = {
 		},
 		{
 			isSingle: true,
+			title: "Backups",
+			url: "/dashboard/settings/backups",
+			icon: Database,
+			isEnabled: ({ permissions }) => !!permissions?.backup?.read,
+		},
+		{
+			isSingle: true,
 			title: "Billing",
 			url: "/dashboard/settings/billing",
 			icon: CreditCard,
