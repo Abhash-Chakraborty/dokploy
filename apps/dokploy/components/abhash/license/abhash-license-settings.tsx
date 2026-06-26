@@ -1,53 +1,38 @@
+import Markdown from "react-markdown";
 import { Badge } from "@/components/ui/badge";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+
+// The personal license text (LICENSE_ABHASH_PERSONAL.md) rendered inline so it
+// ships with the bundle without a server read. Keep in sync with that file.
+const LICENSE_MD = `# Abhash Personal Additions License
+
+Copyright (c) Abhash Chakraborty.
+
+This license applies only to source files intentionally placed under Abhash-owned paths such as:
+
+- \`apps/dokploy/components/abhash\`
+- \`apps/dokploy/server/api/routers/abhash\`
+- \`packages/server/src/services/abhash\`
+
+Abhash Chakraborty may use, modify, run, copy, and archive these additions for personal self-hosted deployments.
+
+No permission is granted to sell, sublicense, repackage, host as a paid service, or distribute these Abhash-owned additions as a commercial Dokploy replacement without separate written permission from Abhash Chakraborty.
+
+This license does not relicense upstream Dokploy source code, Dokploy proprietary source-available files, Apache-2.0 files, dependency code, or any third-party material. Those files remain under their own licenses.
+`;
 
 export function AbhashLicenseSettings() {
 	return (
 		<div className="space-y-4">
-			<CardHeader className="px-0 pt-0">
-				<div className="flex flex-wrap items-center gap-2">
-					<CardTitle className="text-xl">Abhash Personal License</CardTitle>
-					<Badge variant="green">Active</Badge>
-				</div>
-				<CardDescription>
-					This fork keeps Abhash-owned additions separate from Dokploy's
-					proprietary folders and unlocks personal self-hosted usage without a
-					commercial license server.
-				</CardDescription>
-			</CardHeader>
+			<div className="flex flex-wrap items-center gap-2">
+				<h2 className="text-xl font-semibold tracking-tight">
+					Abhash Personal License
+				</h2>
+				<Badge variant="green">Active</Badge>
+			</div>
 
-			<Card>
-				<CardHeader>
-					<CardTitle className="text-base">License Scope</CardTitle>
-					<CardDescription>
-						The personal features in `components/abhash`,
-						`server/api/routers/abhash`, and `services/abhash` are maintained
-						for Abhash's own deployment.
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="space-y-3 text-sm text-muted-foreground">
-					<p>
-						You may use, modify, run, and back up these Abhash-owned changes for
-						your personal infrastructure.
-					</p>
-					<p>
-						You should not sell, sublicense, or publish these personal additions
-						as a commercial Dokploy replacement without a separate explicit
-						license from Abhash.
-					</p>
-					<p>
-						Upstream Dokploy files keep their original licenses. This page does
-						not relicense Dokploy proprietary code or remove any third-party
-						obligations.
-					</p>
-				</CardContent>
-			</Card>
+			<article className="prose prose-sm dark:prose-invert max-w-none prose-headings:tracking-tight prose-h1:text-2xl prose-code:rounded prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:before:content-none prose-code:after:content-none">
+				<Markdown>{LICENSE_MD}</Markdown>
+			</article>
 		</div>
 	);
 }

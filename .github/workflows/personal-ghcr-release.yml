@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - abhash-dokploy
     paths-ignore:
       - "**/*.md"
       - "docs/**"
