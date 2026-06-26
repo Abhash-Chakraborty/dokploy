@@ -267,6 +267,84 @@ ${input.logs}`,
 			}
 		}),
 
+	chat: protectedProcedure
+		.input(
+			z.object({
+				aiId: z.string().min(1),
+				message: z.string().min(1).max(8000),
+				pageContext: z.string().max(4000).optional(),
+				permission: z.enum(["read", "write", "debug"]).default("read"),
+				history: z
+					.array(
+						z.object({
+							role: z.enum(["user", "assistant"]),
+							content: z.string().max(8000),
+						}),
+					)
+					.max(20)
+					.optional(),
+			}),
+		)
+		.mutation(async ({ input, ctx }) => {
+			try {
+				const aiSettings = await getAiSettingById(input.aiId);
+				if (!aiSettings?.isEnabled) {
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message: "AI provider is not enabled",
+					});
+				}
+				if (aiSettings.organizationId !== ctx.session.activeOrganizationId) {
+					throw new TRPCError({
+						code: "FORBIDDEN",
+						message: "Access denied",
+					});
+				}
+
+				const provider = selectAIProvider(aiSettings);
+				const model = provider(aiSettings.model);
+
+				// Safeguard: the agent is advisory. It never executes actions — the
+				// permission level only shapes what it is allowed to suggest, and
+				// critical operations must be confirmed by the user in the UI.
+				const permissionGuidance =
+					input.permission === "read"
+						? "You are in READ-ONLY mode. Only explain, summarize and answer questions. Do not propose mutating actions."
+						: input.permission === "write"
+							? "You are in WRITE-advisory mode. You may suggest configuration changes, but present them as steps for the user to confirm. You cannot execute anything yourself."
+							: "You are in DEBUG mode. Focus on diagnosing problems from logs and context. Suggest fixes as confirmable steps; never claim to have executed them.";
+
+				const historyText = (input.history ?? [])
+					.map(
+						(m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`,
+					)
+					.join("\n");
+
+				const result = await generateText({
+					model,
+					prompt: `You are Dokploy's in-app assistant, helping a developer operate their self-hosted PaaS (projects, services, deployments, backups, cron schedules, notifications).
+
+${permissionGuidance}
+
+Current page context:
+${input.pageContext || "(none provided)"}
+
+${historyText ? `Conversation so far:\n${historyText}\n` : ""}
+User: ${input.message}
+
+Answer concisely and practically. When proposing an action that changes state, list explicit numbered steps and remind the user to confirm. Never fabricate resource names or data you weren't given.`,
+				});
+
+				return { reply: result.text };
+			} catch (error) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message:
+						error instanceof Error ? error.message : `Chat failed: ${error}`,
+				});
+			}
+		}),
+
 	testConnection: protectedProcedure
 		.input(
 			z.object({

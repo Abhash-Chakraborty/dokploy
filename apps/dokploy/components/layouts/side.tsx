@@ -23,13 +23,14 @@ import {
 	Key,
 	KeyRound,
 	Loader2,
-		type LucideIcon,
+	type LucideIcon,
 	Package,
 	Palette,
 	PieChart,
 	Rocket,
 	Server,
 	ShieldCheck,
+	SquareTerminal,
 	Star,
 	Tags,
 	Trash2,
@@ -87,6 +88,7 @@ import { api } from "@/utils/api";
 import { AddOrganization } from "../dashboard/organization/handle-organization";
 import { DialogAction } from "../shared/dialog-action";
 import { Logo } from "../shared/logo";
+import { VersionFooter } from "../shared/version-footer";
 import { Button } from "../ui/button";
 import { TimeBadge } from "../ui/time-badge";
 import { UpdateServerButton } from "./update-server";
@@ -197,6 +199,14 @@ const MENU: Menu = {
 			url: "/dashboard/docker",
 			icon: BlocksIcon,
 			// Only enabled for users with access to Docker
+			isEnabled: ({ permissions }) => !!permissions?.docker.read,
+		},
+		{
+			isSingle: true,
+			title: "Terminals",
+			url: "/dashboard/terminals",
+			icon: SquareTerminal,
+			// Master console — gated behind docker/server access
 			isEnabled: ({ permissions }) => !!permissions?.docker.read,
 		},
 		{
@@ -390,6 +400,13 @@ const MENU: Menu = {
 		},
 		{
 			isSingle: true,
+			title: "Backups",
+			url: "/dashboard/settings/backups",
+			icon: Database,
+			isEnabled: ({ permissions }) => !!permissions?.backup?.read,
+		},
+		{
+			isSingle: true,
 			title: "Billing",
 			url: "/dashboard/settings/billing",
 			icon: CreditCard,
@@ -432,7 +449,7 @@ const MENU: Menu = {
  * Creates a menu based on the current user's role and permissions
  * @returns a menu object with the home, settings, and help items
  */
-function createMenuForAuthUser(opts: {
+export function createMenuForAuthUser(opts: {
 	auth?: AuthQueryOutput;
 	permissions?: PermissionsOutput;
 	isCloud: boolean;
@@ -942,12 +959,10 @@ export default function Page({ children }: Props) {
 			<MobileCloser />
 			<Sidebar collapsible="icon" variant="floating">
 				<SidebarHeader>
-					{/* <SidebarMenuButton
-						className="group-data-[collapsible=icon]:!p-0"
-						size="lg"
-					> */}
-					<LogoWrapper />
-					{/* </SidebarMenuButton> */}
+					<div className="flex items-center justify-between gap-2">
+						<LogoWrapper />
+						<SidebarTrigger className="shrink-0 group-data-[collapsible=icon]:hidden" />
+					</div>
 				</SidebarHeader>
 				<SidebarContent>
 					<SidebarGroup>
@@ -1039,117 +1054,6 @@ export default function Page({ children }: Props) {
 							})}
 						</SidebarMenu>
 					</SidebarGroup>
-					<SidebarGroup>
-						<SidebarGroupLabel>Settings</SidebarGroupLabel>
-						<SidebarMenu className="gap-1">
-							{filteredSettings.map((item) => {
-								const isSingle = item.isSingle !== false;
-								const isActive = isSingle
-									? isActiveRoute({ itemUrl: item.url, pathname })
-									: item.items.some((item) =>
-											isActiveRoute({ itemUrl: item.url, pathname }),
-										);
-
-								return (
-									<Collapsible
-										key={item.title}
-										asChild
-										defaultOpen={isActive}
-										className="group/collapsible"
-									>
-										<SidebarMenuItem>
-											{isSingle ? (
-												<SidebarMenuButton
-													asChild
-													tooltip={item.title}
-													className={cn(isActive && "bg-border")}
-												>
-													<Link
-														href={item.url}
-														className="flex w-full items-center gap-2"
-													>
-														{item.icon && (
-															<item.icon
-																className={cn(isActive && "text-primary")}
-															/>
-														)}
-														<span>{item.title}</span>
-													</Link>
-												</SidebarMenuButton>
-											) : (
-												<>
-													<CollapsibleTrigger asChild>
-														<SidebarMenuButton
-															tooltip={item.title}
-															isActive={isActive}
-														>
-															{item.icon && <item.icon />}
-
-															<span>{item.title}</span>
-															{item.items?.length && (
-																<ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-															)}
-														</SidebarMenuButton>
-													</CollapsibleTrigger>
-													<CollapsibleContent>
-														<SidebarMenuSub>
-															{item.items?.map((subItem) => (
-																<SidebarMenuSubItem key={subItem.title}>
-																	<SidebarMenuSubButton
-																		asChild
-																		className={cn(isActive && "bg-border")}
-																	>
-																		<Link
-																			href={subItem.url}
-																			className="flex w-full items-center"
-																		>
-																			{subItem.icon && (
-																				<span className="mr-2">
-																					<subItem.icon
-																						className={cn(
-																							"h-4 w-4 text-muted-foreground",
-																							isActive && "text-primary",
-																						)}
-																					/>
-																				</span>
-																			)}
-																			<span>{subItem.title}</span>
-																		</Link>
-																	</SidebarMenuSubButton>
-																</SidebarMenuSubItem>
-															))}
-														</SidebarMenuSub>
-													</CollapsibleContent>
-												</>
-											)}
-										</SidebarMenuItem>
-									</Collapsible>
-								);
-							})}
-						</SidebarMenu>
-					</SidebarGroup>
-					<SidebarGroup className="group-data-[collapsible=icon]:hidden">
-						<SidebarGroupLabel>Extra</SidebarGroupLabel>
-						<SidebarMenu>
-							{help.map((item: ExternalLink) => (
-								<SidebarMenuItem key={item.name}>
-									<SidebarMenuButton asChild>
-										<a
-											href={item.url}
-											target="_blank"
-											rel="noopener noreferrer"
-											className="flex w-full items-center gap-2"
-										>
-											<span className="mr-2">
-												<item.icon className="h-4 w-4" />
-											</span>
-											<span>{item.name}</span>
-										</a>
-									</SidebarMenuButton>
-								</SidebarMenuItem>
-							))}
-						</SidebarMenu>
-					</SidebarGroup>
 				</SidebarContent>
 				<SidebarFooter>
 					<SidebarMenu className="flex flex-col gap-2">
@@ -1161,14 +1065,11 @@ export default function Page({ children }: Props) {
 						<SidebarMenuItem>
 							<UserNav />
 						</SidebarMenuItem>
-						{whitelabeling?.footerText && (
-							<div className="px-3 text-xs text-muted-foreground text-center group-data-[collapsible=icon]:hidden">
-								{whitelabeling.footerText}
-							</div>
-						)}
-						{dokployVersion && (
-							<div className="px-3 text-xs text-muted-foreground text-center group-data-[collapsible=icon]:hidden">
-								Version {dokployVersion}
+						{(whitelabeling?.footerText || dokployVersion) && (
+							<div className="px-3 text-xs text-muted-foreground text-left truncate group-data-[collapsible=icon]:hidden">
+								{whitelabeling?.footerText || "Made with ♥ by Abhash"}
+								{dokployVersion &&
+									` · V ${String(dokployVersion).replace(/^v/i, "")}`}
 							</div>
 						)}
 					</SidebarMenu>
@@ -1203,6 +1104,7 @@ export default function Page({ children }: Props) {
 				)}
 
 				<div className="flex flex-col w-full p-4 pt-0">{children}</div>
+				<VersionFooter />
 			</SidebarInset>
 		</SidebarProvider>
 	);

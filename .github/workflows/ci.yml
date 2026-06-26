@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main, master]
   push:
-    branches: [master]
+    branches: [master, abhash-dokploy]
   workflow_dispatch:
 
 permissions:

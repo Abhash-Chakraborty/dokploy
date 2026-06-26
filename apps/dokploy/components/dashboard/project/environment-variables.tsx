@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { AlertBlock } from "@/components/shared/alert-block";
 import { CodeEditor } from "@/components/shared/code-editor";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -124,7 +125,20 @@ export const EnvironmentVariables = ({ environmentId, children }: Props) => {
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-6xl">
 				<DialogHeader>
-					<DialogTitle>Environment Variables</DialogTitle>
+					<DialogTitle className="flex items-center gap-2">
+						Environment Variables
+						<InfoTooltip
+							content={
+								<span>
+									<strong>Environment-level</strong> variables are shared across
+									all services in this environment. Reference them from a
+									service with <code>{"{{environment.NAME}}"}</code>.
+									Service-level (project) variables, set on each service,
+									override these for that service only.
+								</span>
+							}
+						/>
+					</DialogTitle>
 					<DialogDescription>
 						Update the environment variables that are accessible to all services
 						in this environment.

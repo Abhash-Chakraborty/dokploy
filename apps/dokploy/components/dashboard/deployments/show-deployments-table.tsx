@@ -276,11 +276,13 @@ export function ShowDeploymentsTable() {
 				),
 				cell: ({ row }: { row: { original: DeploymentRow } }) => {
 					const d = row.original;
+					// Fall back to "Dokploy" so the column is never empty for
+					// deployments that run on the same server as Dokploy.
 					const serverName =
 						d.server?.name ??
 						d.application?.server?.name ??
 						d.compose?.server?.name ??
-						null;
+						"Dokploy";
 					const serverType =
 						d.server?.serverType ??
 						d.application?.server?.serverType ??

@@ -1,5 +1,6 @@
 import type { IncomingMessage } from "node:http";
 import { apiKey } from "@better-auth/api-key";
+import { passkey } from "@better-auth/passkey";
 import * as bcrypt from "bcrypt";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -402,6 +403,21 @@ const { handler, api } = betterAuth({
 			references: "user",
 		}),
 		twoFactor(),
+		passkey({
+			rpName: "Dokploy",
+			// Origin/rpID are inferred from the request when not set; pass the
+			// configured app URL origin when available for stricter validation.
+			...(authBaseURL
+				? (() => {
+						try {
+							const u = new URL(authBaseURL);
+							return { rpID: u.hostname, origin: u.origin };
+						} catch {
+							return {};
+						}
+					})()
+				: {}),
+		}),
 		organization({
 			ac,
 			roles: {

@@ -72,3 +72,60 @@ You can override it:
 ```bash
 DOKPLOY_IMAGE=ghcr.io/abhash-chakraborty/dokploy:canary bash install.sh
 ```
+
+## Personal Feature Additions
+
+This fork carries a UI/UX overhaul and several feature additions on top of
+upstream Dokploy. Highlights:
+
+### Navigation & layout
+- The sidebar shows only top-level sections (Home, Projects, Deployments,
+  Monitoring, Schedules, Docker, **Terminals**, Swarm, Requests). All settings
+  and help links moved into the user-avatar dropdown.
+- Pages are edge-to-edge (no boxed "canvas"); each page uses a shared
+  `PageHeader` with its primary action consolidated top-right
+  (`components/shared/page-header.tsx`).
+- A thin version footer (`V x.y`) appears on every dashboard page.
+
+### Terminals
+- A top-level **Terminals** page (`/dashboard/terminals`) acts as a master
+  console with a server selector, defaulting to the local Dokploy server.
+- `components/shared/terminal-panel.tsx` provides a slide-over terminal usable
+  anywhere; both reuse the existing xterm `TerminalView`.
+
+### Authentication
+- **2FA** enable/verify no longer hangs — login hard-navigates so the session
+  cookie reaches the dashboard, and enable/disable await the user refetch.
+- **Passkeys (WebAuthn)** via the Better Auth `passkey` plugin. Register/manage
+  passkeys on the profile page; sign in with a passkey on the login page. The
+  `passkey` table is created by migration `0173_add_passkey`.
+- **Per-method login toggles** (email+password, GitHub, Google, passkey) on the
+  Web Server settings page. At least one method must stay enabled — enforced in
+  `authMethodsConfigSchema` and surfaced via `settings.getAuthMethods`. Migration
+  `0174_add_auth_methods`.
+- **Login history** (IP + device) is shown read-only on the profile page,
+  sourced from Better Auth sessions via `user.getLoginHistory`.
+
+### Scheduling
+- New schedules default the timezone picker to the browser's local timezone
+  instead of UTC.
+
+### Backups
+- A unified **Backups** page (`/dashboard/settings/backups`) aggregates every
+  backup across service types with status/schedule/destination and a status
+  filter, via `backup.listAll`.
+
+### AI assistant
+- A right-side **AI sidebar** (`components/shared/ai-sidebar.tsx`) provides a
+  page-context-aware, permission-scoped (read / write / debug) assistant that is
+  advisory only — it proposes confirmable steps and never executes actions. It
+  reuses the existing AI provider settings.
+
+### Tags
+- The tag selector lets you create a tag inline by typing a name that does not
+  exist yet ("+ Create …"), available everywhere the selector is used.
+
+### Migrations
+Two new migrations ship with this fork and run automatically on startup:
+`0173_add_passkey` and `0174_add_auth_methods`. No manual step is required.
+
