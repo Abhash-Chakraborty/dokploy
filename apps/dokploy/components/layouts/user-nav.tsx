@@ -1,4 +1,4 @@
-import { ChevronsUpDown } from "lucide-react";
+import { ChevronsUpDown, ExternalLink } from "lucide-react";
 import { useRouter } from "next/router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -15,6 +15,7 @@ import { getFallbackAvatarInitials } from "@/lib/utils";
 import { api } from "@/utils/api";
 import { ModeToggle } from "../ui/modeToggle";
 import { SidebarMenuButton } from "../ui/sidebar";
+import { createMenuForAuthUser } from "./side";
 
 const _AUTO_CHECK_UPDATES_INTERVAL_MINUTES = 7;
 
@@ -23,8 +24,17 @@ export const UserNav = () => {
 	const { data } = api.user.get.useQuery();
 	const { data: permissions } = api.user.getPermissions.useQuery();
 	const { data: isCloud } = api.settings.isCloud.useQuery();
+	const { data: whitelabeling } = api.whitelabeling.get.useQuery(undefined, {
+		staleTime: 5 * 60 * 1000,
+		refetchOnWindowFocus: false,
+	});
 
-	// const { mutateAsync } = api.auth.logout.useMutation();
+	const { settings, help } = createMenuForAuthUser({
+		auth: data,
+		permissions,
+		isCloud: !!isCloud,
+		whitelabeling,
+	});
 
 	return (
 		<DropdownMenu>
@@ -53,7 +63,7 @@ export const UserNav = () => {
 				</SidebarMenuButton>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent
-				className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+				className="w-[--radix-dropdown-menu-trigger-width] min-w-64 rounded-lg"
 				side="bottom"
 				align="end"
 				sideOffset={4}
@@ -68,79 +78,42 @@ export const UserNav = () => {
 					<ModeToggle />
 				</div>
 				<DropdownMenuSeparator />
-				<DropdownMenuGroup>
-					<DropdownMenuItem
-						className="cursor-pointer"
-						onClick={() => {
-							router.push("/dashboard/settings/profile");
-						}}
-					>
-						Profile
-					</DropdownMenuItem>
-					<DropdownMenuItem
-						className="cursor-pointer"
-						onClick={() => {
-							router.push("/dashboard/home");
-						}}
-					>
-						Projects
-					</DropdownMenuItem>
-					{!isCloud ? (
-						<>
+				{/* Settings (moved out of the sidebar) */}
+				<DropdownMenuGroup className="max-h-[50vh] overflow-y-auto">
+					{settings.map((item) => {
+						const isSingle = item.isSingle !== false;
+						if (!isSingle) return null;
+						return (
 							<DropdownMenuItem
+								key={item.title}
 								className="cursor-pointer"
-								onClick={() => {
-									router.push("/dashboard/monitoring");
-								}}
+								onClick={() => router.push(item.url)}
 							>
-								Monitoring
+								{item.icon && (
+									<item.icon className="mr-2 size-4 text-muted-foreground" />
+								)}
+								{item.title}
 							</DropdownMenuItem>
-							{permissions?.traefikFiles.read && (
-								<DropdownMenuItem
-									className="cursor-pointer"
-									onClick={() => {
-										router.push("/dashboard/traefik");
-									}}
-								>
-									Traefik
-								</DropdownMenuItem>
-							)}
-							{permissions?.docker.read && (
-								<DropdownMenuItem
-									className="cursor-pointer"
-									onClick={() => {
-										router.push("/dashboard/docker", undefined, {
-											shallow: true,
-										});
-									}}
-								>
-									Docker
-								</DropdownMenuItem>
-							)}
-						</>
-					) : (
-						permissions?.organization.update && (
-							<DropdownMenuItem
-								className="cursor-pointer"
-								onClick={() => {
-									router.push("/dashboard/settings/servers");
-								}}
-							>
-								Servers
-							</DropdownMenuItem>
-						)
-					)}
+						);
+					})}
 				</DropdownMenuGroup>
-				{isCloud && data?.role === "owner" && (
-					<DropdownMenuItem
-						className="cursor-pointer"
-						onClick={() => {
-							router.push("/dashboard/settings/billing");
-						}}
-					>
-						Billing
-					</DropdownMenuItem>
-				)}
+				<DropdownMenuSeparator />
+				{/* Help / external links */}
+				<DropdownMenuGroup>
+					{help.map((item) => (
+						<DropdownMenuItem
+							key={item.name}
+							asChild
+							className="cursor-pointer"
+						>
+							<a href={item.url} target="_blank" rel="noopener noreferrer">
+								<item.icon className="mr-2 size-4 text-muted-foreground" />
+								{item.name}
+								<ExternalLink className="ml-auto size-3 text-muted-foreground" />
+							</a>
+						</DropdownMenuItem>
+					))}
+				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem
 					className="cursor-pointer"
@@ -148,9 +121,6 @@ export const UserNav = () => {
 						await authClient.signOut().then(() => {
 							router.push("/");
 						});
-						// await mutateAsync().then(() => {
-						// 	router.push("/");
-						// });
 					}}
 				>
 					Log out
