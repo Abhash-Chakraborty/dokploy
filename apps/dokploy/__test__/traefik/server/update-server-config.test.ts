@@ -68,6 +68,12 @@ const baseSettings: WebServerSettings = {
 	cleanupCacheOnPreviews: false,
 	remoteServersOnly: false,
 	enforceSSO: false,
+	authMethodsConfig: {
+		emailPassword: true,
+		github: true,
+		google: true,
+		passkey: true,
+	},
 	createdAt: null,
 	updatedAt: new Date(),
 };

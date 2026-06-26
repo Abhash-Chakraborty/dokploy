@@ -67,6 +67,7 @@ import {
 	apiSaveSSHKey,
 	apiServerSchema,
 	apiTraefikConfig,
+	apiUpdateAuthMethods,
 	apiUpdateDockerCleanup,
 	apiUpdateWebServerBuildsConcurrency,
 	projects,
@@ -497,6 +498,48 @@ export const settingsRouter = createTRPCRouter({
 			});
 			return true;
 		}),
+
+	updateAuthMethods: adminProcedure
+		.input(apiUpdateAuthMethods)
+		.mutation(async ({ input, ctx }) => {
+			if (IS_CLOUD) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "This feature is only available for self-hosted instances",
+				});
+			}
+
+			await updateWebServerSettings({
+				authMethodsConfig: input.authMethodsConfig,
+			});
+
+			await audit(ctx, {
+				action: "update",
+				resourceType: "settings",
+				resourceName: "auth-methods",
+			});
+			return true;
+		}),
+
+	getAuthMethods: publicProcedure.query(async () => {
+		if (IS_CLOUD) {
+			return {
+				emailPassword: true,
+				github: true,
+				google: true,
+				passkey: true,
+			};
+		}
+		const settings = await getWebServerSettings();
+		return (
+			settings?.authMethodsConfig ?? {
+				emailPassword: true,
+				github: true,
+				google: true,
+				passkey: true,
+			}
+		);
+	}),
 
 	readTraefikConfig: adminProcedure.query(() => {
 		if (IS_CLOUD) {

@@ -35,6 +35,7 @@ import { Input } from "@/components/ui/input";
 import { InputOTP } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
+import { api } from "@/utils/api";
 import { useWhitelabelingPublic } from "@/utils/hooks/use-whitelabeling";
 
 const LoginSchema = z.object({
@@ -57,6 +58,10 @@ interface Props {
 }
 export default function Home({ IS_CLOUD, socialProviders }: Props) {
 	const { config: whitelabeling } = useWhitelabelingPublic();
+	const { data: authMethods } = api.settings.getAuthMethods.useQuery();
+	// Default to enabled while loading so the form is never wrongly hidden.
+	const methodEnabled = (key: keyof NonNullable<typeof authMethods>) =>
+		authMethods ? authMethods[key] : true;
 	const [isLoginLoading, setIsLoginLoading] = useState(false);
 	const [isTwoFactorLoading, setIsTwoFactorLoading] = useState(false);
 	const [isBackupCodeLoading, setIsBackupCodeLoading] = useState(false);
@@ -175,70 +180,78 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 
 	const loginContent = (
 		<>
-			{socialProviders.github && <SignInWithGithub />}
-			{socialProviders.google && <SignInWithGoogle />}
-			<Button
-				type="button"
-				variant="outline"
-				className="w-full"
-				onClick={async () => {
-					try {
-						const res = await authClient.signIn.passkey();
-						if (res?.error) {
-							toast.error(res.error.message || "Passkey sign-in failed");
-							return;
+			{socialProviders.github && methodEnabled("github") && (
+				<SignInWithGithub />
+			)}
+			{socialProviders.google && methodEnabled("google") && (
+				<SignInWithGoogle />
+			)}
+			{methodEnabled("passkey") && (
+				<Button
+					type="button"
+					variant="outline"
+					className="w-full"
+					onClick={async () => {
+						try {
+							const res = await authClient.signIn.passkey();
+							if (res?.error) {
+								toast.error(res.error.message || "Passkey sign-in failed");
+								return;
+							}
+							toast.success("Logged in successfully");
+							window.location.href = "/dashboard/home";
+						} catch {
+							toast.error("Passkey sign-in failed");
 						}
-						toast.success("Logged in successfully");
-						window.location.href = "/dashboard/home";
-					} catch {
-						toast.error("Passkey sign-in failed");
-					}
-				}}
-			>
-				<Fingerprint className="size-4" />
-				Sign in with a passkey
-			</Button>
-			<Form {...loginForm}>
-				<form
-					onSubmit={loginForm.handleSubmit(onSubmit)}
-					className="space-y-4"
-					id="login-form"
+					}}
 				>
-					<FormField
-						control={loginForm.control}
-						name="email"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Email</FormLabel>
-								<FormControl>
-									<Input placeholder="john@example.com" {...field} />
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-					<FormField
-						control={loginForm.control}
-						name="password"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Password</FormLabel>
-								<FormControl>
-									<Input
-										type="password"
-										placeholder="Enter your password"
-										{...field}
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-					<Button className="w-full" type="submit" isLoading={isLoginLoading}>
-						Login
-					</Button>
-				</form>
-			</Form>
+					<Fingerprint className="size-4" />
+					Sign in with a passkey
+				</Button>
+			)}
+			{methodEnabled("emailPassword") && (
+				<Form {...loginForm}>
+					<form
+						onSubmit={loginForm.handleSubmit(onSubmit)}
+						className="space-y-4"
+						id="login-form"
+					>
+						<FormField
+							control={loginForm.control}
+							name="email"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Email</FormLabel>
+									<FormControl>
+										<Input placeholder="john@example.com" {...field} />
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={loginForm.control}
+							name="password"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Password</FormLabel>
+									<FormControl>
+										<Input
+											type="password"
+											placeholder="Enter your password"
+											{...field}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<Button className="w-full" type="submit" isLoading={isLoginLoading}>
+							Login
+						</Button>
+					</form>
+				</Form>
+			)}
 		</>
 	);
 
