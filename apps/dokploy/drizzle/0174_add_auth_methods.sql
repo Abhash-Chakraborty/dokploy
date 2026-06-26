@@ -1,0 +1,1 @@
+ALTER TABLE "webServerSettings" ADD COLUMN "authMethodsConfig" jsonb DEFAULT '{"emailPassword":true,"github":true,"google":true,"passkey":true}'::jsonb NOT NULL;

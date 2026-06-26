@@ -204,8 +204,8 @@ export function LicenseKeySettings() {
 								<div className="space-y-1">
 									<h3 className="text-lg font-semibold">Enterprise Features</h3>
 									<p className="text-sm text-muted-foreground">
-										Unlock advanced capabilities like SSO, Audit logs,
-										whitelabeling and more.
+										Unlock advanced capabilities like audit logs,
+										whitelabeling, custom roles and more.
 									</p>
 								</div>
 							</div>

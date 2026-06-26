@@ -2,13 +2,25 @@ import dotenv, { type DotenvParseOutput } from "dotenv";
 import esbuild from "esbuild";
 
 const result = dotenv.config({ path: ".env.production" });
+const RUNTIME_ENV_KEYS = new Set([
+	"DATABASE_URL",
+	"BETTER_AUTH_SECRET",
+	"BETTER_AUTH_SECRET_FILE",
+	"BETTER_AUTH_URL",
+	"DOKPLOY_URL",
+	"DOKPLOY_UPDATE_IMAGE",
+	"DOKPLOY_IMAGE_REPOSITORY",
+	"GITHUB_CLIENT_ID",
+	"GITHUB_CLIENT_SECRET",
+	"GOOGLE_CLIENT_ID",
+	"GOOGLE_CLIENT_SECRET",
+]);
 
 function prepareDefine(config: DotenvParseOutput | undefined) {
 	const define = {};
 	// @ts-ignore
 	for (const [key, value] of Object.entries(config)) {
-		// Skip DATABASE_URL to allow runtime environment variable override
-		if (key === "DATABASE_URL") {
+		if (RUNTIME_ENV_KEYS.has(key)) {
 			continue;
 		}
 		// @ts-ignore

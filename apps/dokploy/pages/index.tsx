@@ -1,14 +1,10 @@
-import {
-	getWebServerSettings,
-	IS_CLOUD,
-	isAdminPresent,
-} from "@dokploy/server";
+import { IS_CLOUD, isAdminPresent } from "@dokploy/server";
 import { validateRequest } from "@dokploy/server/lib/auth";
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
+import { Fingerprint } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import { type ReactElement, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -16,7 +12,6 @@ import { z } from "zod";
 import { OnboardingLayout } from "@/components/layouts/onboarding-layout";
 import { SignInWithGithub } from "@/components/proprietary/auth/sign-in-with-github";
 import { SignInWithGoogle } from "@/components/proprietary/auth/sign-in-with-google";
-import { SignInWithSSO } from "@/components/proprietary/sso/sign-in-with-sso";
 import { AlertBlock } from "@/components/shared/alert-block";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
@@ -56,12 +51,17 @@ type LoginForm = z.infer<typeof LoginSchema>;
 
 interface Props {
 	IS_CLOUD: boolean;
-	enforceSSO: boolean;
+	socialProviders: {
+		github: boolean;
+		google: boolean;
+	};
 }
-export default function Home({ IS_CLOUD, enforceSSO }: Props) {
-	const router = useRouter();
+export default function Home({ IS_CLOUD, socialProviders }: Props) {
 	const { config: whitelabeling } = useWhitelabelingPublic();
-	const { data: showSignInWithSSO } = api.sso.showSignInWithSSO.useQuery();
+	const { data: authMethods } = api.settings.getAuthMethods.useQuery();
+	// Default to enabled while loading so the form is never wrongly hidden.
+	const methodEnabled = (key: keyof NonNullable<typeof authMethods>) =>
+		authMethods ? authMethods[key] : true;
 	const [isLoginLoading, setIsLoginLoading] = useState(false);
 	const [isTwoFactorLoading, setIsTwoFactorLoading] = useState(false);
 	const [isBackupCodeLoading, setIsBackupCodeLoading] = useState(false);
@@ -111,7 +111,9 @@ export default function Home({ IS_CLOUD, enforceSSO }: Props) {
 			}
 
 			toast.success("Logged in successfully");
-			router.push("/dashboard/home");
+			// Hard navigation so the freshly-set session cookie is sent on the
+			// server request for /dashboard/home (router.push can race the cookie).
+			window.location.href = "/dashboard/home";
 		} catch {
 			toast.error("An error occurred while logging in");
 		} finally {
@@ -138,7 +140,7 @@ export default function Home({ IS_CLOUD, enforceSSO }: Props) {
 			}
 
 			toast.success("Logged in successfully");
-			router.push("/dashboard/home");
+			window.location.href = "/dashboard/home";
 		} catch {
 			toast.error("An error occurred while verifying 2FA code");
 		} finally {
@@ -168,7 +170,7 @@ export default function Home({ IS_CLOUD, enforceSSO }: Props) {
 			}
 
 			toast.success("Logged in successfully");
-			router.push("/dashboard/home");
+			window.location.href = "/dashboard/home";
 		} catch {
 			toast.error("An error occurred while verifying backup code");
 		} finally {
@@ -178,49 +180,78 @@ export default function Home({ IS_CLOUD, enforceSSO }: Props) {
 
 	const loginContent = (
 		<>
-			{IS_CLOUD && <SignInWithGithub />}
-			{IS_CLOUD && <SignInWithGoogle />}
-			<Form {...loginForm}>
-				<form
-					onSubmit={loginForm.handleSubmit(onSubmit)}
-					className="space-y-4"
-					id="login-form"
+			{socialProviders.github && methodEnabled("github") && (
+				<SignInWithGithub />
+			)}
+			{socialProviders.google && methodEnabled("google") && (
+				<SignInWithGoogle />
+			)}
+			{methodEnabled("passkey") && (
+				<Button
+					type="button"
+					variant="outline"
+					className="w-full"
+					onClick={async () => {
+						try {
+							const res = await authClient.signIn.passkey();
+							if (res?.error) {
+								toast.error(res.error.message || "Passkey sign-in failed");
+								return;
+							}
+							toast.success("Logged in successfully");
+							window.location.href = "/dashboard/home";
+						} catch {
+							toast.error("Passkey sign-in failed");
+						}
+					}}
 				>
-					<FormField
-						control={loginForm.control}
-						name="email"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Email</FormLabel>
-								<FormControl>
-									<Input placeholder="john@example.com" {...field} />
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-					<FormField
-						control={loginForm.control}
-						name="password"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Password</FormLabel>
-								<FormControl>
-									<Input
-										type="password"
-										placeholder="Enter your password"
-										{...field}
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-					<Button className="w-full" type="submit" isLoading={isLoginLoading}>
-						Login
-					</Button>
-				</form>
-			</Form>
+					<Fingerprint className="size-4" />
+					Sign in with a passkey
+				</Button>
+			)}
+			{methodEnabled("emailPassword") && (
+				<Form {...loginForm}>
+					<form
+						onSubmit={loginForm.handleSubmit(onSubmit)}
+						className="space-y-4"
+						id="login-form"
+					>
+						<FormField
+							control={loginForm.control}
+							name="email"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Email</FormLabel>
+									<FormControl>
+										<Input placeholder="john@example.com" {...field} />
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={loginForm.control}
+							name="password"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Password</FormLabel>
+									<FormControl>
+										<Input
+											type="password"
+											placeholder="Enter your password"
+											{...field}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<Button className="w-full" type="submit" isLoading={isLoginLoading}>
+							Login
+						</Button>
+					</form>
+				</Form>
+			)}
 		</>
 	);
 
@@ -251,15 +282,7 @@ export default function Home({ IS_CLOUD, enforceSSO }: Props) {
 			)}
 			<CardContent className="p-0">
 				{!isTwoFactor ? (
-					<>
-						{enforceSSO ? (
-							<SignInWithSSO enforce />
-						) : showSignInWithSSO ? (
-							<SignInWithSSO>{loginContent}</SignInWithSSO>
-						) : (
-							loginContent
-						)}
-					</>
+					<>{loginContent}</>
 				) : (
 					<>
 						<form
@@ -424,7 +447,14 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 		return {
 			props: {
 				IS_CLOUD: IS_CLOUD,
-				enforceSSO: false,
+				socialProviders: {
+					github: !!(
+						process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
+					),
+					google: !!(
+						process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+					),
+				},
 			},
 		};
 	}
@@ -450,12 +480,17 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 		};
 	}
 
-	const webServerSettings = await getWebServerSettings();
-
 	return {
 		props: {
 			hasAdmin,
-			enforceSSO: webServerSettings?.enforceSSO ?? false,
+			socialProviders: {
+				github: !!(
+					process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
+				),
+				google: !!(
+					process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+				),
+			},
 		},
 	};
 }

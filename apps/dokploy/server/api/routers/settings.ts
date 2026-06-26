@@ -16,6 +16,7 @@ import {
 	execAsync,
 	findServerById,
 	getDockerDiskUsage,
+	getDokployImageRepository,
 	getDokployImageTag,
 	getLogCleanupStatus,
 	getUpdateData,
@@ -66,6 +67,7 @@ import {
 	apiSaveSSHKey,
 	apiServerSchema,
 	apiTraefikConfig,
+	apiUpdateAuthMethods,
 	apiUpdateDockerCleanup,
 	apiUpdateWebServerBuildsConcurrency,
 	projects,
@@ -497,8 +499,8 @@ export const settingsRouter = createTRPCRouter({
 			return true;
 		}),
 
-	updateEnforceSSO: enterpriseProcedure
-		.input(z.object({ enforceSSO: z.boolean() }))
+	updateAuthMethods: adminProcedure
+		.input(apiUpdateAuthMethods)
 		.mutation(async ({ input, ctx }) => {
 			if (IS_CLOUD) {
 				throw new TRPCError({
@@ -508,16 +510,36 @@ export const settingsRouter = createTRPCRouter({
 			}
 
 			await updateWebServerSettings({
-				enforceSSO: input.enforceSSO,
+				authMethodsConfig: input.authMethodsConfig,
 			});
 
 			await audit(ctx, {
 				action: "update",
 				resourceType: "settings",
-				resourceName: "enforce-sso",
+				resourceName: "auth-methods",
 			});
 			return true;
 		}),
+
+	getAuthMethods: publicProcedure.query(async () => {
+		if (IS_CLOUD) {
+			return {
+				emailPassword: true,
+				github: true,
+				google: true,
+				passkey: true,
+			};
+		}
+		const settings = await getWebServerSettings();
+		return (
+			settings?.authMethodsConfig ?? {
+				emailPassword: true,
+				github: true,
+				google: true,
+				passkey: true,
+			}
+		);
+	}),
 
 	readTraefikConfig: adminProcedure.query(() => {
 		if (IS_CLOUD) {
@@ -605,7 +627,7 @@ export const settingsRouter = createTRPCRouter({
 				"update",
 				"--force",
 				"--image",
-				`dokploy/dokploy:${data.latestVersion}`,
+				`${getDokployImageRepository()}:${data.latestVersion}`,
 				"dokploy",
 			]);
 			await audit(ctx, {
@@ -701,9 +723,12 @@ export const settingsRouter = createTRPCRouter({
 		async ({ ctx }): Promise<unknown> => {
 			const protocol = ctx.req.headers["x-forwarded-proto"];
 			const url = `${protocol}://${ctx.req.headers.host}/api`;
+			// OpenAPI `info.version` must be plain semver; the package version is
+			// prefixed with "v" (e.g. "v0.29.8") which breaks the spec parser.
+			const specVersion = String(packageInfo.version).replace(/^v/, "");
 			const openApiDocument = generateOpenApiDocument(appRouter, {
 				title: "tRPC OpenAPI",
-				version: packageInfo.version,
+				version: specVersion,
 				baseUrl: url,
 				docsUrl: `${url}/settings.getOpenApiDocument`,
 				tags: [
@@ -746,7 +771,6 @@ export const settingsRouter = createTRPCRouter({
 					"auditLog",
 					"customRole",
 					"whitelabeling",
-					"sso",
 					"licenseKey",
 					"organization",
 					"previewDeployment",
@@ -756,7 +780,7 @@ export const settingsRouter = createTRPCRouter({
 			openApiDocument.info = {
 				title: "Dokploy API",
 				description: "Endpoints for dokploy",
-				version: packageInfo.version,
+				version: specVersion,
 			};
 
 			// Add security schemes configuration

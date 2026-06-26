@@ -1,5 +1,6 @@
 import {
 	createBackup,
+	findAllBackupsByOrganizationId,
 	findBackupById,
 	findComposeByBackupId,
 	findComposeById,
@@ -151,6 +152,11 @@ export const backupRouter = createTRPCRouter({
 				});
 			}
 		}),
+	listAll: protectedProcedure.query(async ({ ctx }) => {
+		return await findAllBackupsByOrganizationId(
+			ctx.session.activeOrganizationId,
+		);
+	}),
 	one: protectedProcedure
 		.input(apiFindOneBackup)
 		.query(async ({ input, ctx }) => {

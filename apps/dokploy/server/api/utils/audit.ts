@@ -1,9 +1,16 @@
 import type { AuditAction, AuditResourceType } from "@dokploy/server/db/schema";
-import { createAuditLog } from "@dokploy/server/services/proprietary/audit-log";
+import { createAuditLog } from "@dokploy/server/services/abhash/audit-log";
 
 interface AuditCtx {
 	user: { id: string; email: string; role: string };
 	session: { activeOrganizationId: string };
+	req?: {
+		headers: {
+			[key: string]: string | string[] | undefined;
+		};
+		method?: string;
+		url?: string;
+	};
 }
 
 interface AuditEvent {
@@ -13,6 +20,25 @@ interface AuditEvent {
 	resourceName?: string;
 	metadata?: Record<string, unknown>;
 }
+
+const headerValue = (
+	value: string | string[] | undefined,
+): string | undefined => {
+	if (Array.isArray(value)) {
+		return value[0];
+	}
+	return value;
+};
+
+const requestMetadata = (ctx: AuditCtx) => ({
+	ipAddress:
+		headerValue(ctx.req?.headers["x-forwarded-for"])?.split(",")[0]?.trim() ||
+		headerValue(ctx.req?.headers["x-real-ip"]) ||
+		null,
+	userAgent: headerValue(ctx.req?.headers["user-agent"]) || null,
+	method: ctx.req?.method || null,
+	path: ctx.req?.url || null,
+});
 
 /**
  * Creates an audit log entry from a tRPC context.
@@ -28,4 +54,8 @@ export const audit = (ctx: AuditCtx, event: AuditEvent) =>
 		userEmail: ctx.user.email,
 		userRole: ctx.user.role,
 		...event,
+		metadata: {
+			...requestMetadata(ctx),
+			...(event.metadata ?? {}),
+		},
 	});

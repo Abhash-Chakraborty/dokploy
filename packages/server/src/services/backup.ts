@@ -98,3 +98,45 @@ export const findBackupsByDbId = async (
 	});
 	return result || [];
 };
+
+/**
+ * Aggregate every backup in an organization across all service types for the
+ * unified backups page. Each backup links to a service whose
+ * environment → project carries the organizationId, so we fetch with those
+ * nested relations and filter by org in memory (backup counts are small).
+ */
+export const findAllBackupsByOrganizationId = async (
+	organizationId: string,
+) => {
+	const serviceWith = {
+		with: {
+			environment: {
+				with: {
+					project: { columns: { organizationId: true, name: true } },
+				},
+			},
+		},
+	} as const;
+
+	const result = await db.query.backups.findMany({
+		with: {
+			postgres: serviceWith,
+			mysql: serviceWith,
+			mariadb: serviceWith,
+			mongo: serviceWith,
+			libsql: serviceWith,
+			compose: serviceWith,
+			destination: {
+				columns: { accessKey: false, secretAccessKey: false },
+			},
+		},
+	});
+
+	const orgOf = (b: (typeof result)[number]) => {
+		const svc =
+			b.postgres || b.mysql || b.mariadb || b.mongo || b.libsql || b.compose;
+		return svc?.environment?.project?.organizationId;
+	};
+
+	return result.filter((b) => orgOf(b) === organizationId);
+};

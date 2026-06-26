@@ -8,7 +8,7 @@
 	"scripts": {
 		"dokploy:setup": "pnpm --filter=dokploy run setup",
 		"dokploy:dev": "pnpm --filter=dokploy run dev",
-		"dokploy:build": "pnpm --filter=dokploy run build",
+		"dokploy:build": "pnpm --filter=@dokploy/server run build && pnpm --filter=dokploy run build",
 		"dokploy:start": "pnpm --filter=dokploy run start",
 		"test": "pnpm --filter=dokploy run test",
 		"server:script": "pnpm --filter=server run switch:dev",
@@ -32,7 +32,7 @@
 	},
 	"packageManager": "pnpm@10.22.0",
 	"engines": {
-		"node": "^24.4.0",
+		"node": "^24.17.0",
 		"pnpm": ">=9.12.0"
 	},
 	"lint-staged": {

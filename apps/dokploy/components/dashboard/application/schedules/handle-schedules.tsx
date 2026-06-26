@@ -233,7 +233,11 @@ export const HandleSchedules = ({ id, scheduleId, scheduleType }: Props) => {
 			serviceName: "",
 			scheduleType: scheduleType || "application",
 			script: "",
-			timezone: undefined,
+			// Default to the user's local timezone rather than UTC.
+			timezone:
+				typeof Intl !== "undefined"
+					? Intl.DateTimeFormat().resolvedOptions().timeZone
+					: undefined,
 		},
 	});
 
@@ -521,8 +525,8 @@ export const HandleSchedules = ({ id, scheduleId, scheduleType }: Props) => {
 												</TooltipTrigger>
 												<TooltipContent>
 													<p>
-														Select a timezone for the schedule. If not
-														specified, UTC will be used.
+														Select a timezone for the schedule. Defaults to your
+														local timezone.
 													</p>
 												</TooltipContent>
 											</Tooltip>

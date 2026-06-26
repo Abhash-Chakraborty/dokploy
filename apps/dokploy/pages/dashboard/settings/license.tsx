@@ -3,24 +3,16 @@ import { createServerSideHelpers } from "@trpc/react-query/server";
 import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
 import superjson from "superjson";
+import { AbhashLicenseSettings } from "@/components/abhash/license/abhash-license-settings";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
-import { LicenseKeySettings } from "@/components/proprietary/license-keys/license-key";
-import { Card } from "@/components/ui/card";
+import { PageContainer } from "@/components/shared/page-header";
 import { appRouter } from "@/server/api/root";
 
 const Page = () => {
 	return (
-		<div className="w-full">
-			<div className="h-full rounded-xl max-w-5xl mx-auto flex flex-col gap-4">
-				<Card className="h-full bg-sidebar p-2.5 rounded-xl mx-auto w-full">
-					<div className="rounded-xl bg-background shadow-md">
-						<div className="p-6">
-							<LicenseKeySettings />
-						</div>
-					</div>
-				</Card>
-			</div>
-		</div>
+		<PageContainer>
+			<AbhashLicenseSettings />
+		</PageContainer>
 	);
 };
 
