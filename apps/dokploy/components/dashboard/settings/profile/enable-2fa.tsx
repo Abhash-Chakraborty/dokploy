@@ -57,6 +57,32 @@ type TwoFactorSetupData = {
 type PasswordForm = z.infer<typeof PasswordSchema>;
 type PinForm = z.infer<typeof PinSchema>;
 
+const getAuthErrorMessage = (error: unknown, fallback: string) => {
+	if (error instanceof Error) {
+		return error.message === "Failed to fetch"
+			? "Connection error. Please check your network and server URL."
+			: error.message;
+	}
+	if (
+		error &&
+		typeof error === "object" &&
+		"message" in error &&
+		typeof error.message === "string"
+	) {
+		return error.message;
+	}
+	return fallback;
+};
+
+const extractTotpSecret = (totpURI: string) => {
+	try {
+		return new URL(totpURI).searchParams.get("secret") ?? "";
+	} catch {
+		const secret = totpURI.split("secret=")[1]?.split("&")[0] ?? "";
+		return decodeURIComponent(secret);
+	}
+};
+
 export const USERNAME_PLACEHOLDER = "%username%";
 export const DATE_PLACEHOLDER = "%date%";
 export const BACKUP_CODES_PLACEHOLDER = "%backupCodes%";
@@ -84,14 +110,21 @@ export const Enable2FA = () => {
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [step, setStep] = useState<"password" | "verify">("password");
 	const [isPasswordLoading, setIsPasswordLoading] = useState(false);
+	const [isVerifyLoading, setIsVerifyLoading] = useState(false);
 	const [otpValue, setOtpValue] = useState("");
 	const { data: currentUser } = api.user.get.useQuery();
 
 	const handleVerifySubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		const code = otpValue.replace(/\s/g, "");
+		if (code.length !== 6) {
+			toast.error("Enter the 6-digit code from your authenticator app");
+			return;
+		}
+		setIsVerifyLoading(true);
 		try {
 			const result = await authClient.twoFactor.verifyTotp({
-				code: otpValue,
+				code,
 			});
 
 			if (result.error) {
@@ -111,18 +144,9 @@ export const Enable2FA = () => {
 			utils.user.get.invalidate();
 			setIsDialogOpen(false);
 		} catch (error) {
-			if (error instanceof Error) {
-				const errorMessage =
-					error.message === "Failed to fetch"
-						? "Connection error. Please check your internet connection."
-						: error.message;
-
-				toast.error(errorMessage);
-			} else {
-				toast.error("Error verifying 2FA code", {
-					description: error instanceof Error ? error.message : "Unknown error",
-				});
-			}
+			toast.error(getAuthErrorMessage(error, "Error verifying 2FA code"));
+		} finally {
+			setIsVerifyLoading(false);
 		}
 	};
 
@@ -180,7 +204,7 @@ export const Enable2FA = () => {
 
 				setData({
 					qrCodeUrl,
-					secret: enableData.totpURI.split("secret=")[1]?.split("&")[0] || "",
+					secret: extractTotpSecret(enableData.totpURI),
 					totpURI: enableData.totpURI,
 				});
 
@@ -190,12 +214,10 @@ export const Enable2FA = () => {
 				throw new Error("No TOTP URI received from server");
 			}
 		} catch (error) {
-			toast.error(
-				error instanceof Error ? error.message : "Error setting up 2FA",
-			);
+			const message = getAuthErrorMessage(error, "Error setting up 2FA");
+			toast.error(message);
 			passwordForm.setError("password", {
-				message:
-					error instanceof Error ? error.message : "Error setting up 2FA",
+				message,
 			});
 		} finally {
 			setIsPasswordLoading(false);
@@ -435,7 +457,7 @@ export const Enable2FA = () => {
 							<Button
 								type="submit"
 								className="w-full"
-								isLoading={isPasswordLoading}
+								isLoading={isVerifyLoading}
 								disabled={otpValue.length !== 6}
 							>
 								Enable 2FA

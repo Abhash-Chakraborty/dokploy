@@ -1,6 +1,5 @@
 import type { IncomingMessage } from "node:http";
 import { apiKey } from "@better-auth/api-key";
-import { sso } from "@better-auth/sso";
 import * as bcrypt from "bcrypt";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -10,12 +9,12 @@ import { and, desc, eq } from "drizzle-orm";
 import { IS_CLOUD } from "../constants";
 import { db } from "../db";
 import * as schema from "../db/schema";
+import { createAuditLog } from "../services/abhash/audit-log";
 import {
 	getTrustedOrigins,
 	getTrustedProviders,
 	getUserByToken,
 } from "../services/admin";
-import { createAuditLog } from "../services/abhash/audit-log";
 import {
 	getWebServerSettings,
 	updateWebServerSettings,
@@ -29,19 +28,58 @@ import { getPublicIpWithFallback } from "../wss/utils";
 import { ac, adminRole, memberRole, ownerRole } from "./access-control";
 import { betterAuthSecret } from "./auth-secret";
 
+const authBaseURL =
+	process.env.BETTER_AUTH_URL ||
+	process.env.NEXT_PUBLIC_APP_URL ||
+	process.env.DOKPLOY_URL ||
+	(process.env.NODE_ENV !== "production"
+		? `http://localhost:${process.env.PORT ?? 3000}`
+		: undefined);
+
+const configuredSocialProviders = {
+	...(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
+		? {
+				github: {
+					clientId: process.env.GITHUB_CLIENT_ID,
+					clientSecret: process.env.GITHUB_CLIENT_SECRET,
+				},
+			}
+		: {}),
+	...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+		? {
+				google: {
+					clientId: process.env.GOOGLE_CLIENT_ID,
+					clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+				},
+			}
+		: {}),
+};
+
+const configuredTrustedProviders = Object.keys(configuredSocialProviders);
+
+const requestMetadata = (request?: Request | null, path?: string) => ({
+	path,
+	ipAddress:
+		request?.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+		request?.headers.get("x-real-ip") ||
+		null,
+	userAgent: request?.headers.get("user-agent") || null,
+	host: request?.headers.get("host") || null,
+});
+
 const { handler, api } = betterAuth({
 	database: drizzleAdapter(db, {
 		provider: "pg",
 		schema: schema,
 	}),
 	disabledPaths: [
-		"/sso/register",
 		"/organization/create",
 		"/organization/update",
 		"/organization/delete",
 		...(!IS_CLOUD ? ["/verify-email"] : []),
 	],
 	secret: betterAuthSecret,
+	...(authBaseURL ? { baseURL: authBaseURL } : {}),
 	...(!IS_CLOUD
 		? {
 				advanced: {
@@ -61,22 +99,13 @@ const { handler, api } = betterAuth({
 			enabled: true,
 			async trustedProviders() {
 				const fromDb = await getTrustedProviders();
-				return ["github", "google", ...fromDb];
+				return [...configuredTrustedProviders, ...fromDb];
 			},
 			allowDifferentEmails: true,
 		},
 	},
 	appName: "Dokploy",
-	socialProviders: {
-		github: {
-			clientId: process.env.GITHUB_CLIENT_ID as string,
-			clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
-		},
-		google: {
-			clientId: process.env.GOOGLE_CLIENT_ID as string,
-			clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-		},
-	},
+	socialProviders: configuredSocialProviders,
 	logger: {
 		disabled: process.env.NODE_ENV === "production",
 	},
@@ -179,10 +208,6 @@ const { handler, api } = betterAuth({
 								});
 							}
 						} else {
-							const isSSORequest = context?.path.includes("/sso");
-							if (isSSORequest) {
-								return;
-							}
 							const isAdminPresent = await db.query.member.findFirst({
 								where: eq(schema.member.role, "owner"),
 							});
@@ -195,7 +220,6 @@ const { handler, api } = betterAuth({
 					}
 				},
 				after: async (user, context) => {
-					const isSSORequest = context?.path.includes("/sso");
 					const isAdminPresent = await db.query.member.findFirst({
 						where: eq(schema.member.role, "owner"),
 					});
@@ -251,29 +275,6 @@ const { handler, api } = betterAuth({
 								isDefault: true, // Mark first organization as default
 							});
 						});
-					} else if (isSSORequest) {
-						const providerId = context?.params?.providerId;
-						if (!providerId) {
-							throw new APIError("BAD_REQUEST", {
-								message: "Provider ID is required",
-							});
-						}
-						const provider = await db.query.ssoProvider.findFirst({
-							where: eq(schema.ssoProvider.providerId, providerId),
-						});
-
-						if (!provider) {
-							throw new APIError("BAD_REQUEST", {
-								message: "Provider not found",
-							});
-						}
-						await db.insert(schema.member).values({
-							userId: user.id,
-							organizationId: provider?.organizationId || "",
-							role: "member",
-							createdAt: new Date(),
-							isDefault: true,
-						});
 					}
 				},
 			},
@@ -301,7 +302,7 @@ const { handler, api } = betterAuth({
 						},
 					};
 				},
-				after: async (session) => {
+				after: async (session, context) => {
 					const orgId = (
 						session as typeof session & { activeOrganizationId?: string }
 					).activeOrganizationId;
@@ -321,11 +322,12 @@ const { handler, api } = betterAuth({
 						userRole: memberRecord.role,
 						action: "login",
 						resourceType: "session",
+						metadata: requestMetadata(context?.request, context?.path),
 					});
 				},
 			},
 			delete: {
-				after: async (session) => {
+				after: async (session, context) => {
 					const orgId = (
 						session as typeof session & { activeOrganizationId?: string }
 					).activeOrganizationId;
@@ -345,6 +347,7 @@ const { handler, api } = betterAuth({
 						userRole: memberRecord.role,
 						action: "logout",
 						resourceType: "session",
+						metadata: requestMetadata(context?.request, context?.path),
 					});
 				},
 			},
@@ -398,7 +401,6 @@ const { handler, api } = betterAuth({
 			enableMetadata: true,
 			references: "user",
 		}),
-		sso(),
 		twoFactor(),
 		organization({
 			ac,
@@ -425,8 +427,6 @@ const { handler, api } = betterAuth({
 const _auth = {
 	handler,
 	createApiKey: api.createApiKey,
-	registerSSOProvider: api.registerSSOProvider,
-	updateSSOProvider: api.updateSSOProvider,
 };
 
 export type AuthType = typeof _auth;

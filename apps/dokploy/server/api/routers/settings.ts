@@ -16,6 +16,7 @@ import {
 	execAsync,
 	findServerById,
 	getDockerDiskUsage,
+	getDokployImageRepository,
 	getDokployImageTag,
 	getLogCleanupStatus,
 	getUpdateData,
@@ -497,28 +498,6 @@ export const settingsRouter = createTRPCRouter({
 			return true;
 		}),
 
-	updateEnforceSSO: enterpriseProcedure
-		.input(z.object({ enforceSSO: z.boolean() }))
-		.mutation(async ({ input, ctx }) => {
-			if (IS_CLOUD) {
-				throw new TRPCError({
-					code: "BAD_REQUEST",
-					message: "This feature is only available for self-hosted instances",
-				});
-			}
-
-			await updateWebServerSettings({
-				enforceSSO: input.enforceSSO,
-			});
-
-			await audit(ctx, {
-				action: "update",
-				resourceType: "settings",
-				resourceName: "enforce-sso",
-			});
-			return true;
-		}),
-
 	readTraefikConfig: adminProcedure.query(() => {
 		if (IS_CLOUD) {
 			return true;
@@ -605,7 +584,7 @@ export const settingsRouter = createTRPCRouter({
 				"update",
 				"--force",
 				"--image",
-				`dokploy/dokploy:${data.latestVersion}`,
+				`${getDokployImageRepository()}:${data.latestVersion}`,
 				"dokploy",
 			]);
 			await audit(ctx, {
@@ -746,7 +725,6 @@ export const settingsRouter = createTRPCRouter({
 					"auditLog",
 					"customRole",
 					"whitelabeling",
-					"sso",
 					"licenseKey",
 					"organization",
 					"previewDeployment",
