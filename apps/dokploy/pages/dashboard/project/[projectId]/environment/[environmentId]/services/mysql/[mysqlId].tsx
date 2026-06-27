@@ -29,7 +29,6 @@ import { AdvanceBreadcrumb } from "@/components/shared/advance-breadcrumb";
 import { StatusTooltip } from "@/components/shared/status-tooltip";
 import { Badge } from "@/components/ui/badge";
 import {
-	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
@@ -88,222 +87,219 @@ const MySql = (
 					</title>
 				</Head>
 				<div className="w-full">
-					<Card className="h-full bg-sidebar  p-2.5 rounded-xl w-full">
-						<div className="rounded-xl bg-background shadow-md ">
-							<CardHeader className="flex flex-row justify-between items-center">
-								<div className="flex flex-col">
-									<CardTitle className="text-xl flex flex-row gap-2">
-										<div className="relative flex flex-row gap-4">
-											<div className="absolute -right-1  -top-2">
-												<StatusTooltip status={data?.applicationStatus} />
-											</div>
-
-											<MysqlIcon className="h-6 w-6 text-muted-foreground" />
+					<div className="flex w-full flex-col">
+						<CardHeader className="flex flex-row justify-between items-center">
+							<div className="flex flex-col">
+								<CardTitle className="text-xl flex flex-row gap-2">
+									<div className="relative flex flex-row gap-4">
+										<div className="absolute -right-1  -top-2">
+											<StatusTooltip status={data?.applicationStatus} />
 										</div>
-										{data?.name}
-									</CardTitle>
-									{data?.description && (
-										<CardDescription>{data?.description}</CardDescription>
-									)}
 
-									<span className="text-sm text-muted-foreground">
-										{data?.appName}
-									</span>
-								</div>
-								<div className="flex flex-col h-fit w-fit gap-2">
-									<div className="flex flex-row h-fit w-fit gap-2">
-										<Badge
-											className="cursor-pointer"
-											onClick={() => {
-												const ip = data?.server?.ipAddress || serverIp;
-												if (ip) {
-													copy(ip);
-													toast.success("IP Address Copied!");
-												}
-											}}
-											variant={
-												!data?.serverId
-													? "default"
-													: data?.server?.serverStatus === "active"
-														? "default"
-														: "destructive"
+										<MysqlIcon className="h-6 w-6 text-muted-foreground" />
+									</div>
+									{data?.name}
+								</CardTitle>
+								{data?.description && (
+									<CardDescription>{data?.description}</CardDescription>
+								)}
+
+								<span className="text-sm text-muted-foreground">
+									{data?.appName}
+								</span>
+							</div>
+							<div className="flex flex-col h-fit w-fit gap-2">
+								<div className="flex flex-row h-fit w-fit gap-2">
+									<Badge
+										className="cursor-pointer"
+										onClick={() => {
+											const ip = data?.server?.ipAddress || serverIp;
+											if (ip) {
+												copy(ip);
+												toast.success("IP Address Copied!");
 											}
-										>
-											{data?.server?.name || "Dokploy Server"}
-										</Badge>
-										{data?.server?.serverStatus === "inactive" && (
-											<TooltipProvider delayDuration={0}>
-												<Tooltip>
-													<TooltipTrigger asChild>
-														<Label className="break-all w-fit flex flex-row gap-1 items-center">
-															<HelpCircle className="size-4 text-muted-foreground" />
-														</Label>
-													</TooltipTrigger>
-													<TooltipContent
-														className="z-[999] w-[300px]"
-														align="start"
-														side="top"
-													>
-														<span>
-															You cannot, deploy this application because the
-															server is inactive, please upgrade your plan to
-															add more servers.
-														</span>
-													</TooltipContent>
-												</Tooltip>
-											</TooltipProvider>
-										)}
-									</div>
+										}}
+										variant={
+											!data?.serverId
+												? "default"
+												: data?.server?.serverStatus === "active"
+													? "default"
+													: "destructive"
+										}
+									>
+										{data?.server?.name || "Dokploy Server"}
+									</Badge>
+									{data?.server?.serverStatus === "inactive" && (
+										<TooltipProvider delayDuration={0}>
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<Label className="break-all w-fit flex flex-row gap-1 items-center">
+														<HelpCircle className="size-4 text-muted-foreground" />
+													</Label>
+												</TooltipTrigger>
+												<TooltipContent
+													className="z-[999] w-[300px]"
+													align="start"
+													side="top"
+												>
+													<span>
+														You cannot, deploy this application because the
+														server is inactive, please upgrade your plan to add
+														more servers.
+													</span>
+												</TooltipContent>
+											</Tooltip>
+										</TooltipProvider>
+									)}
+								</div>
 
-									<div className="flex flex-row gap-2 justify-end">
-										{permissions?.service.create && (
-											<UpdateMysql mysqlId={mysqlId} />
-										)}
-										{permissions?.service.delete && (
-											<DeleteService id={mysqlId} type="mysql" />
-										)}
+								<div className="flex flex-row gap-2 justify-end">
+									{permissions?.service.create && (
+										<UpdateMysql mysqlId={mysqlId} />
+									)}
+									{permissions?.service.delete && (
+										<DeleteService id={mysqlId} type="mysql" />
+									)}
+								</div>
+							</div>
+						</CardHeader>
+						<CardContent className="space-y-2 py-8 border-t px-0">
+							{data?.server?.serverStatus === "inactive" ? (
+								<div className="flex h-[55vh] border-2 rounded-xl border-dashed p-4">
+									<div className="max-w-3xl mx-auto flex flex-col items-center justify-center self-center gap-3">
+										<ServerOff className="size-10 text-muted-foreground self-center" />
+										<span className="text-center text-base text-muted-foreground">
+											This service is hosted on the server {data.server.name},
+											but this server has been disabled because your current
+											plan doesn't include enough servers. Please purchase more
+											servers to regain access to this application.
+										</span>
+										<span className="text-center text-base text-muted-foreground">
+											Go to{" "}
+											<Link
+												href="/dashboard/settings/billing"
+												className="text-primary"
+											>
+												Billing
+											</Link>
+										</span>
 									</div>
 								</div>
-							</CardHeader>
-							<CardContent className="space-y-2 py-8 border-t">
-								{data?.server?.serverStatus === "inactive" ? (
-									<div className="flex h-[55vh] border-2 rounded-xl border-dashed p-4">
-										<div className="max-w-3xl mx-auto flex flex-col items-center justify-center self-center gap-3">
-											<ServerOff className="size-10 text-muted-foreground self-center" />
-											<span className="text-center text-base text-muted-foreground">
-												This service is hosted on the server {data.server.name},
-												but this server has been disabled because your current
-												plan doesn't include enough servers. Please purchase
-												more servers to regain access to this application.
-											</span>
-											<span className="text-center text-base text-muted-foreground">
-												Go to{" "}
-												<Link
-													href="/dashboard/settings/billing"
-													className="text-primary"
-												>
-													Billing
-												</Link>
-											</span>
-										</div>
-									</div>
-								) : (
-									<Tabs
-										value={tab}
-										defaultValue="general"
-										className="w-full"
-										onValueChange={(e) => {
-											setSab(e as TabState);
-											const newPath = `/dashboard/project/${projectId}/environment/${environmentId}/services/mysql/${mysqlId}?tab=${e}`;
+							) : (
+								<Tabs
+									value={tab}
+									defaultValue="general"
+									className="w-full"
+									onValueChange={(e) => {
+										setSab(e as TabState);
+										const newPath = `/dashboard/project/${projectId}/environment/${environmentId}/services/mysql/${mysqlId}?tab=${e}`;
 
-											router.push(newPath, undefined, { shallow: true });
-										}}
-									>
-										<div className="flex flex-row items-center justify-between w-full gap-4 overflow-x-scroll">
-											<TabsList
-												className={cn(
-													"md:grid md:w-fit max-md:overflow-y-scroll justify-start ",
-													isCloud && data?.serverId
-														? "md:grid-cols-6"
-														: data?.serverId
-															? "md:grid-cols-5"
-															: "md:grid-cols-6",
-												)}
-											>
-												<TabsTrigger value="general">General</TabsTrigger>
-												{permissions?.envVars.read && (
-													<TabsTrigger value="environment">
-														Environment
+										router.push(newPath, undefined, { shallow: true });
+									}}
+								>
+									<div className="flex flex-row items-center justify-between w-full gap-4 overflow-x-scroll">
+										<TabsList
+											className={cn(
+												"md:grid md:w-fit max-md:overflow-y-scroll justify-start ",
+												isCloud && data?.serverId
+													? "md:grid-cols-6"
+													: data?.serverId
+														? "md:grid-cols-5"
+														: "md:grid-cols-6",
+											)}
+										>
+											<TabsTrigger value="general">General</TabsTrigger>
+											{permissions?.envVars.read && (
+												<TabsTrigger value="environment">
+													Environment
+												</TabsTrigger>
+											)}
+											{permissions?.logs.read && (
+												<TabsTrigger value="logs">Logs</TabsTrigger>
+											)}
+											{permissions?.monitoring.read &&
+												((data?.serverId && isCloud) || !data?.server) && (
+													<TabsTrigger value="monitoring">
+														Monitoring
 													</TabsTrigger>
 												)}
-												{permissions?.logs.read && (
-													<TabsTrigger value="logs">Logs</TabsTrigger>
-												)}
-												{permissions?.monitoring.read &&
-													((data?.serverId && isCloud) || !data?.server) && (
-														<TabsTrigger value="monitoring">
-															Monitoring
-														</TabsTrigger>
-													)}
-												<TabsTrigger value="backups">Backups</TabsTrigger>
-												{permissions?.service.create && (
-													<TabsTrigger value="advanced">Advanced</TabsTrigger>
-												)}
-											</TabsList>
-										</div>
+											<TabsTrigger value="backups">Backups</TabsTrigger>
+											{permissions?.service.create && (
+												<TabsTrigger value="advanced">Advanced</TabsTrigger>
+											)}
+										</TabsList>
+									</div>
 
-										<TabsContent value="general">
+									<TabsContent value="general">
+										<div className="flex flex-col gap-4 pt-2.5">
+											<ShowGeneralMysql mysqlId={mysqlId} />
+											<ShowInternalMysqlCredentials mysqlId={mysqlId} />
+											<ShowExternalMysqlCredentials mysqlId={mysqlId} />
+										</div>
+									</TabsContent>
+									{permissions?.envVars.read && (
+										<TabsContent value="environment" className="w-full">
 											<div className="flex flex-col gap-4 pt-2.5">
-												<ShowGeneralMysql mysqlId={mysqlId} />
-												<ShowInternalMysqlCredentials mysqlId={mysqlId} />
-												<ShowExternalMysqlCredentials mysqlId={mysqlId} />
+												<ShowEnvironment id={mysqlId} type="mysql" />
 											</div>
 										</TabsContent>
-										{permissions?.envVars.read && (
-											<TabsContent value="environment" className="w-full">
-												<div className="flex flex-col gap-4 pt-2.5">
-													<ShowEnvironment id={mysqlId} type="mysql" />
-												</div>
-											</TabsContent>
-										)}
-										{permissions?.monitoring.read && (
-											<TabsContent value="monitoring">
-												<div className="pt-2.5">
-													<div className="flex flex-col gap-4 border rounded-lg p-6">
-														{data?.serverId && isCloud ? (
-															<ContainerPaidMonitoring
+									)}
+									{permissions?.monitoring.read && (
+										<TabsContent value="monitoring">
+											<div className="pt-2.5">
+												<div className="flex flex-col gap-4 border rounded-lg p-6">
+													{data?.serverId && isCloud ? (
+														<ContainerPaidMonitoring
+															appName={data?.appName || ""}
+															baseUrl={`${data?.serverId ? `http://${data?.server?.ipAddress}:${data?.server?.metricsConfig?.server?.port}` : "http://localhost:4500"}`}
+															token={
+																data?.server?.metricsConfig?.server?.token || ""
+															}
+														/>
+													) : (
+														<>
+															<ContainerFreeMonitoring
 																appName={data?.appName || ""}
-																baseUrl={`${data?.serverId ? `http://${data?.server?.ipAddress}:${data?.server?.metricsConfig?.server?.port}` : "http://localhost:4500"}`}
-																token={
-																	data?.server?.metricsConfig?.server?.token ||
-																	""
-																}
 															/>
-														) : (
-															<>
-																<ContainerFreeMonitoring
-																	appName={data?.appName || ""}
-																/>
-															</>
-														)}
-													</div>
+														</>
+													)}
 												</div>
-											</TabsContent>
-										)}
-										{permissions?.logs.read && (
-											<TabsContent value="logs">
-												<div className="flex flex-col gap-4  pt-2.5">
-													<ShowDockerLogs
-														serverId={data?.serverId || ""}
-														appName={data?.appName || ""}
-													/>
-												</div>
-											</TabsContent>
-										)}
-										<TabsContent value="backups">
-											<div className="flex flex-col gap-4 pt-2.5">
-												<ShowBackups
-													id={mysqlId}
-													databaseType="mysql"
-													backupType="database"
+											</div>
+										</TabsContent>
+									)}
+									{permissions?.logs.read && (
+										<TabsContent value="logs">
+											<div className="flex flex-col gap-4  pt-2.5">
+												<ShowDockerLogs
+													serverId={data?.serverId || ""}
+													appName={data?.appName || ""}
 												/>
 											</div>
 										</TabsContent>
-										{permissions?.service.create && (
-											<TabsContent value="advanced">
-												<div className="flex flex-col gap-4 pt-2.5">
-													<ShowDatabaseAdvancedSettings
-														id={mysqlId}
-														type="mysql"
-													/>
-												</div>
-											</TabsContent>
-										)}
-									</Tabs>
-								)}
-							</CardContent>
-						</div>
-					</Card>
+									)}
+									<TabsContent value="backups">
+										<div className="flex flex-col gap-4 pt-2.5">
+											<ShowBackups
+												id={mysqlId}
+												databaseType="mysql"
+												backupType="database"
+											/>
+										</div>
+									</TabsContent>
+									{permissions?.service.create && (
+										<TabsContent value="advanced">
+											<div className="flex flex-col gap-4 pt-2.5">
+												<ShowDatabaseAdvancedSettings
+													id={mysqlId}
+													type="mysql"
+												/>
+											</div>
+										</TabsContent>
+									)}
+								</Tabs>
+							)}
+						</CardContent>
+					</div>
 				</div>
 			</div>
 		</div>

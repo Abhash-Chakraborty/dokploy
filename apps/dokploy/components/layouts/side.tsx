@@ -1066,10 +1066,13 @@ export default function Page({ children }: Props) {
 							<UserNav />
 						</SidebarMenuItem>
 						{(whitelabeling?.footerText || dokployVersion) && (
-							<div className="px-3 text-xs text-muted-foreground text-left truncate group-data-[collapsible=icon]:hidden">
+							<div className="px-3 text-xs text-foreground text-left truncate group-data-[collapsible=icon]:hidden">
 								{whitelabeling?.footerText || "Made with ♥ by Abhash"}
-								{dokployVersion &&
-									` · V ${String(dokployVersion).replace(/^v/i, "")}`}
+								{dokployVersion && (
+									<span className="text-muted-foreground">
+										{` · V ${String(dokployVersion).replace(/^v/i, "")}`}
+									</span>
+								)}
 							</div>
 						)}
 					</SidebarMenu>
