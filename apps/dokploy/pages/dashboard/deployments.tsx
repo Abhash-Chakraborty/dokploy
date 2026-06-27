@@ -3,8 +3,11 @@ import { hasPermission } from "@dokploy/server/services/permission";
 import { Rocket } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
-import type { ReactElement } from "react";
-import { ShowDeploymentsTable } from "@/components/dashboard/deployments/show-deployments-table";
+import { type ReactElement, useState } from "react";
+import {
+	DeploymentFilters,
+	ShowDeploymentsTable,
+} from "@/components/dashboard/deployments/show-deployments-table";
 import { ShowQueueTable } from "@/components/dashboard/deployments/show-queue-table";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
@@ -24,6 +27,20 @@ function DeploymentsPage() {
 			? (router.query.tab as TabValue)
 			: "deployments";
 
+	// Lifted here so the filter toolbar can sit inline with the tabs row
+	// instead of stacking onto its own line below them.
+	const [globalFilter, setGlobalFilter] = useState("");
+	const [statusFilter, setStatusFilter] = useState("all");
+	const [typeFilter, setTypeFilter] = useState("all");
+	const filters = {
+		globalFilter,
+		setGlobalFilter,
+		statusFilter,
+		setStatusFilter,
+		typeFilter,
+		setTypeFilter,
+	};
+
 	const setTab = (value: string) => {
 		if (!isValidTab(value)) return;
 		router.replace(
@@ -41,12 +58,15 @@ function DeploymentsPage() {
 				icon={<Rocket className="size-5" />}
 			/>
 			<Tabs value={tab} onValueChange={setTab} className="w-full">
-				<TabsList>
-					<TabsTrigger value="deployments">Deployments</TabsTrigger>
-					<TabsTrigger value="queue">Queue</TabsTrigger>
-				</TabsList>
+				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+					<TabsList>
+						<TabsTrigger value="deployments">Deployments</TabsTrigger>
+						<TabsTrigger value="queue">Queue</TabsTrigger>
+					</TabsList>
+					{tab === "deployments" && <DeploymentFilters {...filters} />}
+				</div>
 				<TabsContent value="deployments" className="mt-0 pt-4">
-					<ShowDeploymentsTable />
+					<ShowDeploymentsTable filters={filters} />
 				</TabsContent>
 				<TabsContent value="queue" className="mt-0 pt-4">
 					<ShowQueueTable />
