@@ -134,18 +134,21 @@ export const ShowGitProviders = () => {
 											>
 												<div className="flex items-center justify-between p-3.5 rounded-lg bg-background border w-full">
 													<div className="flex flex-col items-center justify-between">
-														<div className="flex gap-2 flex-row items-center">
-															{isGithub && <GithubIcon className="size-5" />}
-															{isGitlab && <GitlabIcon className="size-5" />}
-															{isBitbucket && (
-																<BitbucketIcon className="size-5" />
-															)}
-															{isGitea && <GiteaIcon className="size-5" />}
+														<div className="flex gap-3 flex-row items-center">
+															<div className="flex size-11 shrink-0 items-center justify-center rounded-lg border bg-muted/40">
+																{isGithub && <GithubIcon className="size-7" />}
+																{isGitlab && <GitlabIcon className="size-7" />}
+																{isBitbucket && (
+																	<BitbucketIcon className="size-7" />
+																)}
+																{isGitea && <GiteaIcon className="size-7" />}
+															</div>
 															<div className="flex flex-col gap-1">
 																<span className="text-sm font-medium">
 																	{gitProvider.name}
 																</span>
-																<span className="text-xs text-muted-foreground">
+																<span className="text-xs capitalize text-muted-foreground">
+																	{gitProvider.providerType} ·{" "}
 																	{formatDate(
 																		gitProvider.createdAt,
 																		"yyyy-MM-dd hh:mm:ss a",
