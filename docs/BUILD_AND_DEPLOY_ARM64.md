@@ -60,7 +60,7 @@ pulls, force-updates, shows rollout status + logs, and curls the public URL.
 
 ```powershell
 docker buildx imagetools inspect ghcr.io/abhash-chakraborty/dokploy:latest
-$sha = git rev-parse --short HEAD
+$sha = (git rev-parse HEAD).Substring(0,12)   # CI tags with the first 12 hex chars
 docker buildx imagetools inspect "ghcr.io/abhash-chakraborty/dokploy:sha-$sha"
 ```
 

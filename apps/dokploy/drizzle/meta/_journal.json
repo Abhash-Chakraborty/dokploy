@@ -1226,6 +1226,13 @@
       "when": 1782484601908,
       "tag": "0174_add_auth_methods",
       "breakpoints": true
+    },
+    {
+      "idx": 175,
+      "version": "7",
+      "when": 1782484601909,
+      "tag": "0175_add_user_login_notification",
+      "breakpoints": true
     }
   ]
 }

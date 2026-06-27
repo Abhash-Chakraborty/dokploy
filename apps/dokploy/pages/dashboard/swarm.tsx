@@ -31,9 +31,7 @@ const Dashboard = () => {
 							<SwarmMonitorCard serverId={serverId} />
 						</TabsContent>
 						<TabsContent value="containers" className="pt-4">
-							<div className="rounded-xl border bg-background p-6">
-								<ShowSwarmContainers serverId={serverId} />
-							</div>
+							<ShowSwarmContainers serverId={serverId} />
 						</TabsContent>
 					</Tabs>
 				</PageContainer>

@@ -135,7 +135,7 @@ export const ShowAbhashAuditLogs = () => {
 
 	return (
 		<div className="flex w-full flex-col gap-4">
-			<div className="flex flex-col gap-3 rounded-lg border bg-card p-4">
+			<div className="flex flex-col gap-3">
 				<div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
 					<div className="flex items-center gap-3">
 						<div className="flex h-10 w-10 items-center justify-center rounded-md border bg-background">
