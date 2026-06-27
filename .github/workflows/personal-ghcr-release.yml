@@ -9,12 +9,6 @@ on:
       - "docs/**"
       - ".github/**"
   workflow_dispatch:
-    inputs:
-      include_arm64:
-        description: "Also publish a linux/arm64 image. This is much slower on GitHub-hosted runners."
-        type: boolean
-        required: false
-        default: false
 
 permissions:
   contents: write
@@ -37,7 +31,6 @@ jobs:
           node-version: 24.17.0
 
       - name: Set up QEMU
-        if: ${{ inputs.include_arm64 == true }}
         uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
@@ -66,13 +59,8 @@ jobs:
           TAGS="${TAGS},${IMAGE_NAME}:latest,${IMAGE_NAME}:${VERSION}"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
-          if [ "${{ inputs.include_arm64 }}" = "true" ]; then
-            echo "platforms=linux/amd64,linux/arm64" >> "$GITHUB_OUTPUT"
-            echo "cache-scope=dokploy-release-multiarch" >> "$GITHUB_OUTPUT"
-          else
-            echo "platforms=linux/amd64" >> "$GITHUB_OUTPUT"
-            echo "cache-scope=dokploy-release-amd64" >> "$GITHUB_OUTPUT"
-          fi
+          echo "platforms=linux/amd64,linux/arm64" >> "$GITHUB_OUTPUT"
+          echo "cache-scope=dokploy-release-multiarch" >> "$GITHUB_OUTPUT"
 
       - name: Build and push image
         uses: docker/build-push-action@v7
