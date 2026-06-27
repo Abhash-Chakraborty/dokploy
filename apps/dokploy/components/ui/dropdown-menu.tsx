@@ -145,7 +145,9 @@ const DropdownMenuLabel = React.forwardRef<
 	<DropdownMenuPrimitive.Label
 		ref={ref}
 		className={cn(
-			"px-2 py-1.5 text-sm font-semibold",
+			// Render as a clearly non-interactive section header so it never
+			// reads as a clickable action (it sits above the menu items).
+			"px-2 py-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground",
 			inset && "pl-8",
 			className,
 		)}
