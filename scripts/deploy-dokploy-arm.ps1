@@ -29,7 +29,8 @@ $Url       = "https://dokploy.abhashchakraborty.tech/"
 
 Set-Location $RepoRoot
 
-$ShortSha = (git rev-parse --short HEAD).Trim()
+# Match CI's tag exactly: it uses ${GITHUB_SHA::12} (first 12 hex chars).
+$ShortSha = (git rev-parse HEAD).Trim().Substring(0, 12)
 $DeployImage = if ($Tag) { "${ImageName}:$Tag" } else { "${ImageName}:sha-$ShortSha" }
 
 Write-Host "Deploying image: $DeployImage"
