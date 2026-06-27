@@ -20,9 +20,13 @@ const DOKPLOY_SERVER = "dokploy-server";
 
 interface Props {
 	children: (serverId?: string) => ReactNode;
+	/** Optional actions rendered inline with the server selector (top-right),
+	 * e.g. an "Add node" button on the cluster page. Receives the selected
+	 * serverId so the action can target the current server. */
+	actions?: (serverId?: string) => ReactNode;
 }
 
-export const ServerFilter = ({ children }: Props) => {
+export const ServerFilter = ({ children, actions }: Props) => {
 	const router = useRouter();
 	const { data: servers, isLoading: isLoadingServers } =
 		api.server.withSSHKey.useQuery();
@@ -100,47 +104,50 @@ export const ServerFilter = ({ children }: Props) => {
 
 	return (
 		<div className="flex flex-col gap-4 w-full">
-			{!!servers?.length && (
+			{(!!servers?.length || actions) && (
 				<div className="flex w-full items-center justify-end gap-3">
-					<Select
-						value={serverId ?? DOKPLOY_SERVER}
-						onValueChange={setServerId}
-					>
-						<SelectTrigger id="server-filter" className="w-fit min-w-[220px]">
-							<div className="flex items-center gap-2">
-								<ServerIcon className="size-4 text-muted-foreground" />
-								<SelectValue placeholder="Select a server" />
-							</div>
-						</SelectTrigger>
-						<SelectContent>
-							<SelectGroup>
-								<SelectLabel>Servers</SelectLabel>
-								{!isCloud && (
-									<SelectItem value={DOKPLOY_SERVER}>
-										<div className="flex items-center gap-2">
-											<span>Dokploy Server</span>
-											<Badge
-												variant="secondary"
-												className="text-[10px] px-1.5 py-0"
-											>
-												Local
-											</Badge>
-										</div>
-									</SelectItem>
-								)}
-								{servers.map((server) => (
-									<SelectItem key={server.serverId} value={server.serverId}>
-										<div className="flex items-center gap-2">
-											<span>{server.name}</span>
-											<span className="text-xs text-muted-foreground">
-												{server.ipAddress}
-											</span>
-										</div>
-									</SelectItem>
-								))}
-							</SelectGroup>
-						</SelectContent>
-					</Select>
+					{!!servers?.length && (
+						<Select
+							value={serverId ?? DOKPLOY_SERVER}
+							onValueChange={setServerId}
+						>
+							<SelectTrigger id="server-filter" className="w-fit min-w-[220px]">
+								<div className="flex items-center gap-2">
+									<ServerIcon className="size-4 text-muted-foreground" />
+									<SelectValue placeholder="Select a server" />
+								</div>
+							</SelectTrigger>
+							<SelectContent>
+								<SelectGroup>
+									<SelectLabel>Servers</SelectLabel>
+									{!isCloud && (
+										<SelectItem value={DOKPLOY_SERVER}>
+											<div className="flex items-center gap-2">
+												<span>Dokploy Server</span>
+												<Badge
+													variant="secondary"
+													className="text-[10px] px-1.5 py-0"
+												>
+													Local
+												</Badge>
+											</div>
+										</SelectItem>
+									)}
+									{servers?.map((server) => (
+										<SelectItem key={server.serverId} value={server.serverId}>
+											<div className="flex items-center gap-2">
+												<span>{server.name}</span>
+												<span className="text-xs text-muted-foreground">
+													{server.ipAddress}
+												</span>
+											</div>
+										</SelectItem>
+									))}
+								</SelectGroup>
+							</SelectContent>
+						</Select>
+					)}
+					{actions?.(serverId)}
 				</div>
 			)}
 			<Fragment key={serverId ?? DOKPLOY_SERVER}>{children(serverId)}</Fragment>
