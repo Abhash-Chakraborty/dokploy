@@ -1081,8 +1081,14 @@ export default function Page({ children }: Props) {
 					<header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
 						<div className="flex items-center justify-between w-full px-4">
 							<div className="flex items-center gap-2">
-								<SidebarTrigger className="-ml-1" />
-								<Separator orientation="vertical" className="mr-2 h-4" />
+								{/* Only show this outer toggle when the sidebar is collapsed;
+								    the in-sidebar toggle handles the expanded state, so there
+								    is always exactly one visible collapse button. */}
+								<SidebarTrigger className="-ml-1 hidden group-has-[[data-collapsible=icon]]/sidebar-wrapper:flex" />
+								<Separator
+									orientation="vertical"
+									className="mr-2 h-4 hidden group-has-[[data-collapsible=icon]]/sidebar-wrapper:block"
+								/>
 								<Breadcrumb>
 									<BreadcrumbList>
 										<BreadcrumbItem className="block">
@@ -1103,7 +1109,9 @@ export default function Page({ children }: Props) {
 					</header>
 				)}
 
-				<div className="flex flex-col w-full p-4 pt-0">{children}</div>
+				<div className="flex flex-col w-full min-w-0 p-4 pt-0 overflow-x-hidden">
+					{children}
+				</div>
 				<VersionFooter />
 			</SidebarInset>
 		</SidebarProvider>

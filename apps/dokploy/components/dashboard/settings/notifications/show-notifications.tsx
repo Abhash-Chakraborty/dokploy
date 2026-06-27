@@ -63,50 +63,59 @@ export const ShowNotifications = () => {
 					{permissions?.notification.create && <HandleNotifications />}
 				</div>
 			) : (
-				<div className="flex flex-col gap-2">
+				<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 					{data?.map((notification) => (
 						<div
 							key={notification.notificationId}
-							className="flex items-center justify-between rounded-lg border bg-background px-4 py-3"
+							className="flex flex-col gap-3 rounded-xl border bg-background p-4 transition-colors hover:bg-muted/40"
 						>
-							<span className="text-sm flex flex-row items-center gap-4">
-								{NOTIFICATION_ICONS[notification.notificationType] ?? (
-									<Bell className="size-6 text-muted-foreground" />
-								)}
-								{notification.name}
-							</span>
-							<div className="flex flex-row gap-1">
-								<HandleNotifications
-									notificationId={notification.notificationId}
-								/>
-								{permissions?.notification.delete && (
-									<DialogAction
-										title="Delete Notification"
-										description="Are you sure you want to delete this notification?"
-										type="destructive"
-										onClick={async () => {
-											await mutateAsync({
-												notificationId: notification.notificationId,
-											})
-												.then(() => {
-													toast.success("Notification deleted successfully");
-													refetch();
+							<div className="flex items-start justify-between gap-2">
+								<div className="flex size-11 shrink-0 items-center justify-center rounded-lg border bg-muted/40">
+									{NOTIFICATION_ICONS[notification.notificationType] ?? (
+										<Bell className="size-6 text-muted-foreground" />
+									)}
+								</div>
+								<div className="flex flex-row gap-1">
+									<HandleNotifications
+										notificationId={notification.notificationId}
+									/>
+									{permissions?.notification.delete && (
+										<DialogAction
+											title="Delete Notification"
+											description="Are you sure you want to delete this notification?"
+											type="destructive"
+											onClick={async () => {
+												await mutateAsync({
+													notificationId: notification.notificationId,
 												})
-												.catch(() => {
-													toast.error("Error deleting notification");
-												});
-										}}
-									>
-										<Button
-											variant="ghost"
-											size="icon"
-											className="group hover:bg-red-500/10"
-											isLoading={isRemoving}
+													.then(() => {
+														toast.success("Notification deleted successfully");
+														refetch();
+													})
+													.catch(() => {
+														toast.error("Error deleting notification");
+													});
+											}}
 										>
-											<Trash2 className="size-4 text-primary group-hover:text-red-500" />
-										</Button>
-									</DialogAction>
-								)}
+											<Button
+												variant="ghost"
+												size="icon"
+												className="group hover:bg-red-500/10"
+												isLoading={isRemoving}
+											>
+												<Trash2 className="size-4 text-primary group-hover:text-red-500" />
+											</Button>
+										</DialogAction>
+									)}
+								</div>
+							</div>
+							<div className="flex flex-col gap-0.5 min-w-0">
+								<span className="truncate text-sm font-medium">
+									{notification.name}
+								</span>
+								<span className="text-xs capitalize text-muted-foreground">
+									{notification.notificationType}
+								</span>
 							</div>
 						</div>
 					))}

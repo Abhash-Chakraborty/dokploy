@@ -20,6 +20,7 @@ import {
 	getWebServerSettings,
 	updateWebServerSettings,
 } from "../services/web-server-settings";
+import { sendUserLoginNotifications } from "../utils/notifications/user-login";
 import { getHubSpotUTK, submitToHubSpot } from "../utils/tracking/hubspot";
 import {
 	sendEmail,
@@ -324,6 +325,16 @@ const { handler, api } = betterAuth({
 						action: "login",
 						resourceType: "session",
 						metadata: requestMetadata(context?.request, context?.path),
+					});
+					// Alert any channel that has the "new login" event enabled. Fire
+					// and forget so notification latency never blocks the login.
+					const meta = requestMetadata(context?.request, context?.path);
+					void sendUserLoginNotifications({
+						organizationId: orgId,
+						userEmail: memberRecord.user.email,
+						userRole: memberRecord.role,
+						ipAddress: meta.ipAddress ?? undefined,
+						userAgent: meta.userAgent ?? undefined,
 					});
 				},
 			},

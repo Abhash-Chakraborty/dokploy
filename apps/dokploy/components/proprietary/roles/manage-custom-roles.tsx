@@ -1,11 +1,5 @@
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
-import {
-	Loader2,
-	PlusIcon,
-	ShieldCheck,
-	TrashIcon,
-	Users,
-} from "lucide-react";
+import { Loader2, PlusIcon, ShieldCheck, TrashIcon, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -13,13 +7,6 @@ import { z } from "zod";
 import { AlertBlock } from "@/components/shared/alert-block";
 import { DialogAction } from "@/components/shared/dialog-action";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
 import {
 	Dialog,
 	DialogContent,
@@ -547,22 +534,20 @@ type CreateRoleSchema = z.infer<typeof createRoleSchema>;
 
 export const ManageCustomRoles = () => {
 	return (
-		<Card className="h-full bg-sidebar p-2.5 rounded-xl max-w-5xl mx-auto w-full">
-			<div className="rounded-xl bg-background shadow-md">
-				<CardHeader>
-					<CardTitle className="text-xl flex flex-row gap-2">
-						<ShieldCheck className="size-6 text-muted-foreground self-center" />
-						Custom Roles
-					</CardTitle>
-					<CardDescription>
-						Create and manage custom roles with fine-grained permissions
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="border-t pt-6">
-					<CustomRolesContent />
-				</CardContent>
+		<div className="flex w-full flex-col gap-1.5">
+			<div className="flex flex-col gap-1">
+				<h2 className="text-xl font-medium flex flex-row gap-2 items-center">
+					<ShieldCheck className="size-5 text-muted-foreground" />
+					Custom Roles
+				</h2>
+				<p className="text-sm text-muted-foreground">
+					Create and manage custom roles with fine-grained permissions
+				</p>
 			</div>
-		</Card>
+			<div className="pt-4">
+				<CustomRolesContent />
+			</div>
+		</div>
 	);
 };
 

@@ -221,8 +221,8 @@ export const ShowServers = () => {
 
 															{/* Compact Actions */}
 															{isActive && (
-																<div className="flex items-center  gap-2 pt-3 border-t mt-auto flex-wrap">
-																	<div className="flex items-center gap-2 w-full">
+																<div className="flex items-center gap-2 pt-3 border-t mt-auto flex-wrap">
+																	<TooltipProvider>
 																		<Tooltip>
 																			<TooltipTrigger asChild>
 																				<SetupServer
@@ -245,9 +245,6 @@ export const ShowServers = () => {
 																				</div>
 																			</TooltipContent>
 																		</Tooltip>
-																	</div>
-
-																	<TooltipProvider>
 																		{server.sshKeyId && (
 																			<Tooltip>
 																				<TooltipTrigger asChild>

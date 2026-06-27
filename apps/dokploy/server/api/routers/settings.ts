@@ -777,6 +777,11 @@ export const settingsRouter = createTRPCRouter({
 				],
 			});
 
+			// Swagger UI's ApiDOM 3.1 refractor has a known bug; pin the document to
+			// OpenAPI 3.0.3 so the served spec always carries a valid version field
+			// (the client also forces this, but the source must be valid on its own).
+			openApiDocument.openapi = "3.0.3";
+
 			openApiDocument.info = {
 				title: "Dokploy API",
 				description: "Endpoints for dokploy",
