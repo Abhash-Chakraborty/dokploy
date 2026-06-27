@@ -5,7 +5,6 @@ import { Fragment, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import {
 	Select,
 	SelectContent,
@@ -103,12 +102,6 @@ export const ServerFilter = ({ children }: Props) => {
 		<div className="flex flex-col gap-4 w-full">
 			{!!servers?.length && (
 				<div className="flex w-full items-center justify-end gap-3">
-					<Label
-						htmlFor="server-filter"
-						className="text-sm text-muted-foreground whitespace-nowrap"
-					>
-						Viewing server
-					</Label>
 					<Select
 						value={serverId ?? DOKPLOY_SERVER}
 						onValueChange={setServerId}
