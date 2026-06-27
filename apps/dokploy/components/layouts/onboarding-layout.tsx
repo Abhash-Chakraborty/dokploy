@@ -1,3 +1,4 @@
+import { GitFork } from "lucide-react";
 import Link from "next/link";
 import type React from "react";
 import { cn } from "@/lib/utils";
@@ -65,6 +66,16 @@ export const OnboardingLayout = ({ children }: Props) => {
 							aria-label="GitHub"
 						>
 							<GithubIcon />
+						</Link>
+					</Button>
+					<Button variant="ghost" size="icon" asChild>
+						<Link
+							href="https://github.com/Abhash-Chakraborty/dokploy"
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label="Fork repository (Abhash-Chakraborty/dokploy)"
+						>
+							<GitFork className="size-5" />
 						</Link>
 					</Button>
 					<Button variant="ghost" size="icon" asChild>
