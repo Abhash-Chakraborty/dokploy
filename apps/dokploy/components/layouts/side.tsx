@@ -2,6 +2,7 @@
 import type { inferRouterOutputs } from "@trpc/server";
 import {
 	Activity,
+	ArrowLeft,
 	BarChartHorizontalBigIcon,
 	Bell,
 	BlocksIcon,
@@ -38,7 +39,7 @@ import {
 	Users,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -286,148 +287,157 @@ const MENU: Menu = {
 
 	settings: [
 		{
-			isSingle: true,
-			title: "Web Server",
-			url: "/dashboard/settings/server",
-			icon: Activity,
-			// Only enabled for admins in non-cloud environments
-			isEnabled: ({ permissions, isCloud }) =>
-				!!(permissions?.organization.update && !isCloud),
-		},
-		{
-			isSingle: true,
-			title: "Profile",
-			url: "/dashboard/settings/profile",
+			isSingle: false,
+			title: "Account",
 			icon: User,
+			items: [
+				{ title: "Profile", url: "/dashboard/settings/profile", icon: User },
+				{
+					title: "Security & Devices",
+					url: "/dashboard/settings/devices",
+					icon: ShieldCheck,
+				},
+				{
+					title: "Users",
+					url: "/dashboard/settings/users",
+					icon: Users,
+					isEnabled: ({ permissions }) => !!permissions?.member.read,
+				},
+				{
+					title: "Audit Logs",
+					url: "/dashboard/settings/audit-logs",
+					icon: ClipboardList,
+					isEnabled: ({ permissions }) => !!permissions?.auditLog.read,
+				},
+			],
 		},
 		{
-			isSingle: true,
-			title: "Remote Servers",
-			url: "/dashboard/settings/servers",
+			isSingle: false,
+			title: "Infrastructure",
 			icon: Server,
-			isEnabled: ({ permissions }) => !!permissions?.server.read,
+			items: [
+				{
+					title: "Web Server",
+					url: "/dashboard/settings/server",
+					icon: Activity,
+					isEnabled: ({ permissions, isCloud }) =>
+						!!(permissions?.organization.update && !isCloud),
+				},
+				{
+					title: "Remote Servers",
+					url: "/dashboard/settings/servers",
+					icon: Server,
+					isEnabled: ({ permissions }) => !!permissions?.server.read,
+				},
+				{
+					title: "Deployments",
+					url: "/dashboard/settings/deployments",
+					icon: Boxes,
+					isEnabled: ({ permissions, isCloud }) =>
+						!!(permissions?.server.read && !isCloud),
+				},
+				{
+					title: "Cluster",
+					url: "/dashboard/settings/cluster",
+					icon: Boxes,
+					isEnabled: ({ permissions }) => !!permissions?.organization.update,
+				},
+			],
 		},
 		{
-			isSingle: true,
-			title: "Deployments",
-			url: "/dashboard/settings/deployments",
-			icon: Boxes,
-			isEnabled: ({ permissions, isCloud }) =>
-				!!(permissions?.server.read && !isCloud),
-		},
-		{
-			isSingle: true,
-			title: "Users",
-			icon: Users,
-			url: "/dashboard/settings/users",
-			// Only enabled for users with member.read permission
-			isEnabled: ({ permissions }) => !!permissions?.member.read,
-		},
-		{
-			isSingle: true,
-			title: "Audit Logs",
-			icon: ClipboardList,
-			url: "/dashboard/settings/audit-logs",
-			isEnabled: ({ permissions }) => !!permissions?.auditLog.read,
-		},
-		{
-			isSingle: true,
-			title: "SSH Keys",
+			isSingle: false,
+			title: "Access & Sources",
 			icon: KeyRound,
-			url: "/dashboard/settings/ssh-keys",
-			// Only enabled for users with access to SSH keys
-			isEnabled: ({ permissions }) => !!permissions?.sshKeys.read,
+			items: [
+				{
+					title: "SSH Keys",
+					url: "/dashboard/settings/ssh-keys",
+					icon: KeyRound,
+					isEnabled: ({ permissions }) => !!permissions?.sshKeys.read,
+				},
+				{
+					title: "Git",
+					url: "/dashboard/settings/git-providers",
+					icon: GitBranch,
+					isEnabled: ({ permissions }) => !!permissions?.gitProviders.read,
+				},
+				{
+					title: "Registry",
+					url: "/dashboard/settings/registry",
+					icon: Package,
+					isEnabled: ({ permissions }) => !!permissions?.registry.read,
+				},
+				{
+					title: "S3 Destinations",
+					url: "/dashboard/settings/destinations",
+					icon: Database,
+					isEnabled: ({ permissions }) => !!permissions?.destination.read,
+				},
+				{
+					title: "Certificates",
+					url: "/dashboard/settings/certificates",
+					icon: ShieldCheck,
+					isEnabled: ({ permissions }) => !!permissions?.certificate.read,
+				},
+			],
 		},
 		{
-			title: "AI",
+			isSingle: false,
+			title: "Automation",
 			icon: BotIcon,
-			url: "/dashboard/settings/ai",
-			isSingle: true,
-			isEnabled: ({ permissions }) => !!permissions?.organization.update,
+			items: [
+				{
+					title: "AI",
+					url: "/dashboard/settings/ai",
+					icon: BotIcon,
+					isEnabled: ({ permissions }) => !!permissions?.organization.update,
+				},
+				{
+					title: "Tags",
+					url: "/dashboard/settings/tags",
+					icon: Tags,
+					isEnabled: ({ permissions }) => !!permissions?.tag.read,
+				},
+				{
+					title: "Notifications",
+					url: "/dashboard/settings/notifications",
+					icon: Bell,
+					isEnabled: ({ permissions }) => !!permissions?.notification.read,
+				},
+				{
+					title: "Backups",
+					url: "/dashboard/settings/backups",
+					icon: Database,
+					isEnabled: ({ permissions }) => !!permissions?.backup?.read,
+				},
+			],
 		},
 		{
-			isSingle: true,
-			title: "Tags",
-			url: "/dashboard/settings/tags",
-			icon: Tags,
-			isEnabled: ({ permissions }) => !!permissions?.tag.read,
-		},
-		{
-			isSingle: true,
-			title: "Git",
-			url: "/dashboard/settings/git-providers",
-			icon: GitBranch,
-			// Only enabled for users with access to Git providers
-			isEnabled: ({ permissions }) => !!permissions?.gitProviders.read,
-		},
-		{
-			isSingle: true,
-			title: "Registry",
-			url: "/dashboard/settings/registry",
-			icon: Package,
-			isEnabled: ({ permissions }) => !!permissions?.registry.read,
-		},
-		{
-			isSingle: true,
-			title: "S3 Destinations",
-			url: "/dashboard/settings/destinations",
-			icon: Database,
-			isEnabled: ({ permissions }) => !!permissions?.destination.read,
-		},
-
-		{
-			isSingle: true,
-			title: "Certificates",
-			url: "/dashboard/settings/certificates",
-			icon: ShieldCheck,
-			isEnabled: ({ permissions }) => !!permissions?.certificate.read,
-		},
-		{
-			isSingle: true,
-			title: "Cluster",
-			url: "/dashboard/settings/cluster",
-			icon: Boxes,
-			// Only enabled for admins
-			isEnabled: ({ permissions }) => !!permissions?.organization.update,
-		},
-		{
-			isSingle: true,
-			title: "Notifications",
-			url: "/dashboard/settings/notifications",
-			icon: Bell,
-			// Only enabled for users with access to notifications
-			isEnabled: ({ permissions }) => !!permissions?.notification.read,
-		},
-		{
-			isSingle: true,
-			title: "Backups",
-			url: "/dashboard/settings/backups",
-			icon: Database,
-			isEnabled: ({ permissions }) => !!permissions?.backup?.read,
-		},
-		{
-			isSingle: true,
-			title: "Billing",
-			url: "/dashboard/settings/billing",
-			icon: CreditCard,
-			// Only enabled for owners in cloud environments
-			isEnabled: ({ auth, isCloud }) => !!(auth?.role === "owner" && isCloud),
-		},
-		{
-			isSingle: true,
-			title: "License",
-			url: "/dashboard/settings/license",
-			icon: Key,
-			// Only enabled for owners
-			isEnabled: ({ auth }) => !!(auth?.role === "owner"),
-		},
-		{
-			isSingle: true,
-			title: "Whitelabeling",
-			url: "/dashboard/settings/whitelabeling",
+			isSingle: false,
+			title: "Organization",
 			icon: Palette,
-			// Only enabled for owners in non-cloud environments (enterprise)
-			isEnabled: ({ auth, isCloud }) => !!(auth?.role === "owner" && !isCloud),
+			items: [
+				{
+					title: "Billing",
+					url: "/dashboard/settings/billing",
+					icon: CreditCard,
+					isEnabled: ({ auth, isCloud }) =>
+						!!(auth?.role === "owner" && isCloud),
+				},
+				{
+					title: "License",
+					url: "/dashboard/settings/license",
+					icon: Key,
+					isEnabled: ({ auth }) => !!(auth?.role === "owner"),
+				},
+				{
+					title: "Whitelabeling",
+					url: "/dashboard/settings/whitelabeling",
+					icon: Palette,
+					isEnabled: ({ auth, isCloud }) =>
+						!!(auth?.role === "owner" && !isCloud),
+				},
+			],
 		},
 	],
 
@@ -444,6 +454,67 @@ const MENU: Menu = {
 		},
 	],
 } as const;
+
+const SERVICE_NAVIGATION: Record<
+	string,
+	Array<{ title: string; tab: string; icon: LucideIcon }>
+> = {
+	application: [
+		{ title: "General", tab: "general", icon: Activity },
+		{ title: "Environment", tab: "environment", icon: KeyRound },
+		{ title: "Domains", tab: "domains", icon: GalleryVerticalEnd },
+		{ title: "Deployments", tab: "deployments", icon: Rocket },
+		{ title: "Preview Deployments", tab: "preview-deployments", icon: Forward },
+		{ title: "Schedules", tab: "schedules", icon: Clock },
+		{ title: "Volume Backups", tab: "volume-backups", icon: Database },
+		{ title: "Logs", tab: "logs", icon: ClipboardList },
+		{ title: "Patches", tab: "patches", icon: ShieldCheck },
+		{ title: "Monitoring", tab: "monitoring", icon: BarChartHorizontalBigIcon },
+		{ title: "Advanced", tab: "advanced", icon: Key },
+	],
+	compose: [
+		{ title: "General", tab: "general", icon: Activity },
+		{ title: "Environment", tab: "environment", icon: KeyRound },
+		{ title: "Domains", tab: "domains", icon: GalleryVerticalEnd },
+		{ title: "Deployments", tab: "deployments", icon: Rocket },
+		{ title: "Containers", tab: "containers", icon: Boxes },
+		{ title: "Backups", tab: "backups", icon: Database },
+		{ title: "Schedules", tab: "schedules", icon: Clock },
+		{ title: "Volume Backups", tab: "volumeBackups", icon: Database },
+		{ title: "Logs", tab: "logs", icon: ClipboardList },
+		{ title: "Patches", tab: "patches", icon: ShieldCheck },
+		{ title: "Monitoring", tab: "monitoring", icon: BarChartHorizontalBigIcon },
+		{ title: "Advanced", tab: "advanced", icon: Key },
+	],
+	libsql: [
+		{ title: "General", tab: "general", icon: Activity },
+		{ title: "Environment", tab: "environment", icon: KeyRound },
+		{ title: "Logs", tab: "logs", icon: ClipboardList },
+		{ title: "Monitoring", tab: "monitoring", icon: BarChartHorizontalBigIcon },
+		{ title: "Backups", tab: "backups", icon: Database },
+		{ title: "Advanced", tab: "advanced", icon: Key },
+	],
+	redis: [
+		{ title: "General", tab: "general", icon: Activity },
+		{ title: "Environment", tab: "environment", icon: KeyRound },
+		{ title: "Logs", tab: "logs", icon: ClipboardList },
+		{ title: "Monitoring", tab: "monitoring", icon: BarChartHorizontalBigIcon },
+		{ title: "Advanced", tab: "advanced", icon: Key },
+	],
+};
+
+const DATABASE_SERVICE_NAVIGATION = [
+	{ title: "General", tab: "general", icon: Activity },
+	{ title: "Environment", tab: "environment", icon: KeyRound },
+	{ title: "Logs", tab: "logs", icon: ClipboardList },
+	{ title: "Monitoring", tab: "monitoring", icon: BarChartHorizontalBigIcon },
+	{ title: "Backups", tab: "backups", icon: Database },
+	{ title: "Advanced", tab: "advanced", icon: Key },
+];
+
+for (const service of ["postgres", "mysql", "mariadb", "mongo"]) {
+	SERVICE_NAVIGATION[service] = DATABASE_SERVICE_NAVIGATION;
+}
 
 /**
  * Creates a menu based on the current user's role and permissions
@@ -474,6 +545,16 @@ export function createMenuForAuthUser(opts: {
 						isCloud: opts.isCloud,
 					}),
 		) as T[];
+	const filterNavigation = (items: readonly NavItem[]): NavItem[] =>
+		filterEnabled(items).reduce<NavItem[]>((result, item) => {
+			if (item.isSingle !== false) {
+				result.push(item);
+				return result;
+			}
+			const enabledItems = filterEnabled(item.items);
+			if (enabledItems.length) result.push({ ...item, items: enabledItems });
+			return result;
+		}, []);
 
 	// Apply whitelabeling URL overrides to help items
 	const helpItems = filterEnabled(MENU.help).map((item) => {
@@ -487,8 +568,8 @@ export function createMenuForAuthUser(opts: {
 	});
 
 	return {
-		home: filterEnabled(MENU.home),
-		settings: filterEnabled(MENU.settings),
+		home: filterNavigation(MENU.home),
+		settings: filterNavigation(MENU.settings),
 		help: helpItems,
 	};
 }
@@ -619,15 +700,11 @@ function SidebarLogo() {
 									>
 										<div
 											className={cn(
-												"flex items-center justify-center rounded-sm border",
-												"size-6",
+												"flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-background",
 											)}
 										>
 											<Logo
-												className={cn(
-													"transition-all",
-													isCollapsed ? "size-4" : "size-5",
-												)}
+												className="h-auto max-h-full w-auto max-w-full object-contain transition-transform duration-200"
 												logoUrl={activeOrganization?.logo || undefined}
 											/>
 										</div>
@@ -678,12 +755,9 @@ function SidebarLogo() {
 															{org.name}
 														</div>
 													</div>
-													<div className="flex size-6 items-center justify-center rounded-sm border">
+													<div className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-background">
 														<Logo
-															className={cn(
-																"transition-all",
-																state === "collapsed" ? "size-6" : "size-10",
-															)}
+															className="h-auto max-h-full w-auto max-w-full object-contain"
 															logoUrl={org.logo ?? undefined}
 														/>
 													</div>
@@ -880,13 +954,15 @@ function SidebarLogo() {
 
 function MobileCloser() {
 	const pathname = usePathname();
+	const searchParams = useSearchParams();
 	const { setOpenMobile, isMobile } = useSidebar();
+	const routeKey = `${pathname}?${searchParams.toString()}`;
 
 	useEffect(() => {
 		if (isMobile) {
 			setOpenMobile(false);
 		}
-	}, [pathname, isMobile, setOpenMobile]);
+	}, [routeKey, isMobile, setOpenMobile]);
 
 	return null;
 }
@@ -908,15 +984,22 @@ export default function Page({ children }: Props) {
 	}, []);
 
 	const pathname = usePathname();
+	const searchParams = useSearchParams();
 	const { data: auth } = api.user.get.useQuery();
 	const { data: permissions } = api.user.getPermissions.useQuery();
-	const { data: dokployVersion } = api.settings.getDokployVersion.useQuery();
 	const { data: whitelabeling } = api.whitelabeling.get.useQuery(undefined, {
 		staleTime: 5 * 60 * 1000,
 		refetchOnWindowFocus: false,
 	});
 
 	const includesProjects = pathname?.includes("/dashboard/project");
+	const isSettings = pathname?.startsWith("/dashboard/settings");
+	const serviceType = pathname?.match(/\/services\/([^/]+)\//)?.[1];
+	const isService = !!serviceType;
+	const activeServiceTab = searchParams.get("tab") || "general";
+	const serviceNavigation = serviceType
+		? (SERVICE_NAVIGATION[serviceType] ?? [])
+		: [];
 	const { data: isCloud } = api.settings.isCloud.useQuery();
 
 	const {
@@ -934,6 +1017,15 @@ export default function Page({ children }: Props) {
 		[...filteredHome, ...filteredSettings],
 		pathname,
 	);
+	const visibleNavigation = isService
+		? serviceNavigation.map((item) => ({
+				...item,
+				isSingle: true as const,
+				url: `${pathname}?tab=${item.tab}`,
+			}))
+		: isSettings
+			? filteredSettings
+			: filteredHome;
 
 	if (!isLoaded) {
 		return <div className="w-full h-screen bg-background" />; // Placeholder mientras se carga
@@ -966,15 +1058,35 @@ export default function Page({ children }: Props) {
 				</SidebarHeader>
 				<SidebarContent>
 					<SidebarGroup>
-						<SidebarGroupLabel>Home</SidebarGroupLabel>
+						<SidebarGroupLabel
+							className={cn((isSettings || isService) && "h-9 px-1")}
+						>
+							{isSettings || isService ? (
+								<Link
+									href={isService ? "/dashboard/projects" : "/dashboard/home"}
+									className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent"
+								>
+									<ArrowLeft className="size-4" />
+									<span className="truncate">
+										{isService
+											? `${serviceType?.charAt(0).toUpperCase()}${serviceType?.slice(1)}`
+											: "Settings"}
+									</span>
+								</Link>
+							) : (
+								"Home"
+							)}
+						</SidebarGroupLabel>
 						<SidebarMenu>
-							{filteredHome.map((item) => {
+							{visibleNavigation.map((item) => {
 								const isSingle = item.isSingle !== false;
-								const isActive = isSingle
-									? isActiveRoute({ itemUrl: item.url, pathname })
-									: item.items.some((item) =>
-											isActiveRoute({ itemUrl: item.url, pathname }),
-										);
+								const isActive = isService
+									? "tab" in item && item.tab === activeServiceTab
+									: isSingle
+										? isActiveRoute({ itemUrl: item.url, pathname })
+										: item.items.some((item) =>
+												isActiveRoute({ itemUrl: item.url, pathname }),
+											);
 
 								return (
 									<Collapsible
@@ -1019,31 +1131,40 @@ export default function Page({ children }: Props) {
 													</CollapsibleTrigger>
 													<CollapsibleContent>
 														<SidebarMenuSub>
-															{item.items?.map((subItem) => (
-																<SidebarMenuSubItem key={subItem.title}>
-																	<SidebarMenuSubButton
-																		asChild
-																		className={cn(isActive && "bg-border")}
-																	>
-																		<Link
-																			href={subItem.url}
-																			className="flex w-full items-center"
-																		>
-																			{subItem.icon && (
-																				<span className="mr-2">
-																					<subItem.icon
-																						className={cn(
-																							"h-4 w-4 text-muted-foreground",
-																							isActive && "text-primary",
-																						)}
-																					/>
-																				</span>
+															{item.items?.map((subItem) => {
+																const isSubItemActive = isActiveRoute({
+																	itemUrl: subItem.url,
+																	pathname,
+																});
+																return (
+																	<SidebarMenuSubItem key={subItem.title}>
+																		<SidebarMenuSubButton
+																			asChild
+																			className={cn(
+																				isSubItemActive && "bg-border",
 																			)}
-																			<span>{subItem.title}</span>
-																		</Link>
-																	</SidebarMenuSubButton>
-																</SidebarMenuSubItem>
-															))}
+																		>
+																			<Link
+																				href={subItem.url}
+																				className="flex w-full items-center"
+																			>
+																				{subItem.icon && (
+																					<span className="mr-2">
+																						<subItem.icon
+																							className={cn(
+																								"h-4 w-4 text-muted-foreground",
+																								isSubItemActive &&
+																									"text-primary",
+																							)}
+																						/>
+																					</span>
+																				)}
+																				<span>{subItem.title}</span>
+																			</Link>
+																		</SidebarMenuSubButton>
+																	</SidebarMenuSubItem>
+																);
+															})}
 														</SidebarMenuSub>
 													</CollapsibleContent>
 												</>
@@ -1065,14 +1186,9 @@ export default function Page({ children }: Props) {
 						<SidebarMenuItem>
 							<UserNav />
 						</SidebarMenuItem>
-						{(whitelabeling?.footerText || dokployVersion) && (
-							<div className="px-3 text-xs text-foreground text-left truncate group-data-[collapsible=icon]:hidden">
+						{whitelabeling?.footerText && (
+							<div className="px-3 text-center text-xs text-foreground truncate group-data-[collapsible=icon]:hidden">
 								{whitelabeling?.footerText || "Made with ♥ by Abhash"}
-								{dokployVersion && (
-									<span className="text-muted-foreground">
-										{` · V ${String(dokployVersion).replace(/^v/i, "")}`}
-									</span>
-								)}
 							</div>
 						)}
 					</SidebarMenu>

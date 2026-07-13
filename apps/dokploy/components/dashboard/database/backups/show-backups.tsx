@@ -281,7 +281,7 @@ export const ShowBackups = ({
 														</div>
 													</div>
 
-													<div className="flex flex-row md:flex-col gap-1.5">
+													<div className="flex shrink-0 flex-row flex-wrap items-center gap-1.5 md:self-center">
 														<ShowDeploymentsModal
 															id={backup.backupId}
 															type="backup"

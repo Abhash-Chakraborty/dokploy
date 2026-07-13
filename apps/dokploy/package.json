@@ -1,11 +1,11 @@
 {
 	"name": "dokploy",
-	"version": "v0.29.11",
+	"version": "v0.29.12",
 	"private": true,
 	"license": "Apache-2.0",
 	"type": "module",
 	"scripts": {
-		"build": "npm run build-server && npm run build-next",
+		"build": "pnpm run build-server && pnpm run build-next",
 		"start": "node -r dotenv/config dist/migration.mjs && node -r dotenv/config dist/server.mjs",
 		"build-server": "tsx esbuild.config.ts",
 		"build-next": "next build --webpack",

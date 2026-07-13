@@ -1,4 +1,11 @@
-import { ChevronsUpDown, ExternalLink } from "lucide-react";
+import {
+	BookOpen,
+	ChevronsUpDown,
+	CircleHelp,
+	ExternalLink,
+	Settings,
+	User,
+} from "lucide-react";
 import { useRouter } from "next/router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -15,26 +22,21 @@ import { getFallbackAvatarInitials } from "@/lib/utils";
 import { api } from "@/utils/api";
 import { ModeToggle } from "../ui/modeToggle";
 import { SidebarMenuButton } from "../ui/sidebar";
-import { createMenuForAuthUser } from "./side";
 
 const _AUTO_CHECK_UPDATES_INTERVAL_MINUTES = 7;
 
 export const UserNav = () => {
 	const router = useRouter();
 	const { data } = api.user.get.useQuery();
-	const { data: permissions } = api.user.getPermissions.useQuery();
-	const { data: isCloud } = api.settings.isCloud.useQuery();
 	const { data: whitelabeling } = api.whitelabeling.get.useQuery(undefined, {
 		staleTime: 5 * 60 * 1000,
 		refetchOnWindowFocus: false,
 	});
 
-	const { settings, help } = createMenuForAuthUser({
-		auth: data,
-		permissions,
-		isCloud: !!isCloud,
-		whitelabeling,
-	});
+	const docsUrl =
+		whitelabeling?.docsUrl || "https://docs.dokploy.com/docs/core";
+	const supportUrl =
+		whitelabeling?.supportUrl || "https://discord.gg/2tBnJ3jDJc";
 
 	return (
 		<DropdownMenu>
@@ -78,41 +80,38 @@ export const UserNav = () => {
 					<ModeToggle />
 				</div>
 				<DropdownMenuSeparator />
-				{/* Settings (moved out of the sidebar) */}
-				<DropdownMenuGroup className="max-h-[50vh] overflow-y-auto">
-					{settings.map((item) => {
-						const isSingle = item.isSingle !== false;
-						if (!isSingle) return null;
-						return (
-							<DropdownMenuItem
-								key={item.title}
-								className="cursor-pointer"
-								onClick={() => router.push(item.url)}
-							>
-								{item.icon && (
-									<item.icon className="mr-2 size-4 text-muted-foreground" />
-								)}
-								{item.title}
-							</DropdownMenuItem>
-						);
-					})}
+				<DropdownMenuGroup>
+					<DropdownMenuItem
+						className="cursor-pointer"
+						onClick={() => router.push("/dashboard/settings/profile")}
+					>
+						<User className="mr-2 size-4 text-muted-foreground" />
+						Profile
+					</DropdownMenuItem>
+					<DropdownMenuItem
+						className="cursor-pointer"
+						onClick={() => router.push("/dashboard/settings/server")}
+					>
+						<Settings className="mr-2 size-4 text-muted-foreground" />
+						Settings
+					</DropdownMenuItem>
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
-				{/* Help / external links */}
 				<DropdownMenuGroup>
-					{help.map((item) => (
-						<DropdownMenuItem
-							key={item.name}
-							asChild
-							className="cursor-pointer"
-						>
-							<a href={item.url} target="_blank" rel="noopener noreferrer">
-								<item.icon className="mr-2 size-4 text-muted-foreground" />
-								{item.name}
-								<ExternalLink className="ml-auto size-3 text-muted-foreground" />
-							</a>
-						</DropdownMenuItem>
-					))}
+					<DropdownMenuItem asChild className="cursor-pointer">
+						<a href={docsUrl} target="_blank" rel="noopener noreferrer">
+							<BookOpen className="mr-2 size-4 text-muted-foreground" />
+							Docs
+							<ExternalLink className="ml-auto size-3 text-muted-foreground" />
+						</a>
+					</DropdownMenuItem>
+					<DropdownMenuItem asChild className="cursor-pointer">
+						<a href={supportUrl} target="_blank" rel="noopener noreferrer">
+							<CircleHelp className="mr-2 size-4 text-muted-foreground" />
+							Support
+							<ExternalLink className="ml-auto size-3 text-muted-foreground" />
+						</a>
+					</DropdownMenuItem>
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem

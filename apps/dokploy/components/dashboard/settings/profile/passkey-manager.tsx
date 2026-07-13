@@ -19,6 +19,19 @@ type Passkey = {
 	deviceType?: string | null;
 };
 
+const getPasskeyErrorMessage = (error: unknown, fallback: string) => {
+	if (error instanceof Error && error.message) return error.message;
+	if (
+		error &&
+		typeof error === "object" &&
+		"message" in error &&
+		typeof error.message === "string"
+	) {
+		return error.message;
+	}
+	return fallback;
+};
+
 /**
  * Register / list / remove WebAuthn passkeys for the current user via the
  * Better Auth passkey plugin.
@@ -46,18 +59,32 @@ export const PasskeyManager = () => {
 	}, []);
 
 	const handleAdd = async () => {
+		if (!window.isSecureContext) {
+			toast.error("Passkeys require HTTPS or localhost");
+			return;
+		}
+		if (!("PublicKeyCredential" in window)) {
+			toast.error("This browser or device does not support passkeys");
+			return;
+		}
 		setIsAdding(true);
 		try {
-			const result = await authClient.passkey.addPasskey();
+			const platform =
+				(
+					navigator as Navigator & {
+						userAgentData?: { platform?: string };
+					}
+				).userAgentData?.platform || navigator.platform;
+			const result = await authClient.passkey.addPasskey({
+				name: platform || "Device",
+			});
 			if (result?.error) {
 				throw result.error;
 			}
 			toast.success("Passkey registered");
 			await load();
 		} catch (error) {
-			toast.error(
-				error instanceof Error ? error.message : "Failed to register passkey",
-			);
+			toast.error(getPasskeyErrorMessage(error, "Failed to register passkey"));
 		} finally {
 			setIsAdding(false);
 		}
@@ -70,9 +97,7 @@ export const PasskeyManager = () => {
 			toast.success("Passkey removed");
 			await load();
 		} catch (error) {
-			toast.error(
-				error instanceof Error ? error.message : "Failed to remove passkey",
-			);
+			toast.error(getPasskeyErrorMessage(error, "Failed to remove passkey"));
 		}
 	};
 

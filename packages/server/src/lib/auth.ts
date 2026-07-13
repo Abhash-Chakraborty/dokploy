@@ -114,6 +114,7 @@ const { handler, api } = betterAuth({
 		disabled: process.env.NODE_ENV === "production",
 	},
 	async trustedOrigins() {
+		if (process.env.DOKPLOY_OPENAPI_GENERATION === "true") return [];
 		try {
 			if (IS_CLOUD) {
 				return await getTrustedOrigins();
@@ -462,18 +463,9 @@ const { handler, api } = betterAuth({
 		twoFactor(),
 		passkey({
 			rpName: "Dokploy",
-			// Origin/rpID are inferred from the request when not set; pass the
-			// configured app URL origin when available for stricter validation.
-			...(authBaseURL
-				? (() => {
-						try {
-							const u = new URL(authBaseURL);
-							return { rpID: u.hostname, origin: u.origin };
-						} catch {
-							return {};
-						}
-					})()
-				: {}),
+			// Dokploy is self-hosted and can be reached through aliases or a domain
+			// changed at runtime. Better Auth validates WebAuthn against the request
+			// origin when these values are omitted, avoiding stale configured hosts.
 		}),
 		organization({
 			ac,

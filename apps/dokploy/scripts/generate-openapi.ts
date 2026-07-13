@@ -10,13 +10,20 @@ import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { generateOpenApiDocument } from "@dokploy/trpc-openapi";
-import { appRouter } from "../server/api/root";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 async function generateOpenAPI() {
 	try {
+		process.env.DOKPLOY_OPENAPI_GENERATION = "true";
+		if (!process.env.NODE_ENV) Object.assign(process.env, { NODE_ENV: "test" });
+		process.env.DATABASE_URL ||=
+			"postgres://dokploy:openapi@127.0.0.1:5432/dokploy";
+		process.env.BETTER_AUTH_SECRET ||=
+			"dokploy-openapi-generation-only-secret-0000000000000000";
+		const { appRouter } = await import("../server/api/root");
+
 		console.log("🔄 Generating OpenAPI specification...");
 
 		const openApiDocument = generateOpenApiDocument(appRouter, {
@@ -123,10 +130,8 @@ async function generateOpenAPI() {
 		);
 	} catch (error) {
 		console.error("❌ Error generating OpenAPI specification:", error);
-		process.exit(1);
-	} finally {
-		process.exit(0);
+		process.exitCode = 1;
 	}
 }
 
-generateOpenAPI();
+void generateOpenAPI();

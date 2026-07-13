@@ -218,7 +218,7 @@ const Service = (
 								}}
 							>
 								<div className="flex flex-row items-center w-full">
-									<TabsList className="flex flex-wrap h-auto gap-x-8 gap-y-1 max-md:gap-x-4 justify-start">
+									<TabsList className="flex h-auto flex-wrap justify-start gap-x-8 gap-y-1 max-md:gap-x-4 lg:hidden">
 										<TabsTrigger value="general">General</TabsTrigger>
 										{permissions?.envVars.read && (
 											<TabsTrigger value="environment">Environment</TabsTrigger>

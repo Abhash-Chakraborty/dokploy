@@ -1,5 +1,5 @@
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
-import { Pencil, PlusIcon } from "lucide-react";
+import { CircleHelp, Pencil, PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -30,14 +30,18 @@ import { Input } from "@/components/ui/input";
 import {
 	Select,
 	SelectContent,
-	SelectGroup,
 	SelectItem,
-	SelectLabel,
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { api } from "@/utils/api";
 
 const Schema = z.object({
@@ -175,66 +179,6 @@ export const HandleServers = ({ serverId, asButton = false }: Props) => {
 						remotely.
 					</DialogDescription>
 				</DialogHeader>
-				<div>
-					<p className="text-primary text-sm font-medium">
-						You may need to purchase or rent a Virtual Private Server (VPS) to
-						proceed. We recommend using one of these heavily tested providers:
-					</p>
-					<ul className="list-inside list-disc pl-4 text-sm text-muted-foreground mt-4">
-						<li>
-							<a
-								href="https://www.hostinger.com/vps-hosting?REFERRALCODE=1SIUMAURICI97"
-								className="text-link underline"
-							>
-								Hostinger - Get 20% Discount
-							</a>
-						</li>
-						<li>
-							<a
-								href=" https://app.americancloud.com/register?ref=dokploy"
-								className="text-link underline"
-							>
-								American Cloud - Get $20 Credits
-							</a>
-						</li>
-						<li>
-							<a
-								href="https://m.do.co/c/db24efd43f35"
-								className="text-link underline"
-							>
-								DigitalOcean - Get $200 Credits
-							</a>
-						</li>
-						<li>
-							<a
-								href="https://hetzner.cloud/?ref=vou4fhxJ1W2D"
-								className="text-link underline"
-							>
-								Hetzner - Get €20 Credits
-							</a>
-						</li>
-						<li>
-							<a
-								href="https://www.vultr.com/?ref=9679828"
-								className="text-link underline"
-							>
-								Vultr
-							</a>
-						</li>
-						<li>
-							<a
-								href="https://www.linode.com/es/pricing/#compute-shared"
-								className="text-link underline"
-							>
-								Linode
-							</a>
-						</li>
-					</ul>
-					<AlertBlock className="mt-4 px-4">
-						You are free to use whatever provider, but we recommend to use one
-						of the above, to avoid issues.
-					</AlertBlock>
-				</div>
 				{!canCreateMoreServers && (
 					<AlertBlock type="warning" className="mt-4">
 						You cannot create more servers,{" "}
@@ -291,7 +235,25 @@ export const HandleServers = ({ serverId, asButton = false }: Props) => {
 								const serverTypeValue = form.watch("serverType");
 								return (
 									<FormItem>
-										<FormLabel>Server Type</FormLabel>
+										<FormLabel className="flex items-center gap-1.5">
+											Server Type
+											<TooltipProvider delayDuration={150}>
+												<Tooltip>
+													<TooltipTrigger asChild>
+														<button
+															type="button"
+															aria-label="About server types"
+														>
+															<CircleHelp className="size-3.5 text-muted-foreground" />
+														</button>
+													</TooltipTrigger>
+													<TooltipContent className="max-w-72">
+														Deploy servers run workloads. Build servers only
+														compile images and are not deployment targets.
+													</TooltipContent>
+												</Tooltip>
+											</TooltipProvider>
+										</FormLabel>
 										<Select
 											onValueChange={field.onChange}
 											defaultValue={field.value}
@@ -300,30 +262,16 @@ export const HandleServers = ({ serverId, asButton = false }: Props) => {
 												<SelectValue placeholder="Select a server type" />
 											</SelectTrigger>
 											<SelectContent>
-												<SelectGroup>
-													<SelectItem value="deploy">Deploy Server</SelectItem>
-													<SelectItem value="build">Build Server</SelectItem>
-													<SelectLabel>Server Type</SelectLabel>
-												</SelectGroup>
+												<SelectItem value="deploy">Deploy Server</SelectItem>
+												<SelectItem value="build">Build Server</SelectItem>
 											</SelectContent>
 										</Select>
 										<FormMessage />
-										{serverTypeValue === "deploy" && (
-											<AlertBlock type="info" className="mt-2">
-												Deploy servers are used to run your applications,
-												databases, and services. They handle the deployment and
-												execution of your projects.
-											</AlertBlock>
-										)}
-										{serverTypeValue === "build" && (
-											<AlertBlock type="info" className="mt-2">
-												Build servers are dedicated to building your
-												applications. They handle the compilation and build
-												process, offloading this work from your deployment
-												servers. Build servers won't appear in deployment
-												options.
-											</AlertBlock>
-										)}
+										<FormDescription>
+											{serverTypeValue === "deploy"
+												? "Runs deployed services."
+												: "Builds images without hosting workloads."}
+										</FormDescription>
 									</FormItem>
 								);
 							}}
@@ -342,19 +290,14 @@ export const HandleServers = ({ serverId, asButton = false }: Props) => {
 											<SelectValue placeholder="Select a SSH Key" />
 										</SelectTrigger>
 										<SelectContent>
-											<SelectGroup>
-												{sshKeys?.map((sshKey) => (
-													<SelectItem
-														key={sshKey.sshKeyId}
-														value={sshKey.sshKeyId}
-													>
-														{sshKey.name}
-													</SelectItem>
-												))}
-												<SelectLabel>
-													Registries ({sshKeys?.length})
-												</SelectLabel>
-											</SelectGroup>
+											{sshKeys?.map((sshKey) => (
+												<SelectItem
+													key={sshKey.sshKeyId}
+													value={sshKey.sshKeyId}
+												>
+													{sshKey.name}
+												</SelectItem>
+											))}
 										</SelectContent>
 									</Select>
 									<FormMessage />

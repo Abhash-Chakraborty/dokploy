@@ -75,9 +75,11 @@ const getDockerConfig = (): Docker => {
 		}
 	}
 
-	console.info(
-		"Using default Docker configuration. You can set the DOCKER_HOST environment variable to specify a custom Docker socket path.",
-	);
+	if (process.env.DOKPLOY_OPENAPI_GENERATION !== "true") {
+		console.info(
+			"Using default Docker configuration. You can set the DOCKER_HOST environment variable to specify a custom Docker socket path.",
+		);
+	}
 	return new Docker({ ...versionOption });
 };
 

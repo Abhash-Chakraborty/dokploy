@@ -2,6 +2,7 @@ import type http from "node:http";
 import {
 	execAsync,
 	findServerById,
+	getWebServerSettings,
 	IS_CLOUD,
 	validateRequest,
 } from "@dokploy/server";
@@ -130,7 +131,10 @@ export const setupTerminalWebSocketServer = (
 						return;
 					}
 
-					const dockerHost = await getDockerHost();
+					const webServerSettings = await getWebServerSettings();
+					const dockerHost = await getDockerHost(port, [
+						webServerSettings?.serverIp || "",
+					]);
 
 					ws.send(`Found Docker host: ${dockerHost}\n`);
 

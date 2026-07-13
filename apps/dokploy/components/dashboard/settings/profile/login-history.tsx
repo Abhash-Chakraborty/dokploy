@@ -1,4 +1,8 @@
-import { Globe, Monitor } from "lucide-react";
+import { Globe, Loader2, LogOut, Monitor, Smartphone } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -6,86 +10,194 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table";
-import { api } from "@/utils/api";
+import { authClient } from "@/lib/auth-client";
 
-const formatDate = (date: Date | string | null | undefined) => {
-	if (!date) return "—";
-	try {
-		return new Date(date).toLocaleString();
-	} catch {
-		return "—";
-	}
+type DeviceSession = {
+	createdAt: Date | string;
+	expiresAt: Date | string;
+	id: string;
+	ipAddress?: string | null;
+	token: string;
+	userAgent?: string | null;
 };
 
-/**
- * Read-only list of the user's recent login sessions with IP and device.
- * Sourced from the Better Auth session table via user.getLoginHistory.
- */
+const formatDate = (date: Date | string | null | undefined) =>
+	date ? new Date(date).toLocaleString() : "Unknown";
+
+const describeDevice = (userAgent?: string | null) => {
+	if (!userAgent) return { browser: "Unknown browser", mobile: false };
+	const browser = userAgent.includes("Edg/")
+		? "Microsoft Edge"
+		: userAgent.includes("Firefox/")
+			? "Firefox"
+			: userAgent.includes("Chrome/")
+				? "Chrome"
+				: userAgent.includes("Safari/")
+					? "Safari"
+					: "Browser";
+	const mobile = /Android|iPhone|iPad|Mobile/i.test(userAgent);
+	const platform = userAgent.includes("Windows")
+		? "Windows"
+		: userAgent.includes("Android")
+			? "Android"
+			: /iPhone|iPad/.test(userAgent)
+				? "iOS"
+				: userAgent.includes("Mac OS")
+					? "macOS"
+					: userAgent.includes("Linux")
+						? "Linux"
+						: "Unknown OS";
+	return { browser: `${browser} on ${platform}`, mobile };
+};
+
+/** Active Better Auth sessions with device-level revocation controls. */
 export const LoginHistory = () => {
-	const { data: history, isLoading } = api.user.getLoginHistory.useQuery();
+	const [sessions, setSessions] = useState<DeviceSession[]>([]);
+	const [currentToken, setCurrentToken] = useState<string | null>(null);
+	const [isLoading, setIsLoading] = useState(true);
+	const [revokingToken, setRevokingToken] = useState<string | null>(null);
+	const [isRevokingOthers, setIsRevokingOthers] = useState(false);
+
+	const loadSessions = useCallback(async () => {
+		setIsLoading(true);
+		try {
+			const [sessionResult, sessionsResult] = await Promise.all([
+				authClient.getSession({ fetchOptions: { cache: "no-store" } }),
+				authClient.listSessions(),
+			]);
+			if (sessionsResult.error) throw sessionsResult.error;
+			setCurrentToken(sessionResult.data?.session.token ?? null);
+			setSessions((sessionsResult.data as DeviceSession[] | null) ?? []);
+		} catch (error) {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Unable to load active devices",
+			);
+		} finally {
+			setIsLoading(false);
+		}
+	}, []);
+
+	useEffect(() => {
+		void loadSessions();
+	}, [loadSessions]);
+
+	const revokeSession = async (token: string) => {
+		setRevokingToken(token);
+		try {
+			const result = await authClient.revokeSession({ token });
+			if (result.error) throw result.error;
+			setSessions((current) =>
+				current.filter((session) => session.token !== token),
+			);
+			toast.success("Device signed out");
+		} catch (error) {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Unable to revoke this session",
+			);
+		} finally {
+			setRevokingToken(null);
+		}
+	};
+
+	const revokeOtherSessions = async () => {
+		setIsRevokingOthers(true);
+		try {
+			const result = await authClient.revokeOtherSessions();
+			if (result.error) throw result.error;
+			setSessions((current) =>
+				current.filter((session) => session.token === currentToken),
+			);
+			toast.success("Other devices signed out");
+		} catch (error) {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Unable to revoke other sessions",
+			);
+		} finally {
+			setIsRevokingOthers(false);
+		}
+	};
+
+	const otherSessionCount = sessions.filter(
+		(session) => session.token !== currentToken,
+	).length;
 
 	return (
 		<Card className="bg-transparent">
-			<CardHeader>
-				<CardTitle className="text-xl flex flex-row gap-2 items-center">
-					<Globe className="size-5 text-muted-foreground" />
-					Login History
-				</CardTitle>
-				<CardDescription>
-					Recent sessions for your account, including IP address and device.
-				</CardDescription>
+			<CardHeader className="gap-3 sm:flex-row sm:items-start sm:justify-between">
+				<div>
+					<CardTitle className="flex items-center gap-2 text-xl">
+						<Globe className="size-5 text-muted-foreground" />
+						Devices
+					</CardTitle>
+					<CardDescription>
+						Browsers currently signed in to your account.
+					</CardDescription>
+				</div>
+				<Button
+					variant="outline"
+					size="sm"
+					disabled={otherSessionCount === 0}
+					isLoading={isRevokingOthers}
+					onClick={revokeOtherSessions}
+				>
+					<LogOut className="size-4" />
+					Sign out other devices
+				</Button>
 			</CardHeader>
 			<CardContent>
 				{isLoading ? (
-					<p className="text-sm text-muted-foreground">Loading…</p>
-				) : !history || history.length === 0 ? (
-					<p className="text-sm text-muted-foreground">No login history yet.</p>
+					<div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
+						<Loader2 className="size-4 animate-spin" /> Loading devices…
+					</div>
+				) : sessions.length === 0 ? (
+					<p className="py-4 text-sm text-muted-foreground">
+						No active sessions found.
+					</p>
 				) : (
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead>IP Address</TableHead>
-								<TableHead>Device</TableHead>
-								<TableHead>Signed in</TableHead>
-								<TableHead className="text-right">Status</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{history.map((entry) => (
-								<TableRow key={entry.id}>
-									<TableCell className="font-mono text-xs">
-										{entry.ipAddress || "—"}
-									</TableCell>
-									<TableCell className="max-w-[280px] truncate text-muted-foreground">
-										<span className="flex items-center gap-2">
-											<Monitor className="size-3.5 shrink-0" />
-											<span className="truncate">{entry.userAgent || "—"}</span>
-										</span>
-									</TableCell>
-									<TableCell className="whitespace-nowrap text-muted-foreground">
-										{formatDate(entry.createdAt)}
-									</TableCell>
-									<TableCell className="text-right">
-										{entry.isCurrent ? (
-											<span className="text-xs font-medium text-green-500">
-												Current
-											</span>
-										) : (
-											<span className="text-xs text-muted-foreground">—</span>
-										)}
-									</TableCell>
-								</TableRow>
-							))}
-						</TableBody>
-					</Table>
+					<div className="divide-y rounded-lg border">
+						{sessions.map((session) => {
+							const device = describeDevice(session.userAgent);
+							const isCurrent = session.token === currentToken;
+							const DeviceIcon = device.mobile ? Smartphone : Monitor;
+							return (
+								<div
+									key={session.id}
+									className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center"
+								>
+									<div className="flex size-9 shrink-0 items-center justify-center rounded-md border bg-muted/40">
+										<DeviceIcon className="size-4 text-muted-foreground" />
+									</div>
+									<div className="min-w-0 flex-1">
+										<div className="flex flex-wrap items-center gap-2">
+											<p className="font-medium">{device.browser}</p>
+											{isCurrent && (
+												<Badge variant="secondary">This device</Badge>
+											)}
+										</div>
+										<p className="mt-1 text-xs text-muted-foreground">
+											{session.ipAddress || "Unknown IP"} · Signed in{" "}
+											{formatDate(session.createdAt)}
+										</p>
+									</div>
+									<Button
+										variant="ghost"
+										size="sm"
+										disabled={isCurrent}
+										isLoading={revokingToken === session.token}
+										onClick={() => revokeSession(session.token)}
+									>
+										Revoke
+									</Button>
+								</div>
+							);
+						})}
+					</div>
 				)}
 			</CardContent>
 		</Card>

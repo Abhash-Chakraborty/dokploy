@@ -1,5 +1,5 @@
 import { createWriteStream } from "node:fs";
-import { mkdtemp, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { IS_CLOUD, paths } from "@dokploy/server/constants";
@@ -49,7 +49,41 @@ export const runWebServerBackup = async (backup: BackupSchedule) => {
 		const s3Path = `:s3:${destination.bucket}/${backup.appName}/${normalizeS3Path(backup.prefix)}${backupFileName}`;
 
 		try {
-			await execAsync(`mkdir -p ${tempDir}/filesystem`);
+			await mkdir(join(tempDir, "filesystem"), { recursive: true });
+			const inventoryDir = join(tempDir, "docker-inventory");
+			await mkdir(inventoryDir, { recursive: true });
+			await writeFile(
+				join(tempDir, "backup-manifest.json"),
+				JSON.stringify(
+					{
+						formatVersion: 1,
+						createdAt: new Date().toISOString(),
+						contents: ["database.sql", "filesystem/", "docker-inventory/"],
+						includesEncryptionKey: backup.includeEncryptionKey,
+					},
+					null,
+					2,
+				),
+			);
+
+			const inventoryCommands = [
+				["containers.txt", "docker ps -a --no-trunc"],
+				["services.txt", "docker service ls --no-trunc"],
+				["volumes.txt", "docker volume ls"],
+				["networks.txt", "docker network ls"],
+			] as const;
+			for (const [fileName, command] of inventoryCommands) {
+				try {
+					const { stdout, stderr } = await execAsync(command);
+					await writeFile(join(inventoryDir, fileName), `${stdout}${stderr}`);
+				} catch (error) {
+					await writeFile(
+						join(inventoryDir, fileName),
+						`Inventory command unavailable: ${redactRcloneCredentials(String(error))}\n`,
+					);
+				}
+			}
+			writeStream.write("Captured Docker recovery inventory\n");
 
 			// First get the container ID
 			const { stdout: containerId } = await execAsync(
@@ -66,20 +100,20 @@ export const runWebServerBackup = async (backup: BackupSchedule) => {
 
 			const postgresContainerId = containerId.trim();
 
-			// First dump the database inside the container
-			const dumpCommand = `docker exec ${postgresContainerId} pg_dump -v -Fc -U dokploy -d dokploy -f /tmp/database.sql`;
-			writeStream.write(`Running dump command: ${dumpCommand}\n`);
-			await execAsync(dumpCommand);
+			try {
+				const dumpCommand = `docker exec ${postgresContainerId} pg_dump -v -Fc -U dokploy -d dokploy -f /tmp/database.sql`;
+				writeStream.write(`Running dump command: ${dumpCommand}\n`);
+				await execAsync(dumpCommand);
 
-			// Then copy the file from the container to host
-			const copyCommand = `docker cp ${postgresContainerId}:/tmp/database.sql ${tempDir}/database.sql`;
-			writeStream.write(`Copying database dump: ${copyCommand}\n`);
-			await execAsync(copyCommand);
-
-			// Clean up the temp file in the container
-			const cleanupCommand = `docker exec ${postgresContainerId} rm -f /tmp/database.sql`;
-			writeStream.write(`Cleaning up temp file: ${cleanupCommand}\n`);
-			await execAsync(cleanupCommand);
+				const copyCommand = `docker cp ${postgresContainerId}:/tmp/database.sql ${tempDir}/database.sql`;
+				writeStream.write(`Copying database dump: ${copyCommand}\n`);
+				await execAsync(copyCommand);
+			} finally {
+				await execAsync(
+					`docker exec ${postgresContainerId} rm -f /tmp/database.sql`,
+				).catch(() => undefined);
+				writeStream.write("Cleaned up temporary database dump\n");
+			}
 
 			await execAsync(
 				`rsync -a --ignore-errors --no-specials --no-devices --exclude='volume-backups/' --exclude='${ENCRYPTION_KEY_BACKUP_FILE}' ${BASE_PATH}/ ${tempDir}/filesystem/`,
@@ -99,13 +133,21 @@ export const runWebServerBackup = async (backup: BackupSchedule) => {
 			}
 
 			await execAsync(
-				// Zip all .sql files since we created more than one
-				`cd ${tempDir} && zip -r ${backupFileName} *.sql filesystem/ > /dev/null 2>&1`,
+				`cd ${tempDir} && zip -r ${backupFileName} *.sql backup-manifest.json docker-inventory/ filesystem/ > /dev/null 2>&1`,
 			);
 
 			writeStream.write("Zipped database and filesystem\n");
 
 			const zipPath = join(tempDir, backupFileName);
+			await execAsync(`unzip -tqq "${zipPath}"`);
+			writeStream.write("Verified backup archive integrity\n");
+			const { stdout: checksumOutput } = await execAsync(
+				`sha256sum "${zipPath}"`,
+			);
+			const checksum = checksumOutput.trim().split(/\s+/)[0];
+			if (!checksum) throw new Error("Unable to calculate backup checksum");
+			const checksumPath = `${zipPath}.sha256`;
+			await writeFile(checksumPath, `${checksum}  ${backupFileName}\n`);
 			try {
 				const { size } = await stat(zipPath);
 				computedBackupSize = size;
@@ -117,6 +159,9 @@ export const runWebServerBackup = async (backup: BackupSchedule) => {
 			const uploadCommand = `rclone copyto ${rcloneFlags.join(" ")} "${zipPath}" "${s3Path}"`;
 			writeStream.write("Running command to upload backup to S3\n");
 			await execAsync(uploadCommand);
+			await execAsync(
+				`rclone copyto ${rcloneFlags.join(" ")} "${checksumPath}" "${s3Path}.sha256"`,
+			);
 			writeStream.write("Uploaded backup to S3 ✅\n");
 			writeStream.end();
 			await sendDokployBackupNotifications({

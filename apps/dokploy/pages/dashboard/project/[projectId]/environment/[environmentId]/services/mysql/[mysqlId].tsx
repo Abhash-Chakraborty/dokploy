@@ -200,7 +200,7 @@ const MySql = (
 									<div className="flex flex-row items-center justify-between w-full gap-4 overflow-x-scroll">
 										<TabsList
 											className={cn(
-												"md:grid md:w-fit max-md:overflow-y-scroll justify-start ",
+												"justify-start max-md:overflow-y-scroll md:grid md:w-fit lg:hidden",
 												isCloud && data?.serverId
 													? "md:grid-cols-6"
 													: data?.serverId

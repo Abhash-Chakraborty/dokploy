@@ -1,5 +1,5 @@
 import { auditLog } from "@dokploy/server/db/schema";
-import { and, desc, eq, gte, ilike, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, or, type SQL, sql } from "drizzle-orm";
 import { z } from "zod";
 import { createTRPCRouter, withPermission } from "../../trpc";
 
@@ -51,10 +51,12 @@ const buildWhere = (
 };
 
 export const abhashAuditLogRouter = createTRPCRouter({
-	all: withPermission("auditLog", "read")
-		.input(z.any().optional())
-		.query(async ({ ctx }): Promise<any> => {
-			const where = eq(auditLog.organizationId, ctx.session.activeOrganizationId);
+	all: withPermission("auditLog", "read").query(
+		async ({ ctx }): Promise<any> => {
+			const where = eq(
+				auditLog.organizationId,
+				ctx.session.activeOrganizationId,
+			);
 			const rows = await ctx.db
 				.select()
 				.from(auditLog)
@@ -69,7 +71,8 @@ export const abhashAuditLogRouter = createTRPCRouter({
 				total: rows.length,
 				totalPages: 1,
 			};
-		}),
+		},
+	),
 
 	list: withPermission("auditLog", "read")
 		.input(listInput)
@@ -85,7 +88,10 @@ export const abhashAuditLogRouter = createTRPCRouter({
 					.orderBy(desc(auditLog.createdAt))
 					.limit(input.limit)
 					.offset(offset),
-				ctx.db.select({ count: sql<number>`count(*)::int` }).from(auditLog).where(where),
+				ctx.db
+					.select({ count: sql<number>`count(*)::int` })
+					.from(auditLog)
+					.where(where),
 			]);
 
 			const total = totalRows[0]?.count ?? 0;
