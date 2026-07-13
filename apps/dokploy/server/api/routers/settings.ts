@@ -16,8 +16,8 @@ import {
 	execAsync,
 	findServerById,
 	getDockerDiskUsage,
-	getDokployImageRepository,
 	getDokployImageTag,
+	getDokployUpdateArguments,
 	getLogCleanupStatus,
 	getUpdateData,
 	getWebServerSettings,
@@ -615,15 +615,13 @@ export const settingsRouter = createTRPCRouter({
 		}
 
 		const data = await getUpdateData(packageInfo.version);
-		if (data.updateAvailable) {
-			void spawnAsync("docker", [
-				"service",
-				"update",
-				"--force",
-				"--image",
-				`${getDokployImageRepository()}:${data.latestVersion}`,
-				"dokploy",
-			]);
+		if (data.updateAvailable && data.latestVersion) {
+			void spawnAsync(
+				"docker",
+				getDokployUpdateArguments(data.latestVersion),
+			).catch((error) => {
+				console.error("Dokploy background update failed:", error);
+			});
 			await audit(ctx, {
 				action: "update",
 				resourceType: "settings",
