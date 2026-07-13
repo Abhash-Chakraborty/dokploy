@@ -4,7 +4,34 @@ import {
 	isValidSearch,
 	isValidSince,
 	isValidTail,
+	parseTerminalResizeMessage,
+	TERMINAL_RESIZE_MESSAGE_PREFIX,
 } from "../../server/wss/utils";
+
+describe("parseTerminalResizeMessage", () => {
+	it("parses valid resize control frames", () => {
+		expect(
+			parseTerminalResizeMessage(
+				`${TERMINAL_RESIZE_MESSAGE_PREFIX}{"cols":120,"rows":40}`,
+			),
+		).toEqual({ cols: 120, rows: 40 });
+	});
+
+	it("clamps dimensions to safe PTY bounds", () => {
+		expect(
+			parseTerminalResizeMessage(
+				`${TERMINAL_RESIZE_MESSAGE_PREFIX}{"cols":9999,"rows":1}`,
+			),
+		).toEqual({ cols: 500, rows: 5 });
+	});
+
+	it("ignores shell input and malformed control frames", () => {
+		expect(parseTerminalResizeMessage("ls -la\r")).toBeNull();
+		expect(
+			parseTerminalResizeMessage(`${TERMINAL_RESIZE_MESSAGE_PREFIX}nope`),
+		).toBeNull();
+	});
+});
 
 describe("isValidTail (docker-container-logs)", () => {
 	it("accepts valid numeric tail values", () => {

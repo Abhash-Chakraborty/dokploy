@@ -1,5 +1,7 @@
+import { RotateCcw, Server } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useCallback, useId, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
 	Select,
 	SelectContent,
@@ -9,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/utils/api";
 import LocalServerConfig from "../dashboard/settings/web-server/local-server-config";
+import type { TerminalConnectionStatus } from "../dashboard/settings/web-server/terminal";
 
 const Terminal = dynamic(
 	() =>
@@ -91,11 +94,17 @@ export const TerminalView = ({
 	const [internalServerId, setInternalServerId] =
 		useState<string>(defaultServerId);
 	const [terminalKey, setTerminalKey] = useState<string>(getTerminalKey());
+	const [connectionStatus, setConnectionStatus] =
+		useState<TerminalConnectionStatus>("connecting");
+	const terminalId = `terminal-${useId().replaceAll(":", "")}`;
 
 	const serverId = controlledServerId ?? internalServerId;
 	const isLocalServer = serverId === "local";
 
-	const reconnect = () => setTerminalKey(getTerminalKey());
+	const reconnect = useCallback(() => {
+		setConnectionStatus("connecting");
+		setTerminalKey(getTerminalKey());
+	}, []);
 
 	const handleServerChange = (value: string) => {
 		if (onServerChange) {
@@ -128,10 +137,59 @@ export const TerminalView = ({
 
 			<div
 				className={
-					fillHeight ? "min-h-0 flex-1 overflow-hidden" : heightClassName
+					fillHeight
+						? "min-h-0 flex-1 overflow-hidden rounded-xl border border-white/10 bg-[#090b0e] shadow-2xl shadow-black/20"
+						: `${heightClassName} overflow-hidden rounded-xl border border-white/10 bg-[#090b0e] shadow-2xl shadow-black/20`
 				}
 			>
-				<Terminal id="shared-terminal" key={terminalKey} serverId={serverId} />
+				<div className="flex h-11 items-center justify-between border-b border-white/10 bg-[#111419] px-3 text-slate-300">
+					<div className="flex min-w-0 items-center gap-2 font-mono text-xs">
+						<span className="flex gap-1.5" aria-hidden="true">
+							<span className="size-2.5 rounded-full bg-rose-400/80" />
+							<span className="size-2.5 rounded-full bg-amber-300/80" />
+							<span className="size-2.5 rounded-full bg-emerald-400/80" />
+						</span>
+						<span className="mx-1 h-4 w-px bg-white/10" />
+						<Server className="size-3.5 shrink-0" />
+						<span className="truncate">
+							{isLocalServer ? "dokploy-host" : serverId}
+						</span>
+					</div>
+					<div className="flex items-center gap-2">
+						<div
+							className="flex items-center gap-1.5 text-[11px] font-medium capitalize"
+							aria-live="polite"
+						>
+							<span
+								className={`size-2 rounded-full ${
+									connectionStatus === "connected"
+										? "bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,.7)]"
+										: connectionStatus === "connecting"
+											? "animate-pulse bg-amber-300"
+											: "bg-rose-400"
+								}`}
+							/>
+							{connectionStatus}
+						</div>
+						<Button
+							type="button"
+							variant="ghost"
+							size="icon"
+							className="size-7 text-slate-300 hover:bg-white/10 hover:text-white"
+							onClick={reconnect}
+							aria-label="Reconnect terminal"
+							title="Reconnect terminal"
+						>
+							<RotateCcw className="size-3.5" />
+						</Button>
+					</div>
+				</div>
+				<Terminal
+					id={terminalId}
+					key={terminalKey}
+					serverId={serverId}
+					onStatusChange={setConnectionStatus}
+				/>
 			</div>
 		</div>
 	);

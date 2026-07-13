@@ -32,6 +32,9 @@ import { postgresRouter } from "./routers/postgres";
 import { previewDeploymentRouter } from "./routers/preview-deployment";
 import { projectRouter } from "./routers/project";
 import { customRoleRouter } from "./routers/proprietary/custom-role";
+import { forwardAuthRouter } from "./routers/proprietary/forward-auth";
+import { scimRouter } from "./routers/proprietary/scim";
+import { ssoRouter } from "./routers/proprietary/sso";
 import { redirectsRouter } from "./routers/redirects";
 import { redisRouter } from "./routers/redis";
 import { registryRouter } from "./routers/registry";
@@ -91,6 +94,9 @@ export const appRouter = createTRPCRouter({
 	ai: aiRouter,
 	organization: organizationRouter,
 	licenseKey: abhashLicenseKeyRouter,
+	sso: ssoRouter,
+	scim: scimRouter,
+	forwardAuth: forwardAuthRouter,
 	whitelabeling: abhashWhitelabelingRouter,
 	customRole: customRoleRouter,
 	auditLog: abhashAuditLogRouter,

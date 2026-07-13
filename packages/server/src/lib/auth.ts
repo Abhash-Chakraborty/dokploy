@@ -1,6 +1,8 @@
 import type { IncomingMessage } from "node:http";
 import { apiKey } from "@better-auth/api-key";
 import { passkey } from "@better-auth/passkey";
+import { scim } from "@better-auth/scim";
+import { sso } from "@better-auth/sso";
 import * as bcrypt from "bcrypt";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -180,6 +182,8 @@ const { handler, api } = betterAuth({
 			create: {
 				before: async (_user, context) => {
 					if (!IS_CLOUD) {
+						const isSSORequest = context?.path.includes("/sso");
+						const isSCIMRequest = context?.path.includes("/scim");
 						const xDokployToken =
 							context?.request?.headers?.get("x-dokploy-token");
 						if (xDokployToken) {
@@ -209,7 +213,7 @@ const { handler, api } = betterAuth({
 									message: "Email does not match invitation",
 								});
 							}
-						} else {
+						} else if (!isSSORequest && !isSCIMRequest) {
 							const isAdminPresent = await db.query.member.findFirst({
 								where: eq(schema.member.role, "owner"),
 							});
@@ -222,6 +226,8 @@ const { handler, api } = betterAuth({
 					}
 				},
 				after: async (user, context) => {
+					const isSSORequest = context?.path.includes("/sso");
+					const isSCIMRequest = context?.path.includes("/scim");
 					const isAdminPresent = await db.query.member.findFirst({
 						where: eq(schema.member.role, "owner"),
 					});
@@ -257,6 +263,8 @@ const { handler, api } = betterAuth({
 						}
 					}
 
+					if (isSCIMRequest) return;
+
 					if (IS_CLOUD || !isAdminPresent) {
 						await db.transaction(async (tx) => {
 							const organization = await tx
@@ -276,6 +284,28 @@ const { handler, api } = betterAuth({
 								createdAt: new Date(),
 								isDefault: true, // Mark first organization as default
 							});
+						});
+					} else if (isSSORequest) {
+						const providerId = context?.params?.providerId;
+						if (!providerId) {
+							throw new APIError("BAD_REQUEST", {
+								message: "Provider ID is required",
+							});
+						}
+						const provider = await db.query.ssoProvider.findFirst({
+							where: eq(schema.ssoProvider.providerId, providerId),
+						});
+						if (!provider) {
+							throw new APIError("BAD_REQUEST", {
+								message: "Provider not found",
+							});
+						}
+						await db.insert(schema.member).values({
+							userId: user.id,
+							organizationId: provider.organizationId || "",
+							role: "member",
+							createdAt: new Date(),
+							isDefault: true,
 						});
 					}
 				},
@@ -413,6 +443,22 @@ const { handler, api } = betterAuth({
 			enableMetadata: true,
 			references: "user",
 		}),
+		sso({
+			saml: { enableInResponseToValidation: false },
+		}),
+		scim({
+			beforeSCIMTokenGenerated: async ({ user }) => {
+				const dbUser = await db.query.user.findFirst({
+					where: eq(schema.user.id, user.id),
+					columns: { enableEnterpriseFeatures: true },
+				});
+				if (!dbUser?.enableEnterpriseFeatures) {
+					throw new APIError("FORBIDDEN", {
+						message: "SCIM provisioning requires an enterprise license",
+					});
+				}
+			},
+		}),
 		twoFactor(),
 		passkey({
 			rpName: "Dokploy",
@@ -441,19 +487,22 @@ const { handler, api } = betterAuth({
 				maximumRolesPerOrganization: 10,
 			},
 		}),
-		...(IS_CLOUD
-			? [
-					admin({
-						adminUserIds: [process.env.USER_ADMIN_ID as string],
-					}),
-				]
-			: []),
+		admin(
+			IS_CLOUD
+				? { adminUserIds: [process.env.USER_ADMIN_ID as string] }
+				: { adminRoles: [] },
+		),
 	],
 });
 
 const _auth = {
 	handler,
 	createApiKey: api.createApiKey,
+	registerSSOProvider: api.registerSSOProvider,
+	updateSSOProvider: api.updateSSOProvider,
+	generateSCIMToken: api.generateSCIMToken,
+	listSCIMProviderConnections: api.listSCIMProviderConnections,
+	deleteSCIMProviderConnection: api.deleteSCIMProviderConnection,
 };
 
 export type AuthType = typeof _auth;

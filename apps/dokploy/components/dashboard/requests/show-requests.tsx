@@ -224,7 +224,6 @@ export const ShowRequests = () => {
 										</PopoverTrigger>
 										<PopoverContent className="w-auto p-0" align="end">
 											<Calendar
-												initialFocus
 												mode="range"
 												defaultMonth={dateRange.from}
 												selected={{

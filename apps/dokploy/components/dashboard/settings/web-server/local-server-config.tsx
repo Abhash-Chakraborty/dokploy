@@ -1,5 +1,6 @@
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
 import { Settings } from "lucide-react";
+import { useId } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import {
@@ -21,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 const Schema = z.object({
-	port: z.number().min(1, "Port must be higher than 0"),
+	port: z.number().int().min(1, "Port must be higher than 0").max(65_535),
 	username: z.string().min(1, "Username is required"),
 });
 
@@ -51,6 +52,7 @@ interface Props {
 }
 
 const LocalServerConfig = ({ onSave }: Props) => {
+	const formId = `local-terminal-settings-${useId().replaceAll(":", "")}`;
 	const form = useForm<Schema>({
 		defaultValues: getLocalServerData(),
 		resolver: zodResolver(Schema),
@@ -63,7 +65,11 @@ const LocalServerConfig = ({ onSave }: Props) => {
 	};
 
 	return (
-		<Accordion collapsible type="single">
+		<Accordion
+			collapsible
+			type="single"
+			className="rounded-lg border bg-muted/20 px-3"
+		>
 			<AccordionItem value="connectionSettings">
 				<AccordionTrigger
 					className={cn(
@@ -74,7 +80,7 @@ const LocalServerConfig = ({ onSave }: Props) => {
 					<div className="flex flex-row items-center gap-2 justify-between w-full">
 						<div className="flex flex-row gap-2 items-center">
 							<Settings className="h-4 w-4" />
-							<span className="dark:hover:text-white">Connection settings</span>
+							<span className="dark:hover:text-white">Host SSH settings</span>
 						</div>
 					</div>
 				</AccordionTrigger>
@@ -82,7 +88,7 @@ const LocalServerConfig = ({ onSave }: Props) => {
 				<AccordionContent className="px-1 flex flex-col gap-2">
 					<Form {...form}>
 						<form
-							id="hook-form-add-server"
+							id={formId}
 							onSubmit={form.handleSubmit(onSubmit)}
 							className="w-full grid grid-cols-2 gap-4"
 						>
@@ -95,6 +101,9 @@ const LocalServerConfig = ({ onSave }: Props) => {
 										<FormControl>
 											<Input
 												{...field}
+												type="number"
+												min={1}
+												max={65_535}
 												onChange={(e) => {
 													const value = e.target.value;
 													if (value === "") {
@@ -132,7 +141,7 @@ const LocalServerConfig = ({ onSave }: Props) => {
 					</Form>
 
 					<Button
-						form="hook-form-add-server"
+						form={formId}
 						type="submit"
 						className="ml-auto"
 						disabled={!form.formState.isDirty}

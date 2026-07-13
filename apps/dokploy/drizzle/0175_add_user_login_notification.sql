@@ -1,1 +1,0 @@
-ALTER TABLE "notification" ADD COLUMN "userLogin" boolean DEFAULT false NOT NULL;
