@@ -4,6 +4,9 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 RUN corepack prepare pnpm@10.22.0 --activate
+# Corepack's bundled node-gyp entrypoint can lose its executable bit when the
+# ARM64 stage runs under QEMU, which breaks native dependency compilation.
+RUN find /root/.cache/node/corepack -type f -name gyp_main.py -exec chmod 755 {} +
 
 FROM base AS build
 COPY . /usr/src/app
