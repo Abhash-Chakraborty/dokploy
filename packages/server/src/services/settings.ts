@@ -4,6 +4,7 @@ import {
 	execAsync,
 	execAsyncRemote,
 } from "@dokploy/server/utils/process/execAsync";
+import { spawnAsync } from "@dokploy/server/utils/process/spawnAsync";
 import { and, eq } from "drizzle-orm";
 
 import semver from "semver";
@@ -24,6 +25,30 @@ export const DEFAULT_UPDATE_DATA: IUpdateData = {
 	updateAvailable: false,
 };
 
+const DEFAULT_IMAGE_REPOSITORY = "ghcr.io/abhash-chakraborty/dokploy";
+const DEFAULT_RELEASE_REPOSITORY = "Abhash-Chakraborty/dokploy";
+const RELEASE_CACHE_TTL_MS = 5 * 60 * 1000;
+const RELEASE_TAG_PATTERN = /^v\d+\.\d+\.\d+$/;
+const RELEASE_REPOSITORY_PATTERN =
+	/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})\/[A-Za-z0-9._-]{1,100}$/;
+const IMAGE_REPOSITORY_PATTERN =
+	/^[a-z0-9]+(?:[._-][a-z0-9]+)*(?::\d+)?(?:\/[a-z0-9]+(?:[._-][a-z0-9]+)*)+$/;
+
+interface ReleaseCacheEntry {
+	expiresAt: number;
+	releaseTag: string | null;
+}
+
+export interface UpdateCheckDependencies {
+	fetch: typeof globalThis.fetch;
+	imageExists: (image: string) => Promise<boolean>;
+	now: () => number;
+}
+
+const releaseCache = new Map<string, ReleaseCacheEntry>();
+
+export const clearUpdateDataCache = () => releaseCache.clear();
+
 /** Returns current Dokploy docker image tag or `latest` by default. */
 export const getDokployImageTag = () => {
 	return process.env.RELEASE_TAG || "latest";
@@ -34,28 +59,135 @@ export const getDokployImageRepository = () => {
 	const configured =
 		process.env.DOKPLOY_UPDATE_IMAGE ||
 		process.env.DOKPLOY_IMAGE_REPOSITORY ||
-		"ghcr.io/abhash-chakraborty/dokploy";
+		DEFAULT_IMAGE_REPOSITORY;
+	const repository = configured
+		.trim()
+		.replace(/@.+$/, "")
+		.replace(/:[^/:]+$/, "");
 
-	return configured.replace(/:[^/:]+$/, "");
+	return IMAGE_REPOSITORY_PATTERN.test(repository)
+		? repository
+		: DEFAULT_IMAGE_REPOSITORY;
 };
 
-const getImageTagDigest = async (image: string) => {
+/** Returns the validated GitHub owner/repository used for stable releases. */
+export const getDokployReleaseRepository = () => {
+	const repository =
+		process.env.DOKPLOY_RELEASE_REPOSITORY || DEFAULT_RELEASE_REPOSITORY;
+	return RELEASE_REPOSITORY_PATTERN.test(repository)
+		? repository
+		: DEFAULT_RELEASE_REPOSITORY;
+};
+
+const imageExists = async (image: string) => {
 	try {
-		const { stdout } = await execAsync(`docker manifest inspect ${image}`);
-		const manifest = JSON.parse(stdout) as {
-			config?: { digest?: string };
-			manifests?: { digest?: string }[];
-		};
-		return new Set(
-			[
-				manifest.config?.digest,
-				...(manifest.manifests?.map((entry) => entry.digest) ?? []),
-			].filter(Boolean),
-		);
-	} catch (error) {
-		console.error("Error reading image manifest:", error);
-		return new Set<string>();
+		await spawnAsync("docker", ["manifest", "inspect", image]);
+		return true;
+	} catch {
+		return false;
 	}
+};
+
+const defaultUpdateCheckDependencies: UpdateCheckDependencies = {
+	fetch: globalThis.fetch,
+	imageExists,
+	now: Date.now,
+};
+
+const validateReleaseTag = (tag: unknown) => {
+	if (typeof tag !== "string" || !RELEASE_TAG_PATTERN.test(tag)) {
+		return null;
+	}
+	return semver.valid(tag) ? tag : null;
+};
+
+/** Builds the fixed, validated Swarm arguments for a custom stable release. */
+export const getDokployUpdateArguments = (releaseTag: string) => {
+	const validatedReleaseTag = validateReleaseTag(releaseTag);
+	if (!validatedReleaseTag) {
+		throw new Error("Invalid Dokploy release tag");
+	}
+	return [
+		"service",
+		"update",
+		"--force",
+		"--with-registry-auth",
+		"--update-failure-action",
+		"rollback",
+		"--update-monitor",
+		"60s",
+		"--image",
+		`${getDokployImageRepository()}:${validatedReleaseTag}`,
+		"dokploy",
+	];
+};
+
+const getLatestCustomReleaseTag = async (
+	imageRepository: string,
+	dependencies: UpdateCheckDependencies,
+) => {
+	const releaseRepository = getDokployReleaseRepository();
+	const cacheKey = `${releaseRepository}|${imageRepository}`;
+	const cached = releaseCache.get(cacheKey);
+	if (cached && cached.expiresAt > dependencies.now()) {
+		return cached.releaseTag;
+	}
+
+	const headers: Record<string, string> = {
+		Accept: "application/vnd.github+json",
+		"User-Agent": "dokploy-release-checker",
+		"X-GitHub-Api-Version": "2022-11-28",
+	};
+	const githubToken = process.env.DOKPLOY_RELEASE_GITHUB_TOKEN;
+	if (githubToken) {
+		headers.Authorization = `Bearer ${githubToken}`;
+	}
+
+	let response: Response;
+	try {
+		response = await dependencies.fetch(
+			`https://api.github.com/repos/${releaseRepository}/releases/latest`,
+			{ headers },
+		);
+	} catch {
+		console.warn("Unable to reach GitHub while checking for Dokploy updates");
+		return null;
+	}
+
+	if (response.status === 404) {
+		releaseCache.set(cacheKey, {
+			expiresAt: dependencies.now() + RELEASE_CACHE_TTL_MS,
+			releaseTag: null,
+		});
+		return null;
+	}
+	if (!response.ok) {
+		console.warn(`GitHub release check failed with status ${response.status}`);
+		return null;
+	}
+
+	let release: { draft?: boolean; prerelease?: boolean; tag_name?: unknown };
+	try {
+		release = (await response.json()) as typeof release;
+	} catch {
+		console.warn("GitHub returned invalid release data while checking updates");
+		return null;
+	}
+
+	const releaseTag =
+		release.draft || release.prerelease
+			? null
+			: validateReleaseTag(release.tag_name);
+	const versionImageExists = releaseTag
+		? await dependencies.imageExists(`${imageRepository}:${releaseTag}`)
+		: false;
+	const verifiedReleaseTag = versionImageExists ? releaseTag : null;
+
+	releaseCache.set(cacheKey, {
+		expiresAt: dependencies.now() + RELEASE_CACHE_TTL_MS,
+		releaseTag: verifiedReleaseTag,
+	});
+	return verifiedReleaseTag;
 };
 
 /** Returns Dokploy docker service image digest */
@@ -86,28 +218,32 @@ export const getServiceImageDigest = async () => {
 	return currentDigest;
 };
 
-/** Returns latest version number and information whether server update is available by comparing current image's digest against digest for provided image tag via Docker hub API. */
+/** Returns the latest version and whether the current installation can update. */
 export const getUpdateData = async (
 	currentVersion: string,
+	dependencies: UpdateCheckDependencies = defaultUpdateCheckDependencies,
 ): Promise<IUpdateData> => {
 	try {
 		const imageRepository = getDokployImageRepository();
 		if (imageRepository !== "dokploy/dokploy") {
-			const currentDigest = await getServiceImageDigest();
-			if (!currentDigest) {
+			const currentImageTag = getDokployImageTag();
+			if (currentImageTag === "canary" || currentImageTag === "feature") {
 				return DEFAULT_UPDATE_DATA;
 			}
-			const latestDigestSet = await getImageTagDigest(
-				`${imageRepository}:latest`,
-			);
 
-			if (latestDigestSet.size === 0) {
+			const latestVersion = await getLatestCustomReleaseTag(
+				imageRepository,
+				dependencies,
+			);
+			const cleanedCurrent = semver.clean(currentVersion);
+			const cleanedLatest = latestVersion ? semver.clean(latestVersion) : null;
+			if (!latestVersion || !cleanedCurrent || !cleanedLatest) {
 				return DEFAULT_UPDATE_DATA;
 			}
 
 			return {
-				latestVersion: "latest",
-				updateAvailable: !latestDigestSet.has(currentDigest),
+				latestVersion,
+				updateAvailable: semver.gt(cleanedLatest, cleanedCurrent),
 			};
 		}
 
@@ -195,8 +331,8 @@ export const getUpdateData = async (
 			latestVersion,
 			updateAvailable,
 		};
-	} catch (error) {
-		console.error("Error fetching update data:", error);
+	} catch {
+		console.warn("Unable to determine Dokploy update availability");
 		return DEFAULT_UPDATE_DATA;
 	}
 };

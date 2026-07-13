@@ -51,15 +51,45 @@ jobs:
 
       - name: Compute tags
         id: meta
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           OWNER=$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')
           IMAGE_NAME="ghcr.io/${OWNER}/dokploy"
           VERSION=$(node -p "require('./apps/dokploy/package.json').version")
+          if [[ ! "${VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid Dokploy release version: ${VERSION}" >&2
+            exit 1
+          fi
+
           SHA_TAG=sha-${GITHUB_SHA::12}
           TAGS="${IMAGE_NAME}:${SHA_TAG}"
-          TAGS="${TAGS},${IMAGE_NAME}:latest,${IMAGE_NAME}:${VERSION}"
+          RELEASE_STATUS=$(curl --silent --show-error \
+            --output /tmp/dokploy-release.json \
+            --write-out "%{http_code}" \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${VERSION}")
+
+          case "${RELEASE_STATUS}" in
+            200)
+              IS_RELEASE=false
+              ;;
+            404)
+              IS_RELEASE=true
+              TAGS="${TAGS},${IMAGE_NAME}:${VERSION},${IMAGE_NAME}:latest"
+              ;;
+            *)
+              echo "Unable to determine release state (GitHub HTTP ${RELEASE_STATUS})" >&2
+              exit 1
+              ;;
+          esac
+
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
+          echo "is_release=${IS_RELEASE}" >> "$GITHUB_OUTPUT"
           echo "platforms=linux/amd64,linux/arm64" >> "$GITHUB_OUTPUT"
           echo "cache-scope=dokploy-release-multiarch" >> "$GITHUB_OUTPUT"
 
@@ -74,7 +104,7 @@ jobs:
           cache-to: type=gha,scope=${{ steps.meta.outputs.cache-scope }},mode=max
 
       - name: Create GitHub release for main
-        if: github.ref_name == 'main'
+        if: github.ref_name == 'main' && steps.meta.outputs.is_release == 'true'
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.meta.outputs.version }}
