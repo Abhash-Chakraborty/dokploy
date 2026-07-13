@@ -1,7 +1,40 @@
+import { execFile } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { execAsync, IS_CLOUD, paths } from "@dokploy/server";
+import { promisify } from "node:util";
+import { IS_CLOUD, paths } from "@dokploy/server";
+
+const execFileAsync = promisify(execFile);
+
+export const TERMINAL_RESIZE_MESSAGE_PREFIX = "\u0000dokploy-resize:";
+
+export interface TerminalDimensions {
+	cols: number;
+	rows: number;
+}
+
+const clampTerminalDimension = (value: unknown, min: number, max: number) => {
+	if (typeof value !== "number" || !Number.isFinite(value)) return null;
+	return Math.min(max, Math.max(min, Math.floor(value)));
+};
+
+/** Parse the private control frame used to resize an SSH PTY. */
+export const parseTerminalResizeMessage = (
+	message: string,
+): TerminalDimensions | null => {
+	if (!message.startsWith(TERMINAL_RESIZE_MESSAGE_PREFIX)) return null;
+	try {
+		const value = JSON.parse(
+			message.slice(TERMINAL_RESIZE_MESSAGE_PREFIX.length),
+		) as { cols?: unknown; rows?: unknown };
+		const cols = clampTerminalDimension(value.cols, 20, 500);
+		const rows = clampTerminalDimension(value.rows, 5, 300);
+		return cols && rows ? { cols, rows } : null;
+	} catch {
+		return null;
+	}
+};
 
 /**
  * Validates that the container ID matches Docker's expected format.
@@ -82,13 +115,34 @@ export const getShell = () => {
 export const setupLocalServerSSHKey = async () => {
 	const { SSH_PATH } = paths(true);
 	const sshKeyPath = path.join(SSH_PATH, "auto_generated-dokploy-local");
+	const publicKeyPath = `${sshKeyPath}.pub`;
+
+	fs.mkdirSync(SSH_PATH, { recursive: true, mode: 0o700 });
+	fs.chmodSync(SSH_PATH, 0o700);
 
 	if (!fs.existsSync(sshKeyPath)) {
-		// Generate new SSH key if it hasn't been created yet
-		await execAsync(
-			`ssh-keygen -t rsa -b 4096 -f ${sshKeyPath} -N "" -C "dokploy-local-access"`,
-		);
+		await execFileAsync("ssh-keygen", [
+			"-t",
+			"ed25519",
+			"-f",
+			sshKeyPath,
+			"-N",
+			"",
+			"-C",
+			"dokploy-local-access",
+		]);
+	} else if (!fs.existsSync(publicKeyPath)) {
+		const { stdout } = await execFileAsync("ssh-keygen", [
+			"-y",
+			"-f",
+			sshKeyPath,
+		]);
+		fs.writeFileSync(publicKeyPath, `${stdout.trim()} dokploy-local-access\n`, {
+			mode: 0o644,
+		});
 	}
+
+	fs.chmodSync(sshKeyPath, 0o600);
 
 	const privateKey = fs.readFileSync(sshKeyPath, "utf8");
 

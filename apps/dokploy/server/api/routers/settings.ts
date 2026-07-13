@@ -67,6 +67,7 @@ import {
 	apiSaveSSHKey,
 	apiServerSchema,
 	apiTraefikConfig,
+	apiUpdateAuthMethods,
 	apiUpdateDockerCleanup,
 	apiUpdateWebServerBuildsConcurrency,
 	projects,
@@ -492,6 +493,48 @@ export const settingsRouter = createTRPCRouter({
 			return true;
 		}),
 
+	updateAuthMethods: adminProcedure
+		.input(apiUpdateAuthMethods)
+		.mutation(async ({ input, ctx }) => {
+			if (IS_CLOUD) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "This feature is only available for self-hosted instances",
+				});
+			}
+
+			await updateWebServerSettings({
+				authMethodsConfig: input.authMethodsConfig,
+			});
+
+			await audit(ctx, {
+				action: "update",
+				resourceType: "settings",
+				resourceName: "auth-methods",
+			});
+			return true;
+		}),
+
+	getAuthMethods: publicProcedure.query(async () => {
+		if (IS_CLOUD) {
+			return {
+				emailPassword: true,
+				github: true,
+				google: true,
+				passkey: true,
+			};
+		}
+		const settings = await getWebServerSettings();
+		return (
+			settings?.authMethodsConfig ?? {
+				emailPassword: true,
+				github: true,
+				google: true,
+				passkey: true,
+			}
+		);
+	}),
+
 	readTraefikConfig: adminProcedure.query(() => {
 		if (IS_CLOUD) {
 			return true;
@@ -674,9 +717,12 @@ export const settingsRouter = createTRPCRouter({
 		async ({ ctx }): Promise<unknown> => {
 			const protocol = ctx.req.headers["x-forwarded-proto"];
 			const url = `${protocol}://${ctx.req.headers.host}/api`;
+			// OpenAPI `info.version` must be plain semver; the package version is
+			// prefixed with "v" (e.g. "v0.29.8") which breaks the spec parser.
+			const specVersion = String(packageInfo.version).replace(/^v/, "");
 			const openApiDocument = generateOpenApiDocument(appRouter, {
 				title: "tRPC OpenAPI",
-				version: packageInfo.version,
+				version: specVersion,
 				baseUrl: url,
 				docsUrl: `${url}/settings.getOpenApiDocument`,
 				tags: [
@@ -725,10 +771,15 @@ export const settingsRouter = createTRPCRouter({
 				],
 			});
 
+			// Swagger UI's ApiDOM 3.1 refractor has a known bug; pin the document to
+			// OpenAPI 3.0.3 so the served spec always carries a valid version field
+			// (the client also forces this, but the source must be valid on its own).
+			openApiDocument.openapi = "3.0.3";
+
 			openApiDocument.info = {
 				title: "Dokploy API",
 				description: "Endpoints for dokploy",
-				version: packageInfo.version,
+				version: specVersion,
 			};
 
 			// Add security schemes configuration

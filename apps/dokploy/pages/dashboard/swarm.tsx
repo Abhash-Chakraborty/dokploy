@@ -1,13 +1,14 @@
 import { validateRequest } from "@dokploy/server/lib/auth";
 import { createServerSideHelpers } from "@trpc/react-query/server";
+import { PieChart } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
 import superjson from "superjson";
 import { ShowSwarmContainers } from "@/components/dashboard/swarm/containers/show-swarm-containers";
 import SwarmMonitorCard from "@/components/dashboard/swarm/monitoring-card";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { ServerFilter } from "@/components/shared/server-filter";
-import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { appRouter } from "@/server/api/root";
 
@@ -15,24 +16,25 @@ const Dashboard = () => {
 	return (
 		<ServerFilter>
 			{(serverId) => (
-				<div className="space-y-4">
+				<PageContainer>
+					<PageHeader
+						title="Swarm"
+						description="Monitor and manage your Docker Swarm cluster."
+						icon={<PieChart className="size-5" />}
+					/>
 					<Tabs defaultValue="overview">
 						<TabsList>
 							<TabsTrigger value="overview">Overview</TabsTrigger>
 							<TabsTrigger value="containers">Containers</TabsTrigger>
 						</TabsList>
-						<TabsContent value="overview">
+						<TabsContent value="overview" className="pt-4">
 							<SwarmMonitorCard serverId={serverId} />
 						</TabsContent>
-						<TabsContent value="containers">
-							<Card className="h-full bg-sidebar p-2.5 rounded-xl mx-auto w-full">
-								<div className="rounded-xl bg-background shadow-md p-6">
-									<ShowSwarmContainers serverId={serverId} />
-								</div>
-							</Card>
+						<TabsContent value="containers" className="pt-4">
+							<ShowSwarmContainers serverId={serverId} />
 						</TabsContent>
 					</Tabs>
-				</div>
+				</PageContainer>
 			)}
 		</ServerFilter>
 	);

@@ -23,13 +23,14 @@ import {
 	Key,
 	KeyRound,
 	Loader2,
-		type LucideIcon,
+	type LucideIcon,
 	Package,
 	Palette,
 	PieChart,
 	Rocket,
 	Server,
 	ShieldCheck,
+	SquareTerminal,
 	Star,
 	Tags,
 	Trash2,
@@ -40,7 +41,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -88,6 +88,7 @@ import { api } from "@/utils/api";
 import { AddOrganization } from "../dashboard/organization/handle-organization";
 import { DialogAction } from "../shared/dialog-action";
 import { Logo } from "../shared/logo";
+import { VersionFooter } from "../shared/version-footer";
 import { Button } from "../ui/button";
 import { TimeBadge } from "../ui/time-badge";
 import { UpdateServerButton } from "./update-server";
@@ -198,6 +199,14 @@ const MENU: Menu = {
 			url: "/dashboard/docker",
 			icon: BlocksIcon,
 			// Only enabled for users with access to Docker
+			isEnabled: ({ permissions }) => !!permissions?.docker.read,
+		},
+		{
+			isSingle: true,
+			title: "Terminals",
+			url: "/dashboard/terminals",
+			icon: SquareTerminal,
+			// Master console — gated behind docker/server access
 			isEnabled: ({ permissions }) => !!permissions?.docker.read,
 		},
 		{
@@ -391,6 +400,13 @@ const MENU: Menu = {
 		},
 		{
 			isSingle: true,
+			title: "Backups",
+			url: "/dashboard/settings/backups",
+			icon: Database,
+			isEnabled: ({ permissions }) => !!permissions?.backup?.read,
+		},
+		{
+			isSingle: true,
 			title: "Billing",
 			url: "/dashboard/settings/billing",
 			icon: CreditCard,
@@ -433,7 +449,7 @@ const MENU: Menu = {
  * Creates a menu based on the current user's role and permissions
  * @returns a menu object with the home, settings, and help items
  */
-function createMenuForAuthUser(opts: {
+export function createMenuForAuthUser(opts: {
 	auth?: AuthQueryOutput;
 	permissions?: PermissionsOutput;
 	isCloud: boolean;
@@ -556,8 +572,6 @@ function SidebarLogo() {
 	const { isMobile } = useSidebar();
 	const isCollapsed = state === "collapsed" && !isMobile;
 	const { data: activeOrganization } = api.organization.active.useQuery();
-	const { data: haveValidLicense } =
-		api.licenseKey.haveValidLicenseKey.useQuery();
 
 	const { data: invitations, refetch: refetchInvitations } =
 		api.user.getInvitations.useQuery();
@@ -623,14 +637,9 @@ function SidebarLogo() {
 												isCollapsed && "hidden",
 											)}
 										>
-											<div className="flex items-center gap-1.5">
-												<p className="text-sm font-medium leading-none">
-													{activeOrganization?.name ?? "Select Organization"}
-												</p>
-												{haveValidLicense && (
-													<Badge variant="blue">Enterprise</Badge>
-												)}
-											</div>
+											<p className="text-sm font-medium leading-none">
+												{activeOrganization?.name ?? "Select Organization"}
+											</p>
 										</div>
 									</div>
 									<ChevronsUpDown
@@ -652,7 +661,7 @@ function SidebarLogo() {
 										const isDefault = org.members?.[0]?.isDefault ?? false;
 										return (
 											<div
-												className="flex flex-row items-center justify-between gap-1"
+												className="flex flex-row justify-between"
 												key={org.name}
 											>
 												<DropdownMenuItem
@@ -662,21 +671,25 @@ function SidebarLogo() {
 														});
 														window.location.reload();
 													}}
-													className="flex min-w-0 flex-1 gap-2 p-2"
+													className="w-full gap-2 p-2"
 												>
-													<div className="flex size-6 shrink-0 items-center justify-center rounded-sm border">
+													<div className="flex flex-col gap-1">
+														<div className="flex items-center gap-2">
+															{org.name}
+														</div>
+													</div>
+													<div className="flex size-6 items-center justify-center rounded-sm border">
 														<Logo
 															className={cn(
 																"transition-all",
-																state === "collapsed" ? "size-4" : "size-5",
+																state === "collapsed" ? "size-6" : "size-10",
 															)}
 															logoUrl={org.logo ?? undefined}
 														/>
 													</div>
-													<span className="truncate">{org.name}</span>
 												</DropdownMenuItem>
 
-												<div className="flex shrink-0 items-center gap-2">
+												<div className="flex items-center gap-2">
 													<Button
 														variant="ghost"
 														size="icon"
@@ -792,7 +805,7 @@ function SidebarLogo() {
 								>
 									<Bell className="size-4" />
 									{invitations && invitations.length > 0 && (
-										<span className="absolute top-0 right-0 flex size-4 items-center justify-center rounded-full bg-blue-500 text-xs text-white">
+										<span className="absolute -top-0 -right-0 flex size-4 items-center justify-center rounded-full bg-blue-500 text-xs text-white">
 											{invitations.length}
 										</span>
 									)}
@@ -946,12 +959,10 @@ export default function Page({ children }: Props) {
 			<MobileCloser />
 			<Sidebar collapsible="icon" variant="floating">
 				<SidebarHeader>
-					{/* <SidebarMenuButton
-						className="group-data-[collapsible=icon]:p-0!"
-						size="lg"
-					> */}
-					<LogoWrapper />
-					{/* </SidebarMenuButton> */}
+					<div className="flex items-center justify-between gap-2">
+						<LogoWrapper />
+						<SidebarTrigger className="shrink-0 group-data-[collapsible=icon]:hidden" />
+					</div>
 				</SidebarHeader>
 				<SidebarContent>
 					<SidebarGroup>
@@ -1043,117 +1054,6 @@ export default function Page({ children }: Props) {
 							})}
 						</SidebarMenu>
 					</SidebarGroup>
-					<SidebarGroup>
-						<SidebarGroupLabel>Settings</SidebarGroupLabel>
-						<SidebarMenu className="gap-1">
-							{filteredSettings.map((item) => {
-								const isSingle = item.isSingle !== false;
-								const isActive = isSingle
-									? isActiveRoute({ itemUrl: item.url, pathname })
-									: item.items.some((item) =>
-											isActiveRoute({ itemUrl: item.url, pathname }),
-										);
-
-								return (
-									<Collapsible
-										key={item.title}
-										asChild
-										defaultOpen={isActive}
-										className="group/collapsible"
-									>
-										<SidebarMenuItem>
-											{isSingle ? (
-												<SidebarMenuButton
-													asChild
-													tooltip={item.title}
-													className={cn(isActive && "bg-border")}
-												>
-													<Link
-														href={item.url}
-														className="flex w-full items-center gap-2"
-													>
-														{item.icon && (
-															<item.icon
-																className={cn(isActive && "text-primary")}
-															/>
-														)}
-														<span>{item.title}</span>
-													</Link>
-												</SidebarMenuButton>
-											) : (
-												<>
-													<CollapsibleTrigger asChild>
-														<SidebarMenuButton
-															tooltip={item.title}
-															isActive={isActive}
-														>
-															{item.icon && <item.icon />}
-
-															<span>{item.title}</span>
-															{item.items?.length && (
-																<ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-															)}
-														</SidebarMenuButton>
-													</CollapsibleTrigger>
-													<CollapsibleContent>
-														<SidebarMenuSub>
-															{item.items?.map((subItem) => (
-																<SidebarMenuSubItem key={subItem.title}>
-																	<SidebarMenuSubButton
-																		asChild
-																		className={cn(isActive && "bg-border")}
-																	>
-																		<Link
-																			href={subItem.url}
-																			className="flex w-full items-center"
-																		>
-																			{subItem.icon && (
-																				<span className="mr-2">
-																					<subItem.icon
-																						className={cn(
-																							"h-4 w-4 text-muted-foreground",
-																							isActive && "text-primary",
-																						)}
-																					/>
-																				</span>
-																			)}
-																			<span>{subItem.title}</span>
-																		</Link>
-																	</SidebarMenuSubButton>
-																</SidebarMenuSubItem>
-															))}
-														</SidebarMenuSub>
-													</CollapsibleContent>
-												</>
-											)}
-										</SidebarMenuItem>
-									</Collapsible>
-								);
-							})}
-						</SidebarMenu>
-					</SidebarGroup>
-					<SidebarGroup className="group-data-[collapsible=icon]:hidden">
-						<SidebarGroupLabel>Extra</SidebarGroupLabel>
-						<SidebarMenu>
-							{help.map((item: ExternalLink) => (
-								<SidebarMenuItem key={item.name}>
-									<SidebarMenuButton asChild>
-										<a
-											href={item.url}
-											target="_blank"
-											rel="noopener noreferrer"
-											className="flex w-full items-center gap-2"
-										>
-											<span className="mr-2">
-												<item.icon className="h-4 w-4" />
-											</span>
-											<span>{item.name}</span>
-										</a>
-									</SidebarMenuButton>
-								</SidebarMenuItem>
-							))}
-						</SidebarMenu>
-					</SidebarGroup>
 				</SidebarContent>
 				<SidebarFooter>
 					<SidebarMenu className="flex flex-col gap-2">
@@ -1165,14 +1065,14 @@ export default function Page({ children }: Props) {
 						<SidebarMenuItem>
 							<UserNav />
 						</SidebarMenuItem>
-						{whitelabeling?.footerText && (
-							<div className="px-3 text-xs text-muted-foreground text-center group-data-[collapsible=icon]:hidden">
-								{whitelabeling.footerText}
-							</div>
-						)}
-						{dokployVersion && (
-							<div className="px-3 text-xs text-muted-foreground text-center group-data-[collapsible=icon]:hidden">
-								Version {dokployVersion}
+						{(whitelabeling?.footerText || dokployVersion) && (
+							<div className="px-3 text-xs text-foreground text-left truncate group-data-[collapsible=icon]:hidden">
+								{whitelabeling?.footerText || "Made with ♥ by Abhash"}
+								{dokployVersion && (
+									<span className="text-muted-foreground">
+										{` · V ${String(dokployVersion).replace(/^v/i, "")}`}
+									</span>
+								)}
 							</div>
 						)}
 					</SidebarMenu>
@@ -1181,11 +1081,17 @@ export default function Page({ children }: Props) {
 			</Sidebar>
 			<SidebarInset>
 				{!includesProjects && (
-					<header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+					<header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
 						<div className="flex items-center justify-between w-full px-4">
 							<div className="flex items-center gap-2">
-								<SidebarTrigger className="-ml-1" />
-								<Separator orientation="vertical" className="mr-2 h-4" />
+								{/* Only show this outer toggle when the sidebar is collapsed;
+								    the in-sidebar toggle handles the expanded state, so there
+								    is always exactly one visible collapse button. */}
+								<SidebarTrigger className="-ml-1 hidden group-has-[[data-collapsible=icon]]/sidebar-wrapper:flex" />
+								<Separator
+									orientation="vertical"
+									className="mr-2 h-4 hidden group-has-[[data-collapsible=icon]]/sidebar-wrapper:block"
+								/>
 								<Breadcrumb>
 									<BreadcrumbList>
 										<BreadcrumbItem className="block">
@@ -1206,7 +1112,10 @@ export default function Page({ children }: Props) {
 					</header>
 				)}
 
-				<div className="flex flex-col w-full p-4 pt-0">{children}</div>
+				<div className="flex flex-col w-full min-w-0 p-4 pt-0 overflow-x-hidden">
+					{children}
+				</div>
+				<VersionFooter />
 			</SidebarInset>
 		</SidebarProvider>
 	);

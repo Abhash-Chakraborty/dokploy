@@ -109,6 +109,21 @@ export const webServerSettings = pgTable("webServerSettings", {
 	buildsConcurrency: integer("buildsConcurrency").notNull().default(1),
 	// Auth Configuration (self-hosted only)
 	enforceSSO: boolean("enforceSSO").notNull().default(false),
+	// Enabled login methods (account owner can toggle; ≥1 must stay enabled)
+	authMethodsConfig: jsonb("authMethodsConfig")
+		.$type<{
+			emailPassword: boolean;
+			github: boolean;
+			google: boolean;
+			passkey: boolean;
+		}>()
+		.notNull()
+		.default({
+			emailPassword: true,
+			github: true,
+			google: true,
+			passkey: true,
+		}),
 	// Cache Cleanup Configuration
 	cleanupCacheApplications: boolean("cleanupCacheApplications")
 		.notNull()
@@ -175,6 +190,21 @@ export const apiUpdateWebServerSettings = createSchema.partial().extend({
 
 export const apiUpdateWebServerBuildsConcurrency = z.object({
 	buildsConcurrency: z.number().int().min(1).max(100),
+});
+
+export const authMethodsConfigSchema = z
+	.object({
+		emailPassword: z.boolean(),
+		github: z.boolean(),
+		google: z.boolean(),
+		passkey: z.boolean(),
+	})
+	.refine((cfg) => Object.values(cfg).some(Boolean), {
+		message: "At least one login method must remain enabled",
+	});
+
+export const apiUpdateAuthMethods = z.object({
+	authMethodsConfig: authMethodsConfigSchema,
 });
 
 export const apiAssignDomain = z

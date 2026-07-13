@@ -5,6 +5,8 @@ import type { ReactElement } from "react";
 import superjson from "superjson";
 import { ShowApiKeys } from "@/components/dashboard/settings/api/show-api-keys";
 import { LinkingAccount } from "@/components/dashboard/settings/linking-account/linking-account";
+import { LoginHistory } from "@/components/dashboard/settings/profile/login-history";
+import { PasskeyManager } from "@/components/dashboard/settings/profile/passkey-manager";
 import { ProfileForm } from "@/components/dashboard/settings/profile/profile-form";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { appRouter } from "@/server/api/root";
@@ -20,6 +22,8 @@ const Page = () => {
 				<ProfileForm />
 				{isCloud && <LinkingAccount />}
 				{permissions?.api.read && <ShowApiKeys />}
+				<PasskeyManager />
+				<LoginHistory />
 			</div>
 		</div>
 	);

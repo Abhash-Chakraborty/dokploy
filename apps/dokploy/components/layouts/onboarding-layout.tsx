@@ -1,3 +1,4 @@
+import { GitFork } from "lucide-react";
 import Link from "next/link";
 import type React from "react";
 import { cn } from "@/lib/utils";
@@ -20,33 +21,70 @@ export const OnboardingLayout = ({ children }: Props) => {
 
 	return (
 		<div className="container relative min-h-svh flex-col items-center justify-center flex lg:max-w-none lg:grid lg:grid-cols-2 lg:px-0 w-full">
-			<div className="relative hidden h-full flex-col  p-10 text-primary dark:border-r lg:flex">
+			<div className="relative hidden h-full flex-col p-10 text-primary dark:border-r lg:flex">
+				{/* Royalty-free CSS mesh gradient backdrop (DESIGN.md aesthetic). */}
 				<div className="absolute inset-0 bg-muted" />
+				<div
+					className="absolute inset-0 opacity-60"
+					style={{
+						backgroundImage:
+							"radial-gradient(at 20% 20%, rgba(0,124,240,0.25) 0px, transparent 50%), radial-gradient(at 80% 0%, rgba(121,40,202,0.25) 0px, transparent 50%), radial-gradient(at 80% 80%, rgba(255,0,128,0.20) 0px, transparent 50%), radial-gradient(at 0% 80%, rgba(80,227,194,0.25) 0px, transparent 50%)",
+					}}
+				/>
 				<Link
 					href="/"
-					className="relative z-20 flex items-center text-lg font-medium gap-4  text-primary"
+					className="relative z-20 flex items-center text-lg font-medium gap-4 text-primary"
 				>
 					<Logo className="size-10" logoUrl={logoUrl} />
 					{appName}
 				</Link>
-				<div className="relative z-20 mt-auto">
+				<div className="relative z-20 mt-auto space-y-4">
 					<blockquote className="space-y-2">
 						<p className="text-lg text-primary">{appDescription}</p>
 					</blockquote>
+					<Link
+						href="https://github.com/Abhash-Chakraborty"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
+					>
+						<GithubIcon className="size-4" />
+						View the repository
+					</Link>
 				</div>
 			</div>
-			<div className="flex min-h-svh w-full flex-col">
-				<div className="flex w-full flex-1 flex-col justify-center space-y-6 max-w-lg mx-auto py-8">
+			<div className="w-full">
+				<div className="flex w-full flex-col justify-center space-y-6 max-w-lg mx-auto">
 					{children}
 				</div>
-				<div className="mx-auto flex w-full max-w-lg items-center justify-center gap-1 pb-6 text-muted-foreground sm:justify-end">
-					<Button variant="ghost" size="icon">
-						<Link href="https://github.com/dokploy/dokploy">
+				<div className="flex items-center gap-4 justify-center absolute bottom-4 right-4 text-muted-foreground">
+					<Button variant="ghost" size="icon" asChild>
+						<Link
+							href="https://github.com/dokploy/dokploy"
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label="GitHub"
+						>
 							<GithubIcon />
 						</Link>
 					</Button>
-					<Button variant="ghost" size="icon">
-						<Link href="https://x.com/getdokploy">
+					<Button variant="ghost" size="icon" asChild>
+						<Link
+							href="https://github.com/Abhash-Chakraborty/dokploy"
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label="Fork repository (Abhash-Chakraborty/dokploy)"
+						>
+							<GitFork className="size-5" />
+						</Link>
+					</Button>
+					<Button variant="ghost" size="icon" asChild>
+						<Link
+							href="https://x.com/getdokploy"
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label="X (Twitter)"
+						>
 							<svg
 								stroke="currentColor"
 								fill="currentColor"
@@ -54,19 +92,26 @@ export const OnboardingLayout = ({ children }: Props) => {
 								viewBox="0 0 24 24"
 								xmlns="http://www.w3.org/2000/svg"
 								className="size-5"
+								aria-hidden="true"
 							>
 								<path d="M10.4883 14.651L15.25 21H22.25L14.3917 10.5223L20.9308 3H18.2808L13.1643 8.88578L8.75 3H1.75L9.26086 13.0145L2.31915 21H4.96917L10.4883 14.651ZM16.25 19L5.75 5H7.75L18.25 19H16.25Z" />
 							</svg>
 						</Link>
 					</Button>
-					<Button variant="ghost" size="icon">
-						<Link href="https://discord.com/invite/2tBnJ3jDJc">
+					<Button variant="ghost" size="icon" asChild>
+						<Link
+							href="https://discord.com/invite/2tBnJ3jDJc"
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label="Discord"
+						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								viewBox="0 0 48 48"
 								width="48px"
 								height="48px"
 								className={cn("size-6")}
+								aria-hidden="true"
 							>
 								<path
 									fill="currentColor"

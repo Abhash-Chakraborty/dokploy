@@ -94,14 +94,86 @@ function getServiceInfo(d: DeploymentRow) {
 	return null;
 }
 
-export function ShowDeploymentsTable() {
+export interface DeploymentFilterState {
+	globalFilter: string;
+	setGlobalFilter: (v: string) => void;
+	statusFilter: string;
+	setStatusFilter: (v: string) => void;
+	typeFilter: string;
+	setTypeFilter: (v: string) => void;
+}
+
+/**
+ * Compact filter toolbar for the deployments table. Exported so the page can
+ * render it inline with the tabs row (the right side of the tabs row is
+ * otherwise empty) instead of stacking it on its own line.
+ */
+export function DeploymentFilters({
+	globalFilter,
+	setGlobalFilter,
+	statusFilter,
+	setStatusFilter,
+	typeFilter,
+	setTypeFilter,
+}: DeploymentFilterState) {
+	return (
+		<div className="flex flex-wrap items-center gap-2">
+			<Input
+				placeholder="Search deployments..."
+				value={globalFilter}
+				onChange={(e) => setGlobalFilter(e.target.value)}
+				className="h-9 w-full sm:w-[240px]"
+			/>
+			<Select value={statusFilter} onValueChange={setStatusFilter}>
+				<SelectTrigger className="h-9 w-[130px]">
+					<SelectValue placeholder="Status" />
+				</SelectTrigger>
+				<SelectContent>
+					<SelectItem value="all">All statuses</SelectItem>
+					<SelectItem value="running">Running</SelectItem>
+					<SelectItem value="done">Done</SelectItem>
+					<SelectItem value="error">Error</SelectItem>
+					<SelectItem value="cancelled">Cancelled</SelectItem>
+				</SelectContent>
+			</Select>
+			<Select value={typeFilter} onValueChange={setTypeFilter}>
+				<SelectTrigger className="h-9 w-[130px]">
+					<SelectValue placeholder="Type" />
+				</SelectTrigger>
+				<SelectContent>
+					<SelectItem value="all">All types</SelectItem>
+					<SelectItem value="application">Application</SelectItem>
+					<SelectItem value="compose">Compose</SelectItem>
+				</SelectContent>
+			</Select>
+		</div>
+	);
+}
+
+interface ShowDeploymentsTableProps {
+	/** Controlled filter state (lifted to the page so the toolbar can sit in
+	 * the tabs row). Falls back to internal state when omitted. */
+	filters?: DeploymentFilterState;
+}
+
+export function ShowDeploymentsTable({
+	filters,
+}: ShowDeploymentsTableProps = {}) {
 	const [sorting, setSorting] = useState<SortingState>([
 		{ id: "createdAt", desc: true },
 	]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-	const [globalFilter, setGlobalFilter] = useState("");
-	const [statusFilter, setStatusFilter] = useState<string>("all");
-	const [typeFilter, setTypeFilter] = useState<string>("all");
+	const [internalGlobalFilter, setInternalGlobalFilter] = useState("");
+	const [internalStatusFilter, setInternalStatusFilter] =
+		useState<string>("all");
+	const [internalTypeFilter, setInternalTypeFilter] = useState<string>("all");
+
+	// Use the lifted filter state when provided, otherwise fall back to internal
+	// state so the component stays usable standalone.
+	const globalFilter = filters?.globalFilter ?? internalGlobalFilter;
+	const setGlobalFilter = filters?.setGlobalFilter ?? setInternalGlobalFilter;
+	const statusFilter = filters?.statusFilter ?? internalStatusFilter;
+	const typeFilter = filters?.typeFilter ?? internalTypeFilter;
 	const [pagination, setPagination] = useState<PaginationState>({
 		pageIndex: 0,
 		pageSize: 50,
@@ -276,11 +348,13 @@ export function ShowDeploymentsTable() {
 				),
 				cell: ({ row }: { row: { original: DeploymentRow } }) => {
 					const d = row.original;
+					// Fall back to "Dokploy" so the column is never empty for
+					// deployments that run on the same server as Dokploy.
 					const serverName =
 						d.server?.name ??
 						d.application?.server?.name ??
 						d.compose?.server?.name ??
-						null;
+						"Dokploy";
 					const serverType =
 						d.server?.serverType ??
 						d.application?.server?.serverType ??
@@ -453,36 +527,16 @@ export function ShowDeploymentsTable() {
 
 	return (
 		<div className="space-y-2">
-			<div className="flex flex-wrap items-center gap-2">
-				<Input
-					placeholder="Search by name, project, environment, server..."
-					value={globalFilter}
-					onChange={(e) => setGlobalFilter(e.target.value)}
-					className="max-w-xs"
+			{!filters && (
+				<DeploymentFilters
+					globalFilter={globalFilter}
+					setGlobalFilter={setGlobalFilter}
+					statusFilter={statusFilter}
+					setStatusFilter={setInternalStatusFilter}
+					typeFilter={typeFilter}
+					setTypeFilter={setInternalTypeFilter}
 				/>
-				<Select value={statusFilter} onValueChange={setStatusFilter}>
-					<SelectTrigger className="w-[140px]">
-						<SelectValue placeholder="Status" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="all">All statuses</SelectItem>
-						<SelectItem value="running">Running</SelectItem>
-						<SelectItem value="done">Done</SelectItem>
-						<SelectItem value="error">Error</SelectItem>
-						<SelectItem value="cancelled">Cancelled</SelectItem>
-					</SelectContent>
-				</Select>
-				<Select value={typeFilter} onValueChange={setTypeFilter}>
-					<SelectTrigger className="w-[140px]">
-						<SelectValue placeholder="Type" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="all">All types</SelectItem>
-						<SelectItem value="application">Application</SelectItem>
-						<SelectItem value="compose">Compose</SelectItem>
-					</SelectContent>
-				</Select>
-			</div>
+			)}
 			<div className="px-0">
 				{isLoading ? (
 					<div className="flex gap-4 w-full items-center justify-center min-h-[45vh] text-muted-foreground">

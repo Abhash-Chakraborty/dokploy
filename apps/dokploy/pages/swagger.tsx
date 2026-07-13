@@ -11,8 +11,8 @@ import superjson from "superjson";
 const SwaggerUI = dynamic(() => import("swagger-ui-react"), { ssr: false });
 
 const Home: NextPage = () => {
-	const { data } = api.settings.getOpenApiDocument.useQuery();
-	const [spec, setSpec] = useState({});
+	const { data, isLoading, error } = api.settings.getOpenApiDocument.useQuery();
+	const [spec, setSpec] = useState<Record<string, unknown> | null>(null);
 
 	useEffect(() => {
 		if (data) {
@@ -33,6 +33,25 @@ const Home: NextPage = () => {
 			setSpec(newSpec);
 		}
 	}, [data]);
+
+	// Don't hand Swagger UI an empty object — it renders the misleading
+	// "does not specify a valid version field" error. Wait for the real spec.
+	if (isLoading || (!spec && !error)) {
+		return (
+			<div className="flex h-screen items-center justify-center bg-white text-sm text-muted-foreground">
+				Loading API definition…
+			</div>
+		);
+	}
+
+	if (error || !spec) {
+		return (
+			<div className="flex h-screen items-center justify-center bg-white text-sm text-destructive">
+				Failed to load the API definition. Make sure you have API read
+				permission and try reloading.
+			</div>
+		);
+	}
 
 	return (
 		<div className="h-screen bg-white">

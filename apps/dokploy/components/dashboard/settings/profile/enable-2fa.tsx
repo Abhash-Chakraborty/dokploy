@@ -109,7 +109,6 @@ ${BACKUP_CODES_PLACEHOLDER}
 `;
 
 export const Enable2FA = () => {
-	const utils = api.useUtils();
 	const [data, setData] = useState<TwoFactorSetupData | null>(null);
 	const [backupCodes, setBackupCodes] = useState<string[]>([]);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -146,11 +145,13 @@ export const Enable2FA = () => {
 			}
 
 			toast.success("2FA configured successfully");
-			utils.user.get.invalidate();
-			setIsDialogOpen(false);
+			// Hard reload: better-auth's verifyTotp upgrades the session server-side.
+			// Awaiting a client invalidate races the dialog unmount and can leave the
+			// button stuck spinning even though 2FA succeeded. A reload reliably picks
+			// up the new MFA state (this is what the user was doing manually).
+			window.location.reload();
 		} catch (error) {
 			toast.error(getAuthErrorMessage(error, "Error verifying 2FA code"));
-		} finally {
 			setIsVerifyLoading(false);
 		}
 	};

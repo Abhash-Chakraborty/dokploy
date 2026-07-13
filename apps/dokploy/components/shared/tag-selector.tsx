@@ -1,5 +1,6 @@
-import { Check, ChevronsUpDown, X } from "lucide-react";
+import { Check, ChevronsUpDown, PlusIcon, X } from "lucide-react";
 import * as React from "react";
+import { toast } from "sonner";
 import { HandleTag } from "@/components/dashboard/settings/tags/handle-tag";
 import { TagBadge } from "@/components/shared/tag-badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { api } from "@/utils/api";
 
 export interface Tag {
 	id: string;
@@ -43,6 +45,10 @@ export function TagSelector({
 	disabled = false,
 }: TagSelectorProps) {
 	const [open, setOpen] = React.useState(false);
+	const [search, setSearch] = React.useState("");
+	const utils = api.useUtils();
+	const { mutateAsync: createTag, isPending: isCreating } =
+		api.tag.create.useMutation();
 
 	const handleTagToggle = (tagId: string) => {
 		if (selectedTags.includes(tagId)) {
@@ -55,6 +61,34 @@ export function TagSelector({
 	const handleTagRemove = (tagId: string, e?: React.MouseEvent) => {
 		e?.stopPropagation();
 		onTagsChange(selectedTags.filter((id) => id !== tagId));
+	};
+
+	const trimmedSearch = search.trim();
+	const hasExactMatch = tags.some(
+		(tag) => tag.name.toLowerCase() === trimmedSearch.toLowerCase(),
+	);
+	const canQuickCreate = trimmedSearch.length > 0 && !hasExactMatch;
+
+	const handleQuickCreate = async () => {
+		if (!trimmedSearch || isCreating) return;
+		try {
+			// Create with a sensible default color and immediately select it.
+			const created = await createTag({
+				name: trimmedSearch,
+				color: "#3b82f6",
+			});
+			await utils.tag.all.invalidate();
+			const newId =
+				(created as { tagId?: string; id?: string })?.tagId ??
+				(created as { id?: string })?.id;
+			if (newId) {
+				onTagsChange([...selectedTags, newId]);
+			}
+			setSearch("");
+			toast.success(`Tag "${trimmedSearch}" created`);
+		} catch {
+			toast.error("Error creating tag");
+		}
 	};
 
 	const selectedTagObjects = tags.filter((tag) =>
@@ -86,7 +120,7 @@ export function TagSelector({
 										<button
 											type="button"
 											onClick={(e) => handleTagRemove(tag.id, e)}
-											className="ml-1 ring-offset-background rounded-full outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2"
+											className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
 											disabled={disabled}
 										>
 											<X className="h-3 w-3 hover:opacity-70" />
@@ -104,19 +138,56 @@ export function TagSelector({
 				<PopoverContent className="w-full p-0" align="start">
 					<Command>
 						<CommandInput
-							placeholder="Search tags..."
+							placeholder="Search or create a tag..."
 							className="focus-visible:ring-0"
+							value={search}
+							onValueChange={setSearch}
 						/>
 						<CommandList>
 							<CommandEmpty>
-								<div className="flex flex-col items-center gap-2 py-1">
-									<span className="text-sm text-muted-foreground">
-										{tags.length === 0
-											? "No tags created yet."
-											: "No tags found."}
-									</span>
-								</div>
+								{canQuickCreate ? (
+									<button
+										type="button"
+										onClick={handleQuickCreate}
+										disabled={isCreating}
+										className="flex w-full items-center gap-2 px-2 py-2 text-sm hover:bg-accent rounded-sm"
+									>
+										<PlusIcon className="h-4 w-4" />
+										<span>
+											Create <strong>{trimmedSearch}</strong>
+										</span>
+									</button>
+								) : (
+									<div className="flex flex-col items-center gap-2 py-1">
+										<span className="text-sm text-muted-foreground">
+											No tags found.
+										</span>
+										<HandleTag />
+									</div>
+								)}
 							</CommandEmpty>
+							{tags.length === 0 && !canQuickCreate && (
+								<div className="flex flex-col items-center gap-2 py-4">
+									<span className="text-sm text-muted-foreground">
+										No tags created yet.
+									</span>
+									<HandleTag />
+								</div>
+							)}
+							{canQuickCreate && (
+								<CommandGroup>
+									<CommandItem
+										value={`__create__${trimmedSearch}`}
+										onSelect={handleQuickCreate}
+										className="cursor-pointer"
+									>
+										<PlusIcon className="mr-2 h-4 w-4" />
+										<span>
+											Create <strong>{trimmedSearch}</strong>
+										</span>
+									</CommandItem>
+								</CommandGroup>
+							)}
 							<CommandGroup>
 								{tags.map((tag) => {
 									const isSelected = selectedTags.includes(tag.id);
@@ -146,9 +217,6 @@ export function TagSelector({
 									);
 								})}
 							</CommandGroup>
-							<div className="flex items-center justify-center p-2 border-t">
-								<HandleTag />
-							</div>
 						</CommandList>
 					</Command>
 				</PopoverContent>

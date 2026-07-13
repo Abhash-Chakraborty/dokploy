@@ -1033,755 +1033,751 @@ const EnvironmentPage = (
 				</title>
 			</Head>
 			<div className="w-full">
-				<Card className="h-full bg-sidebar p-2.5 rounded-xl">
-					<div className="rounded-xl bg-background shadow-md">
-						<div className="flex justify-between gap-4 w-full items-center flex-wrap p-6">
-							<CardHeader className="p-0">
-								<CardTitle className="text-xl flex flex-row gap-2 items-center">
-									<FolderInput className="size-6 text-muted-foreground self-center" />
-									<p className="text-base font-medium max-w-[250px] truncate">
-										{currentEnvironment.project.name}
-									</p>
-									<AdvancedEnvironmentSelector
-										projectId={projectId}
-										currentEnvironmentId={environmentId}
-									/>
-									<EnvironmentVariables environmentId={environmentId}>
-										<Button variant="ghost" size="icon">
-											<SquareTerminal className="size-5 text-muted-foreground cursor-pointer" />
-										</Button>
-									</EnvironmentVariables>
-								</CardTitle>
-								<CardDescription>
-									{currentEnvironment.description || "No description provided"}
-								</CardDescription>
-							</CardHeader>
-							<div className="flex flex-row gap-4 flex-wrap justify-between items-center">
-								<div className="flex flex-row gap-4 flex-wrap">
-									<ProjectEnvironment projectId={projectId}>
-										<Button variant="outline">Project Environment</Button>
-									</ProjectEnvironment>
-									{permissions?.service.create && (
-										<DropdownMenu>
-											<DropdownMenuTrigger asChild>
-												<Button>
-													<PlusIcon className="h-4 w-4" />
-													Create Service
-												</Button>
-											</DropdownMenuTrigger>
-											<DropdownMenuContent
-												className="w-[200px] space-y-2"
-												align="end"
-											>
-												<DropdownMenuLabel className="text-sm font-normal">
-													Actions
-												</DropdownMenuLabel>
-												<DropdownMenuSeparator />
-												<AddApplication
-													projectName={projectData?.name}
-													environmentId={environmentId}
-												/>
-												<AddDatabase
-													projectName={projectData?.name}
-													environmentId={environmentId}
-												/>
-												<AddCompose
-													projectName={projectData?.name}
-													environmentId={environmentId}
-												/>
-												<AddTemplate environmentId={environmentId} />
-												<AddAiAssistant
-													projectName={projectData?.name}
-													environmentId={environmentId}
-												/>
-												<AddImport
-													projectName={projectData?.name}
-													environmentId={environmentId}
-												/>
-											</DropdownMenuContent>
-										</DropdownMenu>
-									)}
-								</div>
+				<div className="flex w-full flex-col">
+					<div className="flex justify-between gap-4 w-full items-center flex-wrap px-0 py-2">
+						<CardHeader className="p-0">
+							<CardTitle className="text-xl flex flex-row gap-2 items-center">
+								<FolderInput className="size-6 text-muted-foreground self-center" />
+								{currentEnvironment.project.name}
+								<AdvancedEnvironmentSelector
+									projectId={projectId}
+									currentEnvironmentId={environmentId}
+								/>
+								<EnvironmentVariables environmentId={environmentId}>
+									<Button variant="ghost" size="icon">
+										<SquareTerminal className="size-5 text-muted-foreground cursor-pointer" />
+									</Button>
+								</EnvironmentVariables>
+							</CardTitle>
+							<CardDescription>
+								{currentEnvironment.description || "No description provided"}
+							</CardDescription>
+						</CardHeader>
+						<div className="flex flex-row gap-4 flex-wrap justify-between items-center">
+							<div className="flex flex-row gap-4 flex-wrap">
+								<ProjectEnvironment projectId={projectId}>
+									<Button variant="outline">Project Environment</Button>
+								</ProjectEnvironment>
+								{permissions?.service.create && (
+									<DropdownMenu>
+										<DropdownMenuTrigger asChild>
+											<Button>
+												<PlusIcon className="h-4 w-4" />
+												Create Service
+											</Button>
+										</DropdownMenuTrigger>
+										<DropdownMenuContent
+											className="w-[200px] space-y-2"
+											align="end"
+										>
+											<DropdownMenuLabel className="text-sm font-normal">
+												Actions
+											</DropdownMenuLabel>
+											<DropdownMenuSeparator />
+											<AddApplication
+												projectName={projectData?.name}
+												environmentId={environmentId}
+											/>
+											<AddDatabase
+												projectName={projectData?.name}
+												environmentId={environmentId}
+											/>
+											<AddCompose
+												projectName={projectData?.name}
+												environmentId={environmentId}
+											/>
+											<AddTemplate environmentId={environmentId} />
+											<AddAiAssistant
+												projectName={projectData?.name}
+												environmentId={environmentId}
+											/>
+											<AddImport
+												projectName={projectData?.name}
+												environmentId={environmentId}
+											/>
+										</DropdownMenuContent>
+									</DropdownMenu>
+								)}
 							</div>
 						</div>
-						<CardContent className="space-y-2 py-8 border-t gap-4 flex flex-col min-h-[60vh]">
-							<>
-								<div className="flex flex-col gap-4 2xl:flex-row 2xl:items-center 2xl:justify-between">
-									<div className="flex items-center gap-4">
-										<div className="flex items-center gap-2">
-											<Checkbox
-												checked={selectedServices.length > 0}
-												className={cn(
-													"data-[state=checked]:bg-primary",
-													selectedServices.length > 0 &&
-														selectedServices.length < filteredServices.length &&
-														"bg-primary/50",
-												)}
-												onCheckedChange={handleSelectAll}
-											/>
-											<span className="text-sm">
-												Select All{" "}
-												{selectedServices.length > 0 &&
-													`(${selectedServices.length}/${filteredServices.length})`}
-											</span>
-										</div>
+					</div>
+					<CardContent className="space-y-2 py-8 border-t gap-4 flex flex-col min-h-[60vh] px-0">
+						<>
+							<div className="flex flex-col gap-4 2xl:flex-row 2xl:items-center 2xl:justify-between">
+								<div className="flex items-center gap-4">
+									<div className="flex items-center gap-2">
+										<Checkbox
+											checked={selectedServices.length > 0}
+											className={cn(
+												"data-[state=checked]:bg-primary",
+												selectedServices.length > 0 &&
+													selectedServices.length < filteredServices.length &&
+													"bg-primary/50",
+											)}
+											onCheckedChange={handleSelectAll}
+										/>
+										<span className="text-sm">
+											Select All{" "}
+											{selectedServices.length > 0 &&
+												`(${selectedServices.length}/${filteredServices.length})`}
+										</span>
+									</div>
 
-										<DropdownMenu
-											open={isDropdownOpen}
-											onOpenChange={setIsDropdownOpen}
-										>
-											<DropdownMenuTrigger asChild>
+									<DropdownMenu
+										open={isDropdownOpen}
+										onOpenChange={setIsDropdownOpen}
+									>
+										<DropdownMenuTrigger asChild>
+											<Button
+												variant="outline"
+												disabled={selectedServices.length === 0}
+												isLoading={isBulkActionLoading}
+											>
+												Bulk Actions
+											</Button>
+										</DropdownMenuTrigger>
+										<DropdownMenuContent align="end">
+											<DropdownMenuLabel>Actions</DropdownMenuLabel>
+											<DropdownMenuSeparator />
+											<DialogAction
+												title="Start Services"
+												description={`Are you sure you want to start ${selectedServices.length} services?`}
+												type="default"
+												onClick={handleBulkStart}
+											>
 												<Button
-													variant="outline"
-													disabled={selectedServices.length === 0}
-													isLoading={isBulkActionLoading}
+													variant="ghost"
+													className="w-full justify-start"
 												>
-													Bulk Actions
+													<CheckCircle2 className="mr-2 h-4 w-4" />
+													Start
 												</Button>
-											</DropdownMenuTrigger>
-											<DropdownMenuContent align="end">
-												<DropdownMenuLabel>Actions</DropdownMenuLabel>
-												<DropdownMenuSeparator />
-												<DialogAction
-													title="Start Services"
-													description={`Are you sure you want to start ${selectedServices.length} services?`}
-													type="default"
-													onClick={handleBulkStart}
+											</DialogAction>
+											<DialogAction
+												title="Deploy Services"
+												description={`Are you sure you want to deploy ${selectedServices.length} service${selectedServices.length !== 1 ? "s" : ""}? This will redeploy/restart the selected services.`}
+												onClick={handleBulkDeploy}
+												type="default"
+												disabled={
+													selectedServices.length === 0 || isBulkActionLoading
+												}
+											>
+												<Button
+													variant="ghost"
+													className="w-full justify-start"
 												>
-													<Button
-														variant="ghost"
-														className="w-full justify-start"
+													<Play className="mr-2 h-4 w-4" />
+													Deploy
+												</Button>
+											</DialogAction>
+											<DialogAction
+												title="Stop Services"
+												description={`Are you sure you want to stop ${selectedServices.length} services?`}
+												type="destructive"
+												onClick={handleBulkStop}
+											>
+												<Button
+													variant="ghost"
+													className="w-full justify-start text-destructive"
+												>
+													<Ban className="mr-2 h-4 w-4" />
+													Stop
+												</Button>
+											</DialogAction>
+											{permissions?.service.delete && (
+												<>
+													<DialogAction
+														title="Delete Services"
+														description={
+															<div className="space-y-3">
+																<p>
+																	Are you sure you want to delete{" "}
+																	{selectedServices.length} services? This
+																	action cannot be undone.
+																</p>
+																{selectedServicesWithRunningStatus.length >
+																	0 && (
+																	<AlertBlock type="warning">
+																		Warning:{" "}
+																		{selectedServicesWithRunningStatus.length}{" "}
+																		of the selected services are currently
+																		running. Please stop these services first
+																		before deleting:{" "}
+																		{selectedServicesWithRunningStatus
+																			.map((s) => s.name)
+																			.join(", ")}
+																	</AlertBlock>
+																)}
+															</div>
+														}
+														type="destructive"
+														disabled={
+															selectedServicesWithRunningStatus.length > 0
+														}
+														onClick={() => setIsBulkDeleteDialogOpen(true)}
 													>
-														<CheckCircle2 className="mr-2 h-4 w-4" />
-														Start
-													</Button>
-												</DialogAction>
-												<DialogAction
-													title="Deploy Services"
-													description={`Are you sure you want to deploy ${selectedServices.length} service${selectedServices.length !== 1 ? "s" : ""}? This will redeploy/restart the selected services.`}
-													onClick={handleBulkDeploy}
-													type="default"
-													disabled={
-														selectedServices.length === 0 || isBulkActionLoading
-													}
-												>
-													<Button
-														variant="ghost"
-														className="w-full justify-start"
-													>
-														<Play className="mr-2 h-4 w-4" />
-														Deploy
-													</Button>
-												</DialogAction>
-												<DialogAction
-													title="Stop Services"
-													description={`Are you sure you want to stop ${selectedServices.length} services?`}
-													type="destructive"
-													onClick={handleBulkStop}
-												>
-													<Button
-														variant="ghost"
-														className="w-full justify-start text-destructive"
-													>
-														<Ban className="mr-2 h-4 w-4" />
-														Stop
-													</Button>
-												</DialogAction>
-												{permissions?.service.delete && (
-													<>
-														<DialogAction
-															title="Delete Services"
-															description={
-																<div className="space-y-3">
-																	<p>
-																		Are you sure you want to delete{" "}
-																		{selectedServices.length} services? This
-																		action cannot be undone.
-																	</p>
-																	{selectedServicesWithRunningStatus.length >
-																		0 && (
-																		<AlertBlock type="warning">
-																			Warning:{" "}
-																			{selectedServicesWithRunningStatus.length}{" "}
-																			of the selected services are currently
-																			running. Please stop these services first
-																			before deleting:{" "}
-																			{selectedServicesWithRunningStatus
-																				.map((s) => s.name)
-																				.join(", ")}
-																		</AlertBlock>
-																	)}
-																</div>
-															}
-															type="destructive"
-															disabled={
-																selectedServicesWithRunningStatus.length > 0
-															}
-															onClick={() => setIsBulkDeleteDialogOpen(true)}
-														>
-															<Button
-																variant="ghost"
-																className="w-full justify-start text-destructive"
-															>
-																<Trash2 className="mr-2 h-4 w-4" />
-																Delete
-															</Button>
-														</DialogAction>
-														<DuplicateProject
-															environmentId={environmentId}
-															services={applications}
-															selectedServiceIds={selectedServices}
-														/>
-													</>
-												)}
-
-												<Dialog
-													open={isMoveDialogOpen}
-													onOpenChange={setIsMoveDialogOpen}
-												>
-													<DialogTrigger asChild>
 														<Button
 															variant="ghost"
-															className="w-full justify-start"
+															className="w-full justify-start text-destructive"
 														>
-															<FolderInput className="mr-2 h-4 w-4" />
-															Move
+															<Trash2 className="mr-2 h-4 w-4" />
+															Delete
 														</Button>
-													</DialogTrigger>
-													<DialogContent>
-														<DialogHeader>
-															<DialogTitle>Move Services</DialogTitle>
-															<DialogDescription>
-																Select the target project and environment to
-																move {selectedServices.length} services
-															</DialogDescription>
-														</DialogHeader>
-														<div className="flex flex-col gap-4">
-															{allProjects?.length === 0 ? (
-																<div className="flex flex-col items-center justify-center gap-2 py-4">
-																	<FolderInput className="h-8 w-8 text-muted-foreground" />
-																	<p className="text-sm text-muted-foreground text-center">
-																		No other projects available. Create a new
-																		project first to move services.
-																	</p>
+													</DialogAction>
+													<DuplicateProject
+														environmentId={environmentId}
+														services={applications}
+														selectedServiceIds={selectedServices}
+													/>
+												</>
+											)}
+
+											<Dialog
+												open={isMoveDialogOpen}
+												onOpenChange={setIsMoveDialogOpen}
+											>
+												<DialogTrigger asChild>
+													<Button
+														variant="ghost"
+														className="w-full justify-start"
+													>
+														<FolderInput className="mr-2 h-4 w-4" />
+														Move
+													</Button>
+												</DialogTrigger>
+												<DialogContent>
+													<DialogHeader>
+														<DialogTitle>Move Services</DialogTitle>
+														<DialogDescription>
+															Select the target project and environment to move{" "}
+															{selectedServices.length} services
+														</DialogDescription>
+													</DialogHeader>
+													<div className="flex flex-col gap-4">
+														{allProjects?.length === 0 ? (
+															<div className="flex flex-col items-center justify-center gap-2 py-4">
+																<FolderInput className="h-8 w-8 text-muted-foreground" />
+																<p className="text-sm text-muted-foreground text-center">
+																	No other projects available. Create a new
+																	project first to move services.
+																</p>
+															</div>
+														) : (
+															<>
+																{/* Step 1: Select Project */}
+																<div className="flex flex-col gap-2">
+																	<label
+																		htmlFor="target-project"
+																		className="text-sm font-medium"
+																	>
+																		Target Project
+																	</label>
+																	<Select
+																		value={selectedTargetProject}
+																		onValueChange={(value) => {
+																			setSelectedTargetProject(value);
+																			setSelectedTargetEnvironment(""); // Reset environment when project changes
+																		}}
+																	>
+																		<SelectTrigger>
+																			<SelectValue placeholder="Select target project" />
+																		</SelectTrigger>
+																		<SelectContent>
+																			{allProjects?.map((project) => (
+																				<SelectItem
+																					key={project.projectId}
+																					value={project.projectId}
+																				>
+																					{project.name}
+																				</SelectItem>
+																			))}
+																		</SelectContent>
+																	</Select>
 																</div>
-															) : (
-																<>
-																	{/* Step 1: Select Project */}
+
+																{/* Step 2: Select Environment (only show if project is selected) */}
+																{selectedTargetProject && (
 																	<div className="flex flex-col gap-2">
 																		<label
-																			htmlFor="target-project"
+																			htmlFor="target-environment"
 																			className="text-sm font-medium"
 																		>
-																			Target Project
+																			Target Environment
 																		</label>
 																		<Select
-																			value={selectedTargetProject}
-																			onValueChange={(value) => {
-																				setSelectedTargetProject(value);
-																				setSelectedTargetEnvironment(""); // Reset environment when project changes
-																			}}
+																			value={selectedTargetEnvironment}
+																			onValueChange={
+																				setSelectedTargetEnvironment
+																			}
 																		>
 																			<SelectTrigger>
-																				<SelectValue placeholder="Select target project" />
+																				<SelectValue placeholder="Select target environment" />
 																			</SelectTrigger>
 																			<SelectContent>
-																				{allProjects?.map((project) => (
-																					<SelectItem
-																						key={project.projectId}
-																						value={project.projectId}
-																					>
-																						{project.name}
-																					</SelectItem>
-																				))}
+																				{selectedProjectEnvironments
+																					?.filter(
+																						(env) =>
+																							env.environmentId !==
+																							environmentId,
+																					)
+																					.map((env) => (
+																						<SelectItem
+																							key={env.environmentId}
+																							value={env.environmentId}
+																						>
+																							{env.name}
+																						</SelectItem>
+																					))}
 																			</SelectContent>
 																		</Select>
 																	</div>
+																)}
+															</>
+														)}
+													</div>
+													<DialogFooter>
+														<Button
+															variant="outline"
+															onClick={() => {
+																setIsMoveDialogOpen(false);
+																setSelectedTargetProject("");
+																setSelectedTargetEnvironment("");
+															}}
+														>
+															Cancel
+														</Button>
+														<Button
+															onClick={handleBulkMove}
+															isLoading={isBulkActionLoading}
+															disabled={
+																allProjects?.length === 0 ||
+																!selectedTargetProject ||
+																!selectedTargetEnvironment
+															}
+														>
+															Move Services
+														</Button>
+													</DialogFooter>
+												</DialogContent>
+											</Dialog>
 
-																	{/* Step 2: Select Environment (only show if project is selected) */}
-																	{selectedTargetProject && (
-																		<div className="flex flex-col gap-2">
-																			<label
-																				htmlFor="target-environment"
-																				className="text-sm font-medium"
-																			>
-																				Target Environment
-																			</label>
-																			<Select
-																				value={selectedTargetEnvironment}
-																				onValueChange={
-																					setSelectedTargetEnvironment
-																				}
-																			>
-																				<SelectTrigger>
-																					<SelectValue placeholder="Select target environment" />
-																				</SelectTrigger>
-																				<SelectContent>
-																					{selectedProjectEnvironments
-																						?.filter(
-																							(env) =>
-																								env.environmentId !==
-																								environmentId,
-																						)
-																						.map((env) => (
-																							<SelectItem
-																								key={env.environmentId}
-																								value={env.environmentId}
-																							>
-																								{env.name}
-																							</SelectItem>
-																						))}
-																				</SelectContent>
-																			</Select>
-																		</div>
-																	)}
-																</>
-															)}
+											{/* Bulk Delete Dialog */}
+											<Dialog
+												open={isBulkDeleteDialogOpen}
+												onOpenChange={setIsBulkDeleteDialogOpen}
+											>
+												<DialogContent>
+													<DialogHeader>
+														<DialogTitle>Delete Services</DialogTitle>
+														<DialogDescription>
+															Are you sure you want to delete{" "}
+															{selectedServices.length} service
+															{selectedServices.length !== 1 ? "s" : ""}? This
+															action cannot be undone.
+														</DialogDescription>
+													</DialogHeader>
+
+													<div className="space-y-4">
+														{/* Show services to be deleted */}
+														<div className="max-h-40 overflow-y-auto space-y-2">
+															{selectedServices.map((serviceId) => {
+																const service = filteredServices.find(
+																	(s) => s.id === serviceId,
+																);
+																return service ? (
+																	<div
+																		key={serviceId}
+																		className="flex items-center space-x-2 text-sm"
+																	>
+																		<span className="px-2 py-1 text-xs bg-secondary rounded">
+																			{service.type}
+																		</span>
+																		<span>{service.name}</span>
+																	</div>
+																) : null;
+															})}
 														</div>
-														<DialogFooter>
-															<Button
-																variant="outline"
-																onClick={() => {
-																	setIsMoveDialogOpen(false);
-																	setSelectedTargetProject("");
-																	setSelectedTargetEnvironment("");
-																}}
-															>
-																Cancel
-															</Button>
-															<Button
-																onClick={handleBulkMove}
-																isLoading={isBulkActionLoading}
-																disabled={
-																	allProjects?.length === 0 ||
-																	!selectedTargetProject ||
-																	!selectedTargetEnvironment
-																}
-															>
-																Move Services
-															</Button>
-														</DialogFooter>
-													</DialogContent>
-												</Dialog>
 
-												{/* Bulk Delete Dialog */}
-												<Dialog
-													open={isBulkDeleteDialogOpen}
-													onOpenChange={setIsBulkDeleteDialogOpen}
-												>
-													<DialogContent>
-														<DialogHeader>
-															<DialogTitle>Delete Services</DialogTitle>
-															<DialogDescription>
-																Are you sure you want to delete{" "}
-																{selectedServices.length} service
-																{selectedServices.length !== 1 ? "s" : ""}? This
-																action cannot be undone.
-															</DialogDescription>
-														</DialogHeader>
-
-														<div className="space-y-4">
-															{/* Show services to be deleted */}
-															<div className="max-h-40 overflow-y-auto space-y-2">
-																{selectedServices.map((serviceId) => {
+														{/* Volume deletion option for compose services */}
+														{(() => {
+															const servicesWithVolumeSupport =
+																selectedServices.filter((serviceId) => {
 																	const service = filteredServices.find(
 																		(s) => s.id === serviceId,
 																	);
-																	return service ? (
-																		<div
-																			key={serviceId}
-																			className="flex items-center space-x-2 text-sm"
+																	// Currently only compose services support volume deletion
+																	return service?.type === "compose";
+																});
+
+															if (servicesWithVolumeSupport.length === 0)
+																return null;
+
+															return (
+																<div className="space-y-2">
+																	<div className="flex items-center space-x-2">
+																		<Checkbox
+																			id="deleteVolumes"
+																			checked={deleteVolumes}
+																			onCheckedChange={(checked) =>
+																				setDeleteVolumes(checked === true)
+																			}
+																		/>
+																		<label
+																			htmlFor="deleteVolumes"
+																			className="text-sm font-medium"
 																		>
-																			<span className="px-2 py-1 text-xs bg-secondary rounded">
-																				{service.type}
-																			</span>
-																			<span>{service.name}</span>
-																		</div>
-																	) : null;
-																})}
-															</div>
-
-															{/* Volume deletion option for compose services */}
-															{(() => {
-																const servicesWithVolumeSupport =
-																	selectedServices.filter((serviceId) => {
-																		const service = filteredServices.find(
-																			(s) => s.id === serviceId,
-																		);
-																		// Currently only compose services support volume deletion
-																		return service?.type === "compose";
-																	});
-
-																if (servicesWithVolumeSupport.length === 0)
-																	return null;
-
-																return (
-																	<div className="space-y-2">
-																		<div className="flex items-center space-x-2">
-																			<Checkbox
-																				id="deleteVolumes"
-																				checked={deleteVolumes}
-																				onCheckedChange={(checked) =>
-																					setDeleteVolumes(checked === true)
-																				}
-																			/>
-																			<label
-																				htmlFor="deleteVolumes"
-																				className="text-sm font-medium"
-																			>
-																				Delete volumes associated with services
-																			</label>
-																		</div>
-																		<p className="text-xs text-muted-foreground">
-																			Volume deletion is available for:{" "}
-																			{servicesWithVolumeSupport.length} compose
-																			service
-																			{servicesWithVolumeSupport.length !== 1
-																				? "s"
-																				: ""}
-																		</p>
+																			Delete volumes associated with services
+																		</label>
 																	</div>
-																);
-															})()}
-														</div>
-
-														<DialogFooter>
-															<Button
-																variant="outline"
-																onClick={() => {
-																	setIsBulkDeleteDialogOpen(false);
-																	setDeleteVolumes(false); // Reset checkbox
-																}}
-															>
-																Cancel
-															</Button>
-															<Button
-																variant="destructive"
-																onClick={() => {
-																	handleBulkDelete(deleteVolumes);
-																	setIsBulkDeleteDialogOpen(false);
-																	setDeleteVolumes(false); // Reset checkbox
-																}}
-																disabled={isBulkActionLoading}
-															>
-																Delete Services
-															</Button>
-														</DialogFooter>
-													</DialogContent>
-												</Dialog>
-											</DropdownMenuContent>
-										</DropdownMenu>
-									</div>
-
-									<div className="flex flex-col gap-2 lg:flex-row lg:gap-4 lg:items-center">
-										<div className="w-full relative">
-											<FocusShortcutInput
-												placeholder="Filter services..."
-												value={searchQuery}
-												onChange={(e) => setSearchQuery(e.target.value)}
-												className="pr-10"
-											/>
-											<Search className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-										</div>
-										<Select value={sortBy} onValueChange={setSortBy}>
-											<SelectTrigger className="lg:w-[280px]">
-												<SelectValue placeholder="Sort by..." />
-											</SelectTrigger>
-											<SelectContent>
-												<SelectItem value="lastDeploy-desc">
-													Recently deployed
-												</SelectItem>
-												<SelectItem value="createdAt-desc">
-													Newest first
-												</SelectItem>
-												<SelectItem value="createdAt-asc">
-													Oldest first
-												</SelectItem>
-												<SelectItem value="name-asc">Name (A-Z)</SelectItem>
-												<SelectItem value="name-desc">Name (Z-A)</SelectItem>
-												<SelectItem value="type-asc">Type (A-Z)</SelectItem>
-												<SelectItem value="type-desc">Type (Z-A)</SelectItem>
-											</SelectContent>
-										</Select>
-										<Popover open={openCombobox} onOpenChange={setOpenCombobox}>
-											<PopoverTrigger asChild>
-												<Button
-													variant="outline"
-													aria-expanded={openCombobox}
-													className="min-w-[200px] justify-between"
-												>
-													{selectedTypes.length === 0
-														? "Select types..."
-														: `${selectedTypes.length} selected`}
-													<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-												</Button>
-											</PopoverTrigger>
-											<PopoverContent className="w-[200px] p-0">
-												<Command>
-													<CommandInput placeholder="Search type..." />
-													<CommandEmpty>No type found.</CommandEmpty>
-													<CommandGroup>
-														{serviceTypes.map((type) => (
-															<CommandItem
-																key={type.value}
-																onSelect={() => {
-																	setSelectedTypes((prev) =>
-																		prev.includes(type.value)
-																			? prev.filter((t) => t !== type.value)
-																			: [...prev, type.value],
-																	);
-																	setOpenCombobox(false);
-																}}
-															>
-																<div className="flex flex-row">
-																	<Check
-																		className={cn(
-																			"mr-2 h-4 w-4",
-																			selectedTypes.includes(type.value)
-																				? "opacity-100"
-																				: "opacity-0",
-																		)}
-																	/>
-																	{type.icon && (
-																		<type.icon className="mr-2 h-4 w-4" />
-																	)}
-																	{type.label}
+																	<p className="text-xs text-muted-foreground">
+																		Volume deletion is available for:{" "}
+																		{servicesWithVolumeSupport.length} compose
+																		service
+																		{servicesWithVolumeSupport.length !== 1
+																			? "s"
+																			: ""}
+																	</p>
 																</div>
-															</CommandItem>
-														))}
+															);
+														})()}
+													</div>
+
+													<DialogFooter>
+														<Button
+															variant="outline"
+															onClick={() => {
+																setIsBulkDeleteDialogOpen(false);
+																setDeleteVolumes(false); // Reset checkbox
+															}}
+														>
+															Cancel
+														</Button>
+														<Button
+															variant="destructive"
+															onClick={() => {
+																handleBulkDelete(deleteVolumes);
+																setIsBulkDeleteDialogOpen(false);
+																setDeleteVolumes(false); // Reset checkbox
+															}}
+															disabled={isBulkActionLoading}
+														>
+															Delete Services
+														</Button>
+													</DialogFooter>
+												</DialogContent>
+											</Dialog>
+										</DropdownMenuContent>
+									</DropdownMenu>
+								</div>
+
+								<div className="flex flex-col gap-2 lg:flex-row lg:gap-4 lg:items-center">
+									<div className="w-full relative">
+										<FocusShortcutInput
+											placeholder="Filter services..."
+											value={searchQuery}
+											onChange={(e) => setSearchQuery(e.target.value)}
+											className="pr-10"
+										/>
+										<Search className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+									</div>
+									<Select value={sortBy} onValueChange={setSortBy}>
+										<SelectTrigger className="lg:w-[280px]">
+											<SelectValue placeholder="Sort by..." />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="lastDeploy-desc">
+												Recently deployed
+											</SelectItem>
+											<SelectItem value="createdAt-desc">
+												Newest first
+											</SelectItem>
+											<SelectItem value="createdAt-asc">
+												Oldest first
+											</SelectItem>
+											<SelectItem value="name-asc">Name (A-Z)</SelectItem>
+											<SelectItem value="name-desc">Name (Z-A)</SelectItem>
+											<SelectItem value="type-asc">Type (A-Z)</SelectItem>
+											<SelectItem value="type-desc">Type (Z-A)</SelectItem>
+										</SelectContent>
+									</Select>
+									<Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+										<PopoverTrigger asChild>
+											<Button
+												variant="outline"
+												aria-expanded={openCombobox}
+												className="min-w-[200px] justify-between"
+											>
+												{selectedTypes.length === 0
+													? "Select types..."
+													: `${selectedTypes.length} selected`}
+												<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+											</Button>
+										</PopoverTrigger>
+										<PopoverContent className="w-[200px] p-0">
+											<Command>
+												<CommandInput placeholder="Search type..." />
+												<CommandEmpty>No type found.</CommandEmpty>
+												<CommandGroup>
+													{serviceTypes.map((type) => (
 														<CommandItem
+															key={type.value}
 															onSelect={() => {
-																setSelectedTypes([]);
+																setSelectedTypes((prev) =>
+																	prev.includes(type.value)
+																		? prev.filter((t) => t !== type.value)
+																		: [...prev, type.value],
+																);
 																setOpenCombobox(false);
 															}}
-															className="border-t"
 														>
-															<div className="flex flex-row items-center">
-																<X className="mr-2 h-4 w-4" />
-																Clear filters
+															<div className="flex flex-row">
+																<Check
+																	className={cn(
+																		"mr-2 h-4 w-4",
+																		selectedTypes.includes(type.value)
+																			? "opacity-100"
+																			: "opacity-0",
+																	)}
+																/>
+																{type.icon && (
+																	<type.icon className="mr-2 h-4 w-4" />
+																)}
+																{type.label}
 															</div>
 														</CommandItem>
-													</CommandGroup>
-												</Command>
-											</PopoverContent>
-										</Popover>
-										{(availableServers.length > 0 ||
-											hasServicesWithoutServer) && (
-											<Select
-												value={selectedServerId || "all"}
-												onValueChange={setSelectedServerId}
-											>
-												<SelectTrigger className="lg:w-[200px]">
-													<SelectValue placeholder="Filter by server..." />
-												</SelectTrigger>
-												<SelectContent>
-													<SelectItem value="all">All servers</SelectItem>
-													{hasServicesWithoutServer && (
-														<SelectItem value="dokploy-server">
-															<div className="flex items-center gap-2">
-																<ServerIcon className="size-4" />
-																<span>Dokploy server</span>
-															</div>
-														</SelectItem>
-													)}
-													{availableServers.map((server) => (
-														<SelectItem
-															key={server.serverId}
-															value={server.serverId}
-														>
-															<div className="flex items-center gap-2">
-																<ServerIcon className="size-4" />
-																<span>{server.serverName}</span>
-															</div>
-														</SelectItem>
 													))}
-												</SelectContent>
-											</Select>
-										)}
-									</div>
-								</div>
-
-								<div className="flex w-full gap-8">
-									{emptyServices ? (
-										<div className="flex h-[70vh] w-full flex-col items-center justify-center">
-											<FolderInput className="size-8 self-center text-muted-foreground" />
-											<span className="text-center font-medium text-muted-foreground">
-												No services added yet. Click on Create Service.
-											</span>
-										</div>
-									) : filteredServices.length === 0 ? (
-										<div className="flex h-[70vh] w-full flex-col items-center justify-center">
-											<Search className="size-8 self-center text-muted-foreground" />
-											<span className="text-center font-medium text-muted-foreground">
-												No services found with the current filters
-											</span>
-											<span className="text-sm text-muted-foreground">
-												Try adjusting your search or filters
-											</span>
-										</div>
-									) : (
-										<div className="flex w-full flex-col gap-4">
-											<div className="gap-5 pb-10 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
-												{filteredServices?.map((service) => (
-													<ContextMenu key={service.id}>
-														<ContextMenuTrigger asChild>
-															<Link
-																href={`/dashboard/project/${projectId}/environment/${environmentId}/services/${service.type}/${service.id}`}
-																className="block h-full"
-															>
-																<Card className="flex flex-col h-full group relative cursor-pointer bg-transparent transition-colors hover:bg-border">
-																	{service.serverId && (
-																		<div className="absolute -left-1 -top-2">
-																			<ServerIcon className="size-4 text-muted-foreground" />
-																		</div>
-																	)}
-																	<div className="absolute -right-1 -top-2">
-																		<StatusTooltip status={service.status} />
-																	</div>
-
-																	<div
-																		className={cn(
-																			"absolute -left-3 -bottom-3 size-9 translate-y-1 rounded-full p-0 transition-all duration-200 z-10 bg-background border",
-																			selectedServices.includes(service.id)
-																				? "opacity-100 translate-y-0"
-																				: "opacity-0 group-hover:translate-y-0 group-hover:opacity-100",
-																		)}
-																		onClick={(e) =>
-																			handleServiceSelect(service.id, e)
-																		}
-																	>
-																		<div className="h-full w-full flex items-center justify-center">
-																			<Checkbox
-																				checked={selectedServices.includes(
-																					service.id,
-																				)}
-																				className="data-[state=checked]:bg-primary"
-																			/>
-																		</div>
-																	</div>
-
-																	<CardHeader>
-																		<CardTitle className="flex items-center justify-between">
-																			<div className="flex flex-row items-center gap-2 justify-between w-full">
-																				<div className="flex flex-col gap-2">
-																					<span className="text-base flex items-center gap-2 font-medium leading-none flex-wrap">
-																						{service.name}
-																					</span>
-																					{service.description && (
-																						<span className="text-sm font-medium text-muted-foreground">
-																							{service.description}
-																						</span>
-																					)}
-																				</div>
-
-																				<span className="text-sm font-medium text-muted-foreground self-start">
-																					{service.type === "postgres" && (
-																						<PostgresqlIcon className="h-7 w-7" />
-																					)}
-																					{service.type === "redis" && (
-																						<RedisIcon className="h-7 w-7" />
-																					)}
-																					{service.type === "mariadb" && (
-																						<MariadbIcon className="h-7 w-7" />
-																					)}
-																					{service.type === "mongo" && (
-																						<MongodbIcon className="h-7 w-7" />
-																					)}
-																					{service.type === "mysql" && (
-																						<MysqlIcon className="h-7 w-7" />
-																					)}
-																					{service.type === "application" &&
-																						(service.icon ? (
-																							// biome-ignore lint/performance/noImgElement: application icon is data URL
-																							<img
-																								src={service.icon}
-																								alt={service.name}
-																								className="size-7 object-contain"
-																							/>
-																						) : (
-																							<GlobeIcon className="h-6 w-6" />
-																						))}
-																					{service.type === "compose" && (
-																						<CircuitBoard className="h-6 w-6" />
-																					)}
-																					{service.type === "libsql" && (
-																						<LibsqlIcon className="h-6 w-6" />
-																					)}
-																				</span>
-																			</div>
-																		</CardTitle>
-																	</CardHeader>
-																	<CardFooter className="mt-auto">
-																		<div className="space-y-1 text-sm w-full">
-																			{service.serverName && (
-																				<div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-																					<ServerIcon className="size-3" />
-																					<span className="truncate">
-																						{service.serverName}
-																					</span>
-																				</div>
-																			)}
-																			<DateTooltip date={service.createdAt}>
-																				Created
-																			</DateTooltip>
-																		</div>
-																	</CardFooter>
-																</Card>
-															</Link>
-														</ContextMenuTrigger>
-														{service.type !== "libsql" && (
-															<ContextMenuContent className="w-48">
-																<ContextMenuLabel className="truncate">
-																	{service.name}
-																</ContextMenuLabel>
-																<ContextMenuSeparator />
-																<ContextMenuItem
-																	className="flex items-center gap-2"
-																	onClick={() =>
-																		handleServiceAction(service, "start")
-																	}
-																>
-																	<Play className="size-4" />
-																	Start
-																</ContextMenuItem>
-																<ContextMenuItem
-																	className="flex items-center gap-2"
-																	onClick={() =>
-																		handleServiceAction(service, "deploy")
-																	}
-																>
-																	<RefreshCw className="size-4" />
-																	Deploy
-																</ContextMenuItem>
-																<ContextMenuItem
-																	className="flex items-center gap-2 text-orange-500 focus:text-orange-500"
-																	onClick={() =>
-																		handleServiceAction(service, "stop")
-																	}
-																>
-																	<Ban className="size-4" />
-																	Stop
-																</ContextMenuItem>
-																<ContextMenuSeparator />
-																<ContextMenuItem
-																	className="flex items-center gap-2 text-red-500 focus:text-red-500"
-																	onClick={() => setServiceToDelete(service)}
-																>
-																	<Trash2 className="size-4" />
-																	Delete
-																</ContextMenuItem>
-															</ContextMenuContent>
-														)}
-													</ContextMenu>
+													<CommandItem
+														onSelect={() => {
+															setSelectedTypes([]);
+															setOpenCombobox(false);
+														}}
+														className="border-t"
+													>
+														<div className="flex flex-row items-center">
+															<X className="mr-2 h-4 w-4" />
+															Clear filters
+														</div>
+													</CommandItem>
+												</CommandGroup>
+											</Command>
+										</PopoverContent>
+									</Popover>
+									{(availableServers.length > 0 ||
+										hasServicesWithoutServer) && (
+										<Select
+											value={selectedServerId || "all"}
+											onValueChange={setSelectedServerId}
+										>
+											<SelectTrigger className="lg:w-[200px]">
+												<SelectValue placeholder="Filter by server..." />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="all">All servers</SelectItem>
+												{hasServicesWithoutServer && (
+													<SelectItem value="dokploy-server">
+														<div className="flex items-center gap-2">
+															<ServerIcon className="size-4" />
+															<span>Dokploy server</span>
+														</div>
+													</SelectItem>
+												)}
+												{availableServers.map((server) => (
+													<SelectItem
+														key={server.serverId}
+														value={server.serverId}
+													>
+														<div className="flex items-center gap-2">
+															<ServerIcon className="size-4" />
+															<span>{server.serverName}</span>
+														</div>
+													</SelectItem>
 												))}
-											</div>
-										</div>
+											</SelectContent>
+										</Select>
 									)}
 								</div>
-							</>
-						</CardContent>
-					</div>
-				</Card>
+							</div>
+
+							<div className="flex w-full gap-8">
+								{emptyServices ? (
+									<div className="flex h-[70vh] w-full flex-col items-center justify-center">
+										<FolderInput className="size-8 self-center text-muted-foreground" />
+										<span className="text-center font-medium text-muted-foreground">
+											No services added yet. Click on Create Service.
+										</span>
+									</div>
+								) : filteredServices.length === 0 ? (
+									<div className="flex h-[70vh] w-full flex-col items-center justify-center">
+										<Search className="size-8 self-center text-muted-foreground" />
+										<span className="text-center font-medium text-muted-foreground">
+											No services found with the current filters
+										</span>
+										<span className="text-sm text-muted-foreground">
+											Try adjusting your search or filters
+										</span>
+									</div>
+								) : (
+									<div className="flex w-full flex-col gap-4">
+										<div className="gap-5 pb-10 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+											{filteredServices?.map((service) => (
+												<ContextMenu key={service.id}>
+													<ContextMenuTrigger asChild>
+														<Link
+															href={`/dashboard/project/${projectId}/environment/${environmentId}/services/${service.type}/${service.id}`}
+															className="block h-full"
+														>
+															<Card className="flex flex-col h-full group relative cursor-pointer bg-transparent transition-colors hover:bg-border">
+																{service.serverId && (
+																	<div className="absolute -left-1 -top-2">
+																		<ServerIcon className="size-4 text-muted-foreground" />
+																	</div>
+																)}
+																<div className="absolute -right-1 -top-2">
+																	<StatusTooltip status={service.status} />
+																</div>
+
+																<div
+																	className={cn(
+																		"absolute -left-3 -bottom-3 size-9 translate-y-1 rounded-full p-0 transition-all duration-200 z-10 bg-background border",
+																		selectedServices.includes(service.id)
+																			? "opacity-100 translate-y-0"
+																			: "opacity-0 group-hover:translate-y-0 group-hover:opacity-100",
+																	)}
+																	onClick={(e) =>
+																		handleServiceSelect(service.id, e)
+																	}
+																>
+																	<div className="h-full w-full flex items-center justify-center">
+																		<Checkbox
+																			checked={selectedServices.includes(
+																				service.id,
+																			)}
+																			className="data-[state=checked]:bg-primary"
+																		/>
+																	</div>
+																</div>
+
+																<CardHeader>
+																	<CardTitle className="flex items-center justify-between">
+																		<div className="flex flex-row items-center gap-2 justify-between w-full">
+																			<div className="flex flex-col gap-2">
+																				<span className="text-base flex items-center gap-2 font-medium leading-none flex-wrap">
+																					{service.name}
+																				</span>
+																				{service.description && (
+																					<span className="text-sm font-medium text-muted-foreground">
+																						{service.description}
+																					</span>
+																				)}
+																			</div>
+
+																			<span className="text-sm font-medium text-muted-foreground self-start">
+																				{service.type === "postgres" && (
+																					<PostgresqlIcon className="h-7 w-7" />
+																				)}
+																				{service.type === "redis" && (
+																					<RedisIcon className="h-7 w-7" />
+																				)}
+																				{service.type === "mariadb" && (
+																					<MariadbIcon className="h-7 w-7" />
+																				)}
+																				{service.type === "mongo" && (
+																					<MongodbIcon className="h-7 w-7" />
+																				)}
+																				{service.type === "mysql" && (
+																					<MysqlIcon className="h-7 w-7" />
+																				)}
+																				{service.type === "application" &&
+																					(service.icon ? (
+																						// biome-ignore lint/performance/noImgElement: application icon is data URL
+																						<img
+																							src={service.icon}
+																							alt={service.name}
+																							className="size-7 object-contain"
+																						/>
+																					) : (
+																						<GlobeIcon className="h-6 w-6" />
+																					))}
+																				{service.type === "compose" && (
+																					<CircuitBoard className="h-6 w-6" />
+																				)}
+																				{service.type === "libsql" && (
+																					<LibsqlIcon className="h-6 w-6" />
+																				)}
+																			</span>
+																		</div>
+																	</CardTitle>
+																</CardHeader>
+																<CardFooter className="mt-auto">
+																	<div className="space-y-1 text-sm w-full">
+																		{service.serverName && (
+																			<div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+																				<ServerIcon className="size-3" />
+																				<span className="truncate">
+																					{service.serverName}
+																				</span>
+																			</div>
+																		)}
+																		<DateTooltip date={service.createdAt}>
+																			Created
+																		</DateTooltip>
+																	</div>
+																</CardFooter>
+															</Card>
+														</Link>
+													</ContextMenuTrigger>
+													{service.type !== "libsql" && (
+														<ContextMenuContent className="w-48">
+															<ContextMenuLabel className="truncate">
+																{service.name}
+															</ContextMenuLabel>
+															<ContextMenuSeparator />
+															<ContextMenuItem
+																className="flex items-center gap-2"
+																onClick={() =>
+																	handleServiceAction(service, "start")
+																}
+															>
+																<Play className="size-4" />
+																Start
+															</ContextMenuItem>
+															<ContextMenuItem
+																className="flex items-center gap-2"
+																onClick={() =>
+																	handleServiceAction(service, "deploy")
+																}
+															>
+																<RefreshCw className="size-4" />
+																Deploy
+															</ContextMenuItem>
+															<ContextMenuItem
+																className="flex items-center gap-2 text-orange-500 focus:text-orange-500"
+																onClick={() =>
+																	handleServiceAction(service, "stop")
+																}
+															>
+																<Ban className="size-4" />
+																Stop
+															</ContextMenuItem>
+															<ContextMenuSeparator />
+															<ContextMenuItem
+																className="flex items-center gap-2 text-red-500 focus:text-red-500"
+																onClick={() => setServiceToDelete(service)}
+															>
+																<Trash2 className="size-4" />
+																Delete
+															</ContextMenuItem>
+														</ContextMenuContent>
+													)}
+												</ContextMenu>
+											))}
+										</div>
+									</div>
+								)}
+							</div>
+						</>
+					</CardContent>
+				</div>
 			</div>
 
 			{/* Single Service Delete Dialog */}

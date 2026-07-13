@@ -33,7 +33,7 @@ import {
 import { hasValidLicense } from "@dokploy/server/services/proprietary/license-key";
 import { TRPCError } from "@trpc/server";
 import * as bcrypt from "bcrypt";
-import { and, asc, eq, gt, ne } from "drizzle-orm";
+import { and, asc, desc, eq, gt, ne } from "drizzle-orm";
 import { z } from "zod";
 import { audit } from "@/server/api/utils/audit";
 import {
@@ -183,6 +183,29 @@ export const userRouter = createTRPCRouter({
 			return true;
 		}
 		return false;
+	}),
+	getLoginHistory: protectedProcedure.query(async ({ ctx }) => {
+		// Surface the user's recent sessions (IP + device) as login history.
+		// Better Auth records ipAddress/userAgent on each session row.
+		const sessions = await db.query.session.findMany({
+			where: eq(session.userId, ctx.user.id),
+			orderBy: [desc(session.createdAt)],
+			limit: 50,
+			columns: {
+				id: true,
+				ipAddress: true,
+				userAgent: true,
+				createdAt: true,
+				updatedAt: true,
+				expiresAt: true,
+			},
+		});
+
+		const currentSessionId = ctx.session?.id;
+		return sessions.map((s) => ({
+			...s,
+			isCurrent: s.id === currentSessionId,
+		}));
 	}),
 	getBackups: adminProcedure.query(async ({ ctx }) => {
 		const memberResult = await db.query.member.findFirst({

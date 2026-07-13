@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { Download, RefreshCw, Search, ShieldCheck } from "lucide-react";
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -135,7 +135,7 @@ export const ShowAbhashAuditLogs = () => {
 
 	return (
 		<div className="flex w-full flex-col gap-4">
-			<div className="flex flex-col gap-3 rounded-lg border bg-card p-4">
+			<div className="flex flex-col gap-3">
 				<div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
 					<div className="flex items-center gap-3">
 						<div className="flex h-10 w-10 items-center justify-center rounded-md border bg-background">
@@ -263,41 +263,76 @@ export const ShowAbhashAuditLogs = () => {
 								</TableCell>
 							</TableRow>
 						) : logs.data?.rows.length ? (
-							logs.data.rows.map((row) => (
-								<TableRow key={row.id}>
-									<TableCell className="text-muted-foreground text-xs">
-										{formatDistanceToNow(new Date(row.createdAt), {
-											addSuffix: true,
-										})}
-									</TableCell>
-									<TableCell>
-										<div className="font-medium text-sm">{row.userEmail}</div>
-										<div className="text-muted-foreground text-xs">
-											{row.userRole}
-										</div>
-									</TableCell>
-									<TableCell>
-										<Badge variant={actionVariant(row.action)}>
-											{row.action}
-										</Badge>
-									</TableCell>
-									<TableCell>
-										<div className="font-medium text-sm">
-											{row.resourceType}
-										</div>
-										<div className="max-w-[260px] truncate text-muted-foreground text-xs">
-											{row.resourceName ||
-												row.resourceId ||
-												"No resource detail"}
-										</div>
-									</TableCell>
-									<TableCell>
-										<pre className="max-h-24 max-w-[420px] overflow-auto whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-xs">
-											{formatMetadata(row.metadata) || "No metadata recorded"}
-										</pre>
-									</TableCell>
-								</TableRow>
-							))
+							(() => {
+								let lastDateLabel: string | null = null;
+								const elements: ReactNode[] = [];
+								for (const row of logs.data.rows) {
+									const dateLabel = new Date(row.createdAt).toLocaleDateString(
+										undefined,
+										{
+											weekday: "short",
+											year: "numeric",
+											month: "short",
+											day: "numeric",
+										},
+									);
+									if (dateLabel !== lastDateLabel) {
+										lastDateLabel = dateLabel;
+										elements.push(
+											<TableRow
+												key={`group-${dateLabel}`}
+												className="hover:bg-transparent"
+											>
+												<TableCell
+													colSpan={5}
+													className="bg-muted/40 py-1.5 font-medium text-muted-foreground text-xs uppercase tracking-wider"
+												>
+													{dateLabel}
+												</TableCell>
+											</TableRow>,
+										);
+									}
+									elements.push(
+										<TableRow key={row.id}>
+											<TableCell className="text-muted-foreground text-xs">
+												{formatDistanceToNow(new Date(row.createdAt), {
+													addSuffix: true,
+												})}
+											</TableCell>
+											<TableCell>
+												<div className="font-medium text-sm">
+													{row.userEmail}
+												</div>
+												<div className="text-muted-foreground text-xs">
+													{row.userRole}
+												</div>
+											</TableCell>
+											<TableCell>
+												<Badge variant={actionVariant(row.action)}>
+													{row.action}
+												</Badge>
+											</TableCell>
+											<TableCell>
+												<div className="font-medium text-sm">
+													{row.resourceType}
+												</div>
+												<div className="max-w-[260px] truncate text-muted-foreground text-xs">
+													{row.resourceName ||
+														row.resourceId ||
+														"No resource detail"}
+												</div>
+											</TableCell>
+											<TableCell>
+												<pre className="max-h-24 max-w-[420px] overflow-auto whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-xs">
+													{formatMetadata(row.metadata) ||
+														"No metadata recorded"}
+												</pre>
+											</TableCell>
+										</TableRow>,
+									);
+								}
+								return elements;
+							})()
 						) : (
 							<TableRow>
 								<TableCell colSpan={5} className="h-28 text-center">
