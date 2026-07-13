@@ -79,12 +79,84 @@ export const getDokployReleaseRepository = () => {
 		: DEFAULT_RELEASE_REPOSITORY;
 };
 
+const MANIFEST_ACCEPT = [
+	"application/vnd.oci.image.index.v1+json",
+	"application/vnd.oci.image.manifest.v1+json",
+	"application/vnd.docker.distribution.manifest.list.v2+json",
+	"application/vnd.docker.distribution.manifest.v2+json",
+].join(", ");
+
+export const imageExistsWithGithubToken = async (image: string) => {
+	const githubToken = process.env.DOKPLOY_RELEASE_GITHUB_TOKEN;
+	const match = image.match(/^ghcr\.io\/([^/]+)\/(.+):([^/:]+)$/);
+	if (!githubToken || !match) return false;
+
+	const [, owner, packagePath, tag] = match;
+	if (!owner || !packagePath || !tag) return false;
+	const manifestUrl = `https://ghcr.io/v2/${owner}/${packagePath}/manifests/${tag}`;
+
+	try {
+		const challengeResponse = await globalThis.fetch(manifestUrl, {
+			method: "HEAD",
+			headers: { Accept: MANIFEST_ACCEPT },
+		});
+		if (challengeResponse.ok) return true;
+		if (challengeResponse.status !== 401) return false;
+
+		const challenge = challengeResponse.headers.get("www-authenticate");
+		if (!challenge?.startsWith("Bearer ")) return false;
+		const parameters = Object.fromEntries(
+			[...challenge.matchAll(/([a-z]+)="([^"]+)"/gi)].map((entry) => [
+				entry[1]?.toLowerCase(),
+				entry[2],
+			]),
+		);
+		const realm = parameters.realm;
+		if (!realm || new URL(realm).hostname !== "ghcr.io") return false;
+
+		const tokenUrl = new URL(realm);
+		if (parameters.service) {
+			tokenUrl.searchParams.set("service", parameters.service);
+		}
+		tokenUrl.searchParams.set(
+			"scope",
+			parameters.scope || `repository:${owner}/${packagePath}:pull`,
+		);
+		const tokenResponse = await globalThis.fetch(tokenUrl, {
+			headers: {
+				Accept: "application/json",
+				Authorization: `Basic ${Buffer.from(`${owner}:${githubToken}`).toString("base64")}`,
+			},
+			redirect: "error",
+		});
+		if (!tokenResponse.ok) return false;
+		const tokenData = (await tokenResponse.json()) as {
+			access_token?: string;
+			token?: string;
+		};
+		const registryToken = tokenData.token || tokenData.access_token;
+		if (!registryToken) return false;
+
+		const manifestResponse = await globalThis.fetch(manifestUrl, {
+			method: "HEAD",
+			redirect: "error",
+			headers: {
+				Accept: MANIFEST_ACCEPT,
+				Authorization: `Bearer ${registryToken}`,
+			},
+		});
+		return manifestResponse.ok;
+	} catch {
+		return false;
+	}
+};
+
 const imageExists = async (image: string) => {
 	try {
 		await spawnAsync("docker", ["manifest", "inspect", image]);
 		return true;
 	} catch {
-		return false;
+		return imageExistsWithGithubToken(image);
 	}
 };
 
@@ -147,7 +219,7 @@ const getLatestCustomReleaseTag = async (
 	try {
 		response = await dependencies.fetch(
 			`https://api.github.com/repos/${releaseRepository}/releases/latest`,
-			{ headers },
+			{ headers, redirect: "error" },
 		);
 	} catch {
 		console.warn("Unable to reach GitHub while checking for Dokploy updates");

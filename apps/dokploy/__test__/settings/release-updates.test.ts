@@ -2,6 +2,7 @@ import {
 	clearUpdateDataCache,
 	getDokployUpdateArguments,
 	getUpdateData,
+	imageExistsWithGithubToken,
 	type UpdateCheckDependencies,
 } from "@dokploy/server/services/settings";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -29,15 +30,23 @@ const createDependencies = (
 ) => {
 	const fetchMock = vi.fn(async () => {
 		if (response instanceof Error) throw response;
-		return response;
+		return response.clone();
 	});
 	const imageExists = vi.fn(async () => imageAvailable);
+	let currentTime = 1_000;
 	const dependencies: UpdateCheckDependencies = {
 		fetch: fetchMock as unknown as typeof globalThis.fetch,
 		imageExists,
-		now: () => 1_000,
+		now: () => currentTime,
 	};
-	return { dependencies, fetchMock, imageExists };
+	return {
+		advance: (milliseconds: number) => {
+			currentTime += milliseconds;
+		},
+		dependencies,
+		fetchMock,
+		imageExists,
+	};
 };
 
 describe("custom Dokploy release updates", () => {
@@ -50,6 +59,7 @@ describe("custom Dokploy release updates", () => {
 
 	afterEach(() => {
 		vi.unstubAllEnvs();
+		vi.unstubAllGlobals();
 		vi.restoreAllMocks();
 	});
 
@@ -161,11 +171,18 @@ describe("custom Dokploy release updates", () => {
 	);
 
 	it("caches verified releases for five minutes", async () => {
-		const { dependencies, fetchMock, imageExists } = createDependencies();
+		const { advance, dependencies, fetchMock, imageExists } =
+			createDependencies();
 		await getUpdateData("v0.29.11", dependencies);
+		advance(5 * 60 * 1000 - 1);
 		await getUpdateData("v0.29.11", dependencies);
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 		expect(imageExists).toHaveBeenCalledTimes(1);
+
+		advance(2);
+		await getUpdateData("v0.29.11", dependencies);
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+		expect(imageExists).toHaveBeenCalledTimes(2);
 	});
 
 	it("builds a rollback-safe update command for the exact release tag", () => {
@@ -185,5 +202,38 @@ describe("custom Dokploy release updates", () => {
 		expect(() => getDokployUpdateArguments("latest")).toThrow(
 			"Invalid Dokploy release tag",
 		);
+	});
+
+	it("checks private GHCR manifests with the server-only GitHub token", async () => {
+		vi.stubEnv("DOKPLOY_RELEASE_GITHUB_TOKEN", "private-token");
+		const fetchMock = vi
+			.fn<typeof globalThis.fetch>()
+			.mockResolvedValueOnce(
+				new Response(null, {
+					headers: {
+						"www-authenticate":
+							'Bearer realm="https://ghcr.io/token",service="ghcr.io",scope="repository:abhash-chakraborty/dokploy:pull"',
+					},
+					status: 401,
+				}),
+			)
+			.mockResolvedValueOnce(
+				new Response(JSON.stringify({ token: "registry-token" }), {
+					status: 200,
+				}),
+			)
+			.mockResolvedValueOnce(new Response(null, { status: 200 }));
+		vi.stubGlobal("fetch", fetchMock);
+
+		await expect(
+			imageExistsWithGithubToken("ghcr.io/abhash-chakraborty/dokploy:v0.29.12"),
+		).resolves.toBe(true);
+		expect(fetchMock).toHaveBeenCalledTimes(3);
+		expect(fetchMock.mock.calls[2]?.[1]).toMatchObject({
+			headers: expect.objectContaining({
+				Authorization: "Bearer registry-token",
+			}),
+			method: "HEAD",
+		});
 	});
 });

@@ -616,7 +616,12 @@ export const settingsRouter = createTRPCRouter({
 
 		const data = await getUpdateData(packageInfo.version);
 		if (data.updateAvailable && data.latestVersion) {
-			void spawnAsync("docker", getDokployUpdateArguments(data.latestVersion));
+			void spawnAsync(
+				"docker",
+				getDokployUpdateArguments(data.latestVersion),
+			).catch((error) => {
+				console.error("Dokploy background update failed:", error);
+			});
 			await audit(ctx, {
 				action: "update",
 				resourceType: "settings",
