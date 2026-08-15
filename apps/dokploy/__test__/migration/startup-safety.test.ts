@@ -50,6 +50,7 @@ describe("migration startup safety", () => {
 		expect(packageJson.scripts.start).toBe(
 			"node -r dotenv/config dist/migration.mjs && node -r dotenv/config dist/server.mjs",
 		);
-		expect(packageJson.version).toBe("v0.29.12");
+		// Pinned to a shape, not a literal, so a release bump doesn't fail this.
+		expect(packageJson.version).toMatch(/^v\d+\.\d+\.\d+/);
 	});
 });

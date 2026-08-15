@@ -11,6 +11,16 @@ export const isWSL = async () => {
 	}
 };
 
+/** Returns if running in Docker Desktop. */
+export const isDockerDesktop = async () => {
+	try {
+		const { stdout } = await execAsync("getent hosts host.docker.internal");
+		return !!stdout.trim();
+	} catch {
+		return false;
+	}
+};
+
 const ipv4ToNumber = (address: string) =>
 	address
 		.split(".")

@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { FitAddon } from "xterm-addon-fit";
 import "@xterm/xterm/css/xterm.css";
 import { ClipboardAddon } from "@xterm/addon-clipboard";
+import { fixMacOsAltKeys } from "@/lib/terminal-keyboard";
 import { getLocalServerData } from "./local-server-config";
 
 const RESIZE_MESSAGE_PREFIX = "\u0000dokploy-resize:";
@@ -48,6 +49,7 @@ export const Terminal: React.FC<Props> = ({ id, serverId, onStatusChange }) => {
 		const clipboardAddon = new ClipboardAddon();
 		term.loadAddon(addonFit);
 		term.loadAddon(clipboardAddon);
+		fixMacOsAltKeys(term);
 		term.open(container);
 		addonFit.fit();
 

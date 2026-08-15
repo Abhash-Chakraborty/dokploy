@@ -5,7 +5,8 @@ import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Fingerprint } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import Link from "next/link";
-import { type ReactElement, useState } from "react";
+import { useRouter } from "next/router";
+import { type ReactElement, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -63,11 +64,13 @@ interface Props {
 }
 export default function Home({ IS_CLOUD, socialProviders }: Props) {
 	const { config: whitelabeling } = useWhitelabelingPublic();
+	const router = useRouter();
 	const { data: authMethods } = api.settings.getAuthMethods.useQuery();
 	// Default to enabled while loading so the form is never wrongly hidden.
 	const methodEnabled = (key: keyof NonNullable<typeof authMethods>) =>
 		authMethods ? authMethods[key] : true;
 	const [isLoginLoading, setIsLoginLoading] = useState(false);
+	const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
 	const [isTwoFactorLoading, setIsTwoFactorLoading] = useState(false);
 	const [isBackupCodeLoading, setIsBackupCodeLoading] = useState(false);
 	const [isTwoFactor, setIsTwoFactor] = useState(false);
@@ -82,6 +85,29 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 			password: "",
 		},
 	});
+
+	useEffect(() => {
+		const queryError = router.query.error;
+		if (!queryError) return;
+
+		const raw = Array.isArray(queryError) ? queryError[0] : queryError;
+		if (!raw) return;
+		const normalized = raw.replace(/[+_]/g, " ").toLowerCase();
+
+		setError(
+			normalized.includes("account not linked")
+				? "This account already exists but isn't linked to that sign-in provider yet. Contact your administrator to link it."
+				: normalized.includes("access denied")
+					? "Access was denied by the identity provider."
+					: "We couldn't complete sign-in. Please try again or contact your administrator.",
+		);
+
+		const { error: _removed, ...rest } = router.query;
+		router.replace({ pathname: router.pathname, query: rest }, undefined, {
+			shallow: true,
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [router.query.error]);
 
 	const onSubmit = async (values: LoginForm) => {
 		setIsLoginLoading(true);
@@ -107,7 +133,7 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 				return;
 			}
 
-			// @ts-ignore
+			// @ts-expect-error
 			if (data?.twoFactorRedirect as boolean) {
 				setTwoFactorCode("");
 				setIsTwoFactor(true);
@@ -125,6 +151,34 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 			setIsLoginLoading(false);
 		}
 	};
+	const onPasskeySignIn = async () => {
+		setIsPasskeyLoading(true);
+		try {
+			const { data, error } = await authClient.signIn.passkey();
+
+			if (error) {
+				const errorCode = "code" in error ? error.code : undefined;
+				if (
+					errorCode !== "AUTH_CANCELLED" &&
+					errorCode !== "ERROR_CEREMONY_ABORTED"
+				) {
+					toast.error(error.message || "Failed to sign in with passkey");
+					setError(error.message || "Failed to sign in with passkey");
+				}
+				return;
+			}
+
+			if (data) {
+				toast.success("Logged in successfully");
+				router.push("/dashboard/home");
+			}
+		} catch {
+			toast.error("An error occurred while signing in with passkey");
+		} finally {
+			setIsPasskeyLoading(false);
+		}
+	};
+
 	const onTwoFactorSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (twoFactorCode.length !== 6) {
@@ -196,19 +250,8 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 					type="button"
 					variant="outline"
 					className="w-full"
-					onClick={async () => {
-						try {
-							const res = await authClient.signIn.passkey();
-							if (res?.error) {
-								toast.error(res.error.message || "Passkey sign-in failed");
-								return;
-							}
-							toast.success("Logged in successfully");
-							window.location.href = "/dashboard/home";
-						} catch {
-							toast.error("Passkey sign-in failed");
-						}
-					}}
+					onClick={onPasskeySignIn}
+					isLoading={isPasskeyLoading}
 				>
 					<Fingerprint className="size-4" />
 					Sign in with a passkey

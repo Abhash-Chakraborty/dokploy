@@ -18,6 +18,7 @@ import {
 	getTrustedProviders,
 	getUserByToken,
 } from "../services/admin";
+import { resolveOrganizationDefaultRole } from "../services/proprietary/license-key";
 import {
 	getWebServerSettings,
 	updateWebServerSettings,
@@ -83,6 +84,9 @@ const { handler, api } = betterAuth({
 		...(!IS_CLOUD ? ["/verify-email"] : []),
 	],
 	secret: betterAuthSecret,
+	onAPIError: {
+		errorURL: "/",
+	},
 	...(authBaseURL ? { baseURL: authBaseURL } : {}),
 	...(!IS_CLOUD
 		? {
@@ -182,9 +186,11 @@ const { handler, api } = betterAuth({
 		user: {
 			create: {
 				before: async (_user, context) => {
+					if (context?.path.includes("/scim")) {
+						return { data: { emailVerified: true } };
+					}
 					if (!IS_CLOUD) {
 						const isSSORequest = context?.path.includes("/sso");
-						const isSCIMRequest = context?.path.includes("/scim");
 						const xDokployToken =
 							context?.request?.headers?.get("x-dokploy-token");
 						if (xDokployToken) {
@@ -214,7 +220,7 @@ const { handler, api } = betterAuth({
 									message: "Email does not match invitation",
 								});
 							}
-						} else if (!isSSORequest && !isSCIMRequest) {
+						} else if (!isSSORequest) {
 							const isAdminPresent = await db.query.member.findFirst({
 								where: eq(schema.member.role, "owner"),
 							});
@@ -264,7 +270,23 @@ const { handler, api } = betterAuth({
 						}
 					}
 
-					if (isSCIMRequest) return;
+					if (isSCIMRequest) {
+						const membership = await db.query.member.findFirst({
+							where: eq(schema.member.userId, user.id),
+						});
+						if (membership) {
+							const defaultRole = await resolveOrganizationDefaultRole(
+								membership.organizationId,
+							);
+							if (defaultRole !== membership.role) {
+								await db
+									.update(schema.member)
+									.set({ role: defaultRole })
+									.where(eq(schema.member.id, membership.id));
+							}
+						}
+						return;
+					}
 
 					if (IS_CLOUD || !isAdminPresent) {
 						await db.transaction(async (tx) => {
@@ -301,10 +323,13 @@ const { handler, api } = betterAuth({
 								message: "Provider not found",
 							});
 						}
+						const defaultRole = provider.organizationId
+							? await resolveOrganizationDefaultRole(provider.organizationId)
+							: "member";
 						await db.insert(schema.member).values({
 							userId: user.id,
 							organizationId: provider.organizationId || "",
-							role: "member",
+							role: defaultRole,
 							createdAt: new Date(),
 							isDefault: true,
 						});
@@ -444,9 +469,7 @@ const { handler, api } = betterAuth({
 			enableMetadata: true,
 			references: "user",
 		}),
-		sso({
-			saml: { enableInResponseToValidation: false },
-		}),
+		sso({ trustEmailVerified: true }),
 		scim({
 			beforeSCIMTokenGenerated: async ({ user }) => {
 				const dbUser = await db.query.user.findFirst({

@@ -1,3 +1,7 @@
+import {
+	INVALID_HOSTNAME_MESSAGE,
+	VALID_HOSTNAME_REGEX,
+} from "@dokploy/server/utils/hostname-validation";
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
 import { GlobeIcon } from "lucide-react";
 import { useEffect } from "react";
@@ -29,13 +33,20 @@ import { api } from "@/utils/api";
 
 const addServerDomain = z
 	.object({
-		domain: z.string().trim().toLowerCase(),
+		domain: z
+			.string()
+			.trim()
+			.toLowerCase()
+			// empty clears the server domain and reverts to IP-only access
+			.refine((val) => val === "" || VALID_HOSTNAME_REGEX.test(val), {
+				message: INVALID_HOSTNAME_MESSAGE,
+			}),
 		letsEncryptEmail: z.string(),
 		https: z.boolean().optional(),
 		certificateType: z.enum(["letsencrypt", "none", "custom"]),
 	})
 	.superRefine((data, ctx) => {
-		if (data.https && !data.certificateType) {
+		if (data.domain && data.https && !data.certificateType) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
 				path: ["certificateType"],
@@ -43,6 +54,7 @@ const addServerDomain = z
 			});
 		}
 		if (
+			data.domain &&
 			data.https &&
 			data.certificateType === "letsencrypt" &&
 			!data.letsEncryptEmail

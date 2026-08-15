@@ -35,6 +35,7 @@ import { ShowVolumeBackups } from "@/components/dashboard/application/volume-bac
 import { DeleteService } from "@/components/dashboard/compose/delete-service";
 import { ContainerFreeMonitoring } from "@/components/dashboard/monitoring/free/container/show-free-container-monitoring";
 import { ContainerPaidMonitoring } from "@/components/dashboard/monitoring/paid/container/show-paid-container-monitoring";
+import { AssignNetworks } from "@/components/dashboard/networks/assign-networks";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { AdvanceBreadcrumb } from "@/components/shared/advance-breadcrumb";
 import { StatusTooltip } from "@/components/shared/status-tooltip";
@@ -124,7 +125,8 @@ const Service = (
 							<CardTitle className="text-xl flex flex-row gap-2 items-center">
 								<div className="relative flex flex-row gap-4 items-center">
 									<ShowIconSettings
-										applicationId={applicationId}
+										serviceId={applicationId}
+										serviceType="application"
 										icon={data?.icon}
 									/>
 									<div className="absolute -right-1 -top-2 z-10">
@@ -339,6 +341,7 @@ const Service = (
 											<ShowDockerLogs
 												appName={data?.appName || ""}
 												serverId={data?.serverId || ""}
+												serviceId={data?.applicationId}
 											/>
 										</div>
 									</TabsContent>
@@ -406,6 +409,7 @@ const Service = (
 											<ShowBuildServer applicationId={applicationId} />
 											<ShowResources id={applicationId} type="application" />
 											<ShowVolumes id={applicationId} type="application" />
+											<AssignNetworks id={applicationId} type="application" />
 											<ShowRedirects applicationId={applicationId} />
 											<ShowSecurity applicationId={applicationId} />
 											<ShowPorts applicationId={applicationId} />

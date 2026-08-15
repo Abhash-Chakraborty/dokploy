@@ -9,8 +9,10 @@ import { Button } from "../ui/button";
 
 interface Props {
 	children: React.ReactNode;
+	/** Overrides the default quote in the left panel (desktop only). */
+	leftPanel?: React.ReactNode;
 }
-export const OnboardingLayout = ({ children }: Props) => {
+export const OnboardingLayout = ({ children, leftPanel }: Props) => {
 	const { config: whitelabeling } = useWhitelabelingPublic();
 	const appName = whitelabeling?.appName || "Dokploy";
 	const appDescription =
@@ -39,18 +41,22 @@ export const OnboardingLayout = ({ children }: Props) => {
 					{appName}
 				</Link>
 				<div className="relative z-20 mt-auto space-y-4">
-					<blockquote className="space-y-2">
-						<p className="text-lg text-primary">{appDescription}</p>
-					</blockquote>
-					<Link
-						href="https://github.com/Abhash-Chakraborty"
-						target="_blank"
-						rel="noopener noreferrer"
-						className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
-					>
-						<GithubIcon className="size-4" />
-						View the repository
-					</Link>
+					{leftPanel ?? (
+						<>
+							<blockquote className="space-y-2">
+								<p className="text-lg text-primary">{appDescription}</p>
+							</blockquote>
+							<Link
+								href="https://github.com/Abhash-Chakraborty"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
+							>
+								<GithubIcon className="size-4" />
+								View the repository
+							</Link>
+						</>
+					)}
 				</div>
 			</div>
 			<div className="w-full">

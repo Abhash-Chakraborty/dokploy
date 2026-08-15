@@ -13,9 +13,9 @@ export const authClient = createAuthClient({
 	plugins: [
 		organizationClient(),
 		twoFactorClient(),
+		passkeyClient(),
 		apiKeyClient(),
 		adminClient(),
-		passkeyClient(),
 		inferAdditionalFields({
 			user: {
 				lastName: {

@@ -46,6 +46,7 @@ export const ShowNodes = ({ serverId }: Props) => {
 		serverId,
 	});
 	const { data: registry } = api.registry.all.useQuery();
+	const { data: permissions } = api.user.getPermissions.useQuery();
 
 	const { mutateAsync: deleteNode } = api.cluster.removeWorker.useMutation();
 
@@ -57,7 +58,9 @@ export const ShowNodes = ({ serverId }: Props) => {
 				description="Add nodes to your cluster."
 				icon={<Boxes className="size-5" />}
 				actions={
-					haveAtLeastOneRegistry ? <AddNode serverId={serverId} /> : undefined
+					haveAtLeastOneRegistry && permissions?.server.create ? (
+						<AddNode serverId={serverId} />
+					) : undefined
 				}
 			/>
 			<div className="space-y-2 min-h-[35vh]">
@@ -121,34 +124,35 @@ export const ShowNodes = ({ serverId }: Props) => {
 													<DropdownMenuContent align="end">
 														<DropdownMenuLabel>Actions</DropdownMenuLabel>
 														<ShowNodeData data={node} />
-														{!node?.ManagerStatus?.Leader && (
-															<DialogAction
-																title="Delete Node"
-																description="Are you sure you want to delete this node from the cluster?"
-																type="destructive"
-																onClick={async () => {
-																	await deleteNode({
-																		nodeId: node.ID,
-																		serverId,
-																	})
-																		.then(() => {
-																			refetch();
-																			toast.success(
-																				"Node deleted successfully",
-																			);
+														{!node?.ManagerStatus?.Leader &&
+															permissions?.server.delete && (
+																<DialogAction
+																	title="Delete Node"
+																	description="Are you sure you want to delete this node from the cluster?"
+																	type="destructive"
+																	onClick={async () => {
+																		await deleteNode({
+																			nodeId: node.ID,
+																			serverId,
 																		})
-																		.catch(() => {
-																			toast.error("Error deleting node");
-																		});
-																}}
-															>
-																<DropdownMenuItem
-																	onSelect={(e) => e.preventDefault()}
+																			.then(() => {
+																				refetch();
+																				toast.success(
+																					"Node deleted successfully",
+																				);
+																			})
+																			.catch(() => {
+																				toast.error("Error deleting node");
+																			});
+																	}}
 																>
-																	Delete
-																</DropdownMenuItem>
-															</DialogAction>
-														)}
+																	<DropdownMenuItem
+																		onSelect={(e) => e.preventDefault()}
+																	>
+																		Delete
+																	</DropdownMenuItem>
+																</DialogAction>
+															)}
 													</DropdownMenuContent>
 												</DropdownMenu>
 											</TableCell>

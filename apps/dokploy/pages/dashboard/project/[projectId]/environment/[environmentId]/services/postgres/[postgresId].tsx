@@ -198,7 +198,7 @@ const Postgresql = (
 									});
 								}}
 							>
-								<div className="flex flex-row items-center justify-between w-full gap-4 overflow-x-scroll">
+								<div className="flex flex-row items-center justify-between w-full gap-4 overflow-x-auto">
 									<TabsList
 										className={cn(
 											"justify-start max-md:overflow-y-scroll md:grid md:w-fit lg:hidden",
@@ -274,6 +274,7 @@ const Postgresql = (
 											<ShowDockerLogs
 												serverId={data?.serverId || ""}
 												appName={data?.appName || ""}
+												serviceId={data?.postgresId}
 											/>
 										</div>
 									</TabsContent>

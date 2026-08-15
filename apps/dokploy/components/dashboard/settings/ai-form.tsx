@@ -7,10 +7,14 @@ import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { api } from "@/utils/api";
 import { HandleAi } from "./handle-ai";
+import { HandleAiProviders } from "./handle-ai-providers";
 
 export const AiForm = () => {
 	const { data: aiConfigs, refetch, isPending } = api.ai.getAll.useQuery();
 	const { mutateAsync, isPending: isRemoving } = api.ai.delete.useMutation();
+	const { data: currentUser } = api.user.get.useQuery();
+	const isOrgAdmin =
+		currentUser?.role === "owner" || currentUser?.role === "admin";
 
 	return (
 		<PageContainer>
@@ -18,7 +22,12 @@ export const AiForm = () => {
 				title="AI Settings"
 				description="Manage your AI configurations."
 				icon={<BotIcon className="size-5" />}
-				actions={aiConfigs && aiConfigs?.length > 0 ? <HandleAi /> : undefined}
+				actions={
+					<div className="flex flex-row gap-2">
+						{isOrgAdmin && <HandleAiProviders />}
+						{aiConfigs && aiConfigs?.length > 0 && <HandleAi />}
+					</div>
+				}
 			/>
 			<div className="space-y-2">
 				{isPending ? (
