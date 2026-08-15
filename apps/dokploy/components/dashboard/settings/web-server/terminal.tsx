@@ -51,7 +51,30 @@ export const Terminal: React.FC<Props> = ({ id, serverId, onStatusChange }) => {
 		term.loadAddon(clipboardAddon);
 		fixMacOsAltKeys(term);
 		term.open(container);
-		addonFit.fit();
+
+		// The terminal lives inside a flex column that can measure 0x0 on the
+		// first paint. Fitting then leaves xterm's renderer without dimensions,
+		// and its viewport later throws when it syncs the scroll area. Only fit
+		// once the container has a real size, and never after dispose.
+		let disposed = false;
+		const safeFit = () => {
+			if (disposed) return;
+			if (container.clientWidth <= 0 || container.clientHeight <= 0) return;
+			try {
+				addonFit.fit();
+			} catch {
+				// Renderer not ready yet; the ResizeObserver retries on next layout.
+			}
+		};
+		const initialFit = requestAnimationFrame(safeFit);
+		const safeWrite = (data: string | Uint8Array) => {
+			if (disposed) return;
+			term.write(data);
+		};
+		const safeWriteln = (line: string) => {
+			if (disposed) return;
+			term.writeln(line);
+		};
 
 		const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
 
@@ -83,37 +106,36 @@ export const Terminal: React.FC<Props> = ({ id, serverId, onStatusChange }) => {
 
 		ws.addEventListener("message", async (event) => {
 			if (typeof event.data === "string") {
-				term.write(event.data);
+				safeWrite(event.data);
 				return;
 			}
 			if (event.data instanceof ArrayBuffer) {
-				term.write(new Uint8Array(event.data));
+				safeWrite(new Uint8Array(event.data));
 				return;
 			}
 			if (event.data instanceof Blob) {
-				term.write(new Uint8Array(await event.data.arrayBuffer()));
+				safeWrite(new Uint8Array(await event.data.arrayBuffer()));
 			}
 		});
 		ws.addEventListener("close", (event) => {
 			onStatusChange?.(event.code === 1000 ? "disconnected" : "error");
 			if (event.code !== 1000) {
-				term.writeln(
+				safeWriteln(
 					`\r\n[connection closed${event.reason ? `: ${event.reason}` : ""}]`,
 				);
 			}
 		});
 		ws.addEventListener("error", () => {
 			onStatusChange?.("error");
-			term.writeln("\r\n[terminal connection error]");
+			safeWriteln("\r\n[terminal connection error]");
 		});
 
-		const resizeObserver = new ResizeObserver(() => {
-			if (container.clientWidth > 0 && container.clientHeight > 0)
-				addonFit.fit();
-		});
+		const resizeObserver = new ResizeObserver(safeFit);
 		resizeObserver.observe(container);
 
 		return () => {
+			disposed = true;
+			cancelAnimationFrame(initialFit);
 			resizeObserver.disconnect();
 			inputDisposable.dispose();
 			resizeDisposable.dispose();

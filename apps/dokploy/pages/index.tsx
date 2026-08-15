@@ -40,6 +40,7 @@ import {
 	InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth-client";
 import { api } from "@/utils/api";
 import { useWhitelabelingPublic } from "@/utils/hooks/use-whitelabeling";
@@ -237,27 +238,42 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 		}
 	};
 
+	const showGithub = socialProviders.github && methodEnabled("github");
+	const showGoogle = socialProviders.google && methodEnabled("google");
+	const showPasskey = methodEnabled("passkey");
+	const showEmailPassword = methodEnabled("emailPassword");
+	const hasAlternativeMethod = showGithub || showGoogle || showPasskey;
+
 	const loginContent = (
-		<>
-			{socialProviders.github && methodEnabled("github") && (
-				<SignInWithGithub />
+		<div className="flex flex-col gap-6">
+			{hasAlternativeMethod && (
+				<div className="flex flex-col gap-2">
+					{showGithub && <SignInWithGithub />}
+					{showGoogle && <SignInWithGoogle />}
+					{showPasskey && (
+						<Button
+							type="button"
+							variant="outline"
+							className="w-full"
+							onClick={onPasskeySignIn}
+							isLoading={isPasskeyLoading}
+						>
+							<Fingerprint className="size-4" />
+							Sign in with a passkey
+						</Button>
+					)}
+				</div>
 			)}
-			{socialProviders.google && methodEnabled("google") && (
-				<SignInWithGoogle />
+			{hasAlternativeMethod && showEmailPassword && (
+				<div className="flex items-center gap-3">
+					<Separator className="flex-1" />
+					<span className="shrink-0 text-xs uppercase text-muted-foreground">
+						Or continue with
+					</span>
+					<Separator className="flex-1" />
+				</div>
 			)}
-			{methodEnabled("passkey") && (
-				<Button
-					type="button"
-					variant="outline"
-					className="w-full"
-					onClick={onPasskeySignIn}
-					isLoading={isPasskeyLoading}
-				>
-					<Fingerprint className="size-4" />
-					Sign in with a passkey
-				</Button>
-			)}
-			{methodEnabled("emailPassword") && (
+			{showEmailPassword && (
 				<Form {...loginForm}>
 					<form
 						onSubmit={loginForm.handleSubmit(onSubmit)}
@@ -300,7 +316,7 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 					</form>
 				</Form>
 			)}
-		</>
+		</div>
 	);
 
 	return (

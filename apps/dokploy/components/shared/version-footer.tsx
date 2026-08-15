@@ -16,7 +16,9 @@ export const VersionFooter = ({ className }: { className?: string }) => {
 	return (
 		<footer
 			className={cn(
-				"mt-auto flex h-8 shrink-0 items-center justify-end border-t border-border bg-background px-4 text-xs text-muted-foreground",
+				// pr-16 keeps the version clear of the floating AI button, which is
+				// fixed at bottom-4 right-4 and otherwise sits on top of the text.
+				"mt-auto flex h-8 shrink-0 items-center justify-end border-t border-border bg-background pl-4 pr-16 text-xs text-muted-foreground",
 				className,
 			)}
 		>
