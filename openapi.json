@@ -42979,6 +42979,83 @@
         }
       }
     },
+    "/server.fleetOverview": {
+      "get": {
+        "operationId": "server-fleetOverview",
+        "tags": [
+          "server"
+        ],
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.BAD_REQUEST"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization not provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.FORBIDDEN"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.NOT_FOUND"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/server.all": {
       "get": {
         "operationId": "server-all",
@@ -46908,6 +46985,178 @@
     "/settings.readDirectories": {
       "get": {
         "operationId": "settings-readDirectories",
+        "tags": [
+          "settings"
+        ],
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "serverId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.BAD_REQUEST"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization not provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.FORBIDDEN"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.NOT_FOUND"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings.getHostCapabilities": {
+      "get": {
+        "operationId": "settings-getHostCapabilities",
+        "tags": [
+          "settings"
+        ],
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "serverId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.BAD_REQUEST"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization not provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.FORBIDDEN"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.NOT_FOUND"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings.getPrunePreview": {
+      "get": {
+        "operationId": "settings-getPrunePreview",
         "tags": [
           "settings"
         ],
@@ -57053,11 +57302,11 @@
         }
       }
     },
-    "/sso.showSignInWithSSO": {
+    "/logDrain.all": {
       "get": {
-        "operationId": "sso-showSignInWithSSO",
+        "operationId": "logDrain-all",
         "tags": [
-          "sso"
+          "logDrain"
         ],
         "security": [
           {
@@ -57130,242 +57379,11 @@
         }
       }
     },
-    "/sso.enforceSSO": {
+    "/logDrain.one": {
       "get": {
-        "operationId": "sso-enforceSSO",
+        "operationId": "logDrain-one",
         "tags": [
-          "sso"
-        ],
-        "security": [
-          {
-            "Authorization": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.BAD_REQUEST"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authorization not provided",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.FORBIDDEN"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.NOT_FOUND"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/sso.listProviders": {
-      "get": {
-        "operationId": "sso-listProviders",
-        "tags": [
-          "sso"
-        ],
-        "security": [
-          {
-            "Authorization": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.BAD_REQUEST"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authorization not provided",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.FORBIDDEN"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.NOT_FOUND"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/sso.getTrustedOrigins": {
-      "get": {
-        "operationId": "sso-getTrustedOrigins",
-        "tags": [
-          "sso"
-        ],
-        "security": [
-          {
-            "Authorization": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.BAD_REQUEST"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authorization not provided",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.FORBIDDEN"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.NOT_FOUND"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/sso.one": {
-      "get": {
-        "operationId": "sso-one",
-        "tags": [
-          "sso"
+          "logDrain"
         ],
         "security": [
           {
@@ -57375,7 +57393,7 @@
         "parameters": [
           {
             "in": "query",
-            "name": "providerId",
+            "name": "logDrainId",
             "schema": {
               "type": "string",
               "minLength": 1
@@ -57449,11 +57467,11 @@
         }
       }
     },
-    "/sso.update": {
+    "/logDrain.create": {
       "post": {
-        "operationId": "sso-update",
+        "operationId": "logDrain-create",
         "tags": [
-          "sso"
+          "logDrain"
         ],
         "security": [
           {
@@ -57468,1404 +57486,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "providerId": {
-                    "type": "string"
-                  },
-                  "issuer": {
-                    "type": "string"
-                  },
-                  "domains": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "oidcConfig": {
-                    "type": "object",
-                    "properties": {
-                      "clientId": {
-                        "type": "string"
-                      },
-                      "clientSecret": {
-                        "type": "string"
-                      },
-                      "authorizationEndpoint": {
-                        "type": "string"
-                      },
-                      "tokenEndpoint": {
-                        "type": "string"
-                      },
-                      "userInfoEndpoint": {
-                        "type": "string"
-                      },
-                      "tokenEndpointAuthentication": {
-                        "type": "string",
-                        "enum": [
-                          "client_secret_post",
-                          "client_secret_basic"
-                        ]
-                      },
-                      "jwksEndpoint": {
-                        "type": "string"
-                      },
-                      "discoveryEndpoint": {
-                        "type": "string"
-                      },
-                      "skipDiscovery": {
-                        "type": "boolean"
-                      },
-                      "scopes": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      },
-                      "pkce": {
-                        "default": true,
-                        "type": "boolean"
-                      },
-                      "mapping": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "email": {
-                            "type": "string"
-                          },
-                          "emailVerified": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "image": {
-                            "type": "string"
-                          },
-                          "extraFields": {
-                            "type": "object",
-                            "propertyNames": {
-                              "type": "string"
-                            },
-                            "additionalProperties": {}
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "email",
-                          "name"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "clientId",
-                      "clientSecret"
-                    ]
-                  },
-                  "samlConfig": {
-                    "type": "object",
-                    "properties": {
-                      "entryPoint": {
-                        "type": "string"
-                      },
-                      "cert": {
-                        "type": "string"
-                      },
-                      "callbackUrl": {
-                        "type": "string"
-                      },
-                      "audience": {
-                        "type": "string"
-                      },
-                      "idpMetadata": {
-                        "type": "object",
-                        "properties": {
-                          "metadata": {
-                            "type": "string"
-                          },
-                          "entityID": {
-                            "type": "string"
-                          },
-                          "cert": {
-                            "type": "string"
-                          },
-                          "privateKey": {
-                            "type": "string"
-                          },
-                          "privateKeyPass": {
-                            "type": "string"
-                          },
-                          "isAssertionEncrypted": {
-                            "type": "boolean"
-                          },
-                          "encPrivateKey": {
-                            "type": "string"
-                          },
-                          "encPrivateKeyPass": {
-                            "type": "string"
-                          },
-                          "singleSignOnService": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "Binding": {
-                                  "type": "string"
-                                },
-                                "Location": {
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "Binding",
-                                "Location"
-                              ]
-                            }
-                          }
-                        }
-                      },
-                      "spMetadata": {
-                        "type": "object",
-                        "properties": {
-                          "metadata": {
-                            "type": "string"
-                          },
-                          "entityID": {
-                            "type": "string"
-                          },
-                          "binding": {
-                            "type": "string"
-                          },
-                          "privateKey": {
-                            "type": "string"
-                          },
-                          "privateKeyPass": {
-                            "type": "string"
-                          },
-                          "isAssertionEncrypted": {
-                            "type": "boolean"
-                          },
-                          "encPrivateKey": {
-                            "type": "string"
-                          },
-                          "encPrivateKeyPass": {
-                            "type": "string"
-                          }
-                        }
-                      },
-                      "wantAssertionsSigned": {
-                        "type": "boolean"
-                      },
-                      "authnRequestsSigned": {
-                        "type": "boolean"
-                      },
-                      "signatureAlgorithm": {
-                        "type": "string"
-                      },
-                      "digestAlgorithm": {
-                        "type": "string"
-                      },
-                      "identifierFormat": {
-                        "type": "string"
-                      },
-                      "privateKey": {
-                        "type": "string"
-                      },
-                      "decryptionPvk": {
-                        "type": "string"
-                      },
-                      "additionalParams": {
-                        "type": "object",
-                        "propertyNames": {
-                          "type": "string"
-                        },
-                        "additionalProperties": {}
-                      },
-                      "mapping": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "email": {
-                            "type": "string"
-                          },
-                          "emailVerified": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "firstName": {
-                            "type": "string"
-                          },
-                          "lastName": {
-                            "type": "string"
-                          },
-                          "extraFields": {
-                            "type": "object",
-                            "propertyNames": {
-                              "type": "string"
-                            },
-                            "additionalProperties": {}
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "email",
-                          "name"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "entryPoint",
-                      "cert",
-                      "callbackUrl",
-                      "spMetadata"
-                    ]
-                  },
-                  "organizationId": {
-                    "type": "string"
-                  },
-                  "overrideUserInfo": {
-                    "default": false,
-                    "type": "boolean"
-                  }
-                },
-                "required": [
-                  "providerId",
-                  "issuer",
-                  "domains"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.BAD_REQUEST"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authorization not provided",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.FORBIDDEN"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/sso.deleteProvider": {
-      "post": {
-        "operationId": "sso-deleteProvider",
-        "tags": [
-          "sso"
-        ],
-        "security": [
-          {
-            "Authorization": []
-          }
-        ],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "providerId": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                },
-                "required": [
-                  "providerId"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.BAD_REQUEST"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authorization not provided",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.FORBIDDEN"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/sso.register": {
-      "post": {
-        "operationId": "sso-register",
-        "tags": [
-          "sso"
-        ],
-        "security": [
-          {
-            "Authorization": []
-          }
-        ],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "providerId": {
-                    "type": "string"
-                  },
-                  "issuer": {
-                    "type": "string"
-                  },
-                  "domains": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "oidcConfig": {
-                    "type": "object",
-                    "properties": {
-                      "clientId": {
-                        "type": "string"
-                      },
-                      "clientSecret": {
-                        "type": "string"
-                      },
-                      "authorizationEndpoint": {
-                        "type": "string"
-                      },
-                      "tokenEndpoint": {
-                        "type": "string"
-                      },
-                      "userInfoEndpoint": {
-                        "type": "string"
-                      },
-                      "tokenEndpointAuthentication": {
-                        "type": "string",
-                        "enum": [
-                          "client_secret_post",
-                          "client_secret_basic"
-                        ]
-                      },
-                      "jwksEndpoint": {
-                        "type": "string"
-                      },
-                      "discoveryEndpoint": {
-                        "type": "string"
-                      },
-                      "skipDiscovery": {
-                        "type": "boolean"
-                      },
-                      "scopes": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      },
-                      "pkce": {
-                        "default": true,
-                        "type": "boolean"
-                      },
-                      "mapping": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "email": {
-                            "type": "string"
-                          },
-                          "emailVerified": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "image": {
-                            "type": "string"
-                          },
-                          "extraFields": {
-                            "type": "object",
-                            "propertyNames": {
-                              "type": "string"
-                            },
-                            "additionalProperties": {}
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "email",
-                          "name"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "clientId",
-                      "clientSecret"
-                    ]
-                  },
-                  "samlConfig": {
-                    "type": "object",
-                    "properties": {
-                      "entryPoint": {
-                        "type": "string"
-                      },
-                      "cert": {
-                        "type": "string"
-                      },
-                      "callbackUrl": {
-                        "type": "string"
-                      },
-                      "audience": {
-                        "type": "string"
-                      },
-                      "idpMetadata": {
-                        "type": "object",
-                        "properties": {
-                          "metadata": {
-                            "type": "string"
-                          },
-                          "entityID": {
-                            "type": "string"
-                          },
-                          "cert": {
-                            "type": "string"
-                          },
-                          "privateKey": {
-                            "type": "string"
-                          },
-                          "privateKeyPass": {
-                            "type": "string"
-                          },
-                          "isAssertionEncrypted": {
-                            "type": "boolean"
-                          },
-                          "encPrivateKey": {
-                            "type": "string"
-                          },
-                          "encPrivateKeyPass": {
-                            "type": "string"
-                          },
-                          "singleSignOnService": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "Binding": {
-                                  "type": "string"
-                                },
-                                "Location": {
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "Binding",
-                                "Location"
-                              ]
-                            }
-                          }
-                        }
-                      },
-                      "spMetadata": {
-                        "type": "object",
-                        "properties": {
-                          "metadata": {
-                            "type": "string"
-                          },
-                          "entityID": {
-                            "type": "string"
-                          },
-                          "binding": {
-                            "type": "string"
-                          },
-                          "privateKey": {
-                            "type": "string"
-                          },
-                          "privateKeyPass": {
-                            "type": "string"
-                          },
-                          "isAssertionEncrypted": {
-                            "type": "boolean"
-                          },
-                          "encPrivateKey": {
-                            "type": "string"
-                          },
-                          "encPrivateKeyPass": {
-                            "type": "string"
-                          }
-                        }
-                      },
-                      "wantAssertionsSigned": {
-                        "type": "boolean"
-                      },
-                      "authnRequestsSigned": {
-                        "type": "boolean"
-                      },
-                      "signatureAlgorithm": {
-                        "type": "string"
-                      },
-                      "digestAlgorithm": {
-                        "type": "string"
-                      },
-                      "identifierFormat": {
-                        "type": "string"
-                      },
-                      "privateKey": {
-                        "type": "string"
-                      },
-                      "decryptionPvk": {
-                        "type": "string"
-                      },
-                      "additionalParams": {
-                        "type": "object",
-                        "propertyNames": {
-                          "type": "string"
-                        },
-                        "additionalProperties": {}
-                      },
-                      "mapping": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "email": {
-                            "type": "string"
-                          },
-                          "emailVerified": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "firstName": {
-                            "type": "string"
-                          },
-                          "lastName": {
-                            "type": "string"
-                          },
-                          "extraFields": {
-                            "type": "object",
-                            "propertyNames": {
-                              "type": "string"
-                            },
-                            "additionalProperties": {}
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "email",
-                          "name"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "entryPoint",
-                      "cert",
-                      "callbackUrl",
-                      "spMetadata"
-                    ]
-                  },
-                  "organizationId": {
-                    "type": "string"
-                  },
-                  "overrideUserInfo": {
-                    "default": false,
-                    "type": "boolean"
-                  }
-                },
-                "required": [
-                  "providerId",
-                  "issuer",
-                  "domains"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.BAD_REQUEST"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authorization not provided",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.FORBIDDEN"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/sso.addTrustedOrigin": {
-      "post": {
-        "operationId": "sso-addTrustedOrigin",
-        "tags": [
-          "sso"
-        ],
-        "security": [
-          {
-            "Authorization": []
-          }
-        ],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "origin": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                },
-                "required": [
-                  "origin"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.BAD_REQUEST"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authorization not provided",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.FORBIDDEN"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/sso.removeTrustedOrigin": {
-      "post": {
-        "operationId": "sso-removeTrustedOrigin",
-        "tags": [
-          "sso"
-        ],
-        "security": [
-          {
-            "Authorization": []
-          }
-        ],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "origin": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                },
-                "required": [
-                  "origin"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.BAD_REQUEST"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authorization not provided",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.FORBIDDEN"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/sso.updateTrustedOrigin": {
-      "post": {
-        "operationId": "sso-updateTrustedOrigin",
-        "tags": [
-          "sso"
-        ],
-        "security": [
-          {
-            "Authorization": []
-          }
-        ],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "oldOrigin": {
+                  "name": {
                     "type": "string",
                     "minLength": 1
                   },
-                  "newOrigin": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                },
-                "required": [
-                  "oldOrigin",
-                  "newOrigin"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.BAD_REQUEST"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authorization not provided",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.FORBIDDEN"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/scim.listProviders": {
-      "get": {
-        "operationId": "scim-listProviders",
-        "tags": [
-          "scim"
-        ],
-        "security": [
-          {
-            "Authorization": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.BAD_REQUEST"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authorization not provided",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.FORBIDDEN"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.NOT_FOUND"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/scim.generateToken": {
-      "post": {
-        "operationId": "scim-generateToken",
-        "tags": [
-          "scim"
-        ],
-        "security": [
-          {
-            "Authorization": []
-          }
-        ],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "providerId": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 64,
-                    "pattern": "^[a-z0-9][a-z0-9-]*$"
-                  }
-                },
-                "required": [
-                  "providerId"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.BAD_REQUEST"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authorization not provided",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.FORBIDDEN"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/scim.deleteProvider": {
-      "post": {
-        "operationId": "scim-deleteProvider",
-        "tags": [
-          "scim"
-        ],
-        "security": [
-          {
-            "Authorization": []
-          }
-        ],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "providerId": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 64,
-                    "pattern": "^[a-z0-9][a-z0-9-]*$"
-                  }
-                },
-                "required": [
-                  "providerId"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.BAD_REQUEST"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authorization not provided",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.FORBIDDEN"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/forwardAuth.getAuthDomain": {
-      "get": {
-        "operationId": "forwardAuth-getAuthDomain",
-        "tags": [
-          "forwardAuth"
-        ],
-        "security": [
-          {
-            "Authorization": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "serverId",
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.BAD_REQUEST"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authorization not provided",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.FORBIDDEN"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.NOT_FOUND"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/forwardAuth.setAuthDomain": {
-      "post": {
-        "operationId": "forwardAuth-setAuthDomain",
-        "tags": [
-          "forwardAuth"
-        ],
-        "security": [
-          {
-            "Authorization": []
-          }
-        ],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
                   "serverId": {
                     "anyOf": [
                       {
@@ -58876,122 +57500,116 @@
                       }
                     ]
                   },
-                  "authDomain": {
-                    "type": "string"
-                  },
-                  "https": {
+                  "enabled": {
                     "default": true,
                     "type": "boolean"
                   },
-                  "certificateType": {
-                    "default": "letsencrypt",
-                    "type": "string",
-                    "enum": [
-                      "none",
-                      "letsencrypt",
-                      "custom"
-                    ]
-                  },
-                  "customCertResolver": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "serverId",
-                  "authDomain"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.BAD_REQUEST"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authorization not provided",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.FORBIDDEN"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/forwardAuth.removeAuthDomain": {
-      "post": {
-        "operationId": "forwardAuth-removeAuthDomain",
-        "tags": [
-          "forwardAuth"
-        ],
-        "security": [
-          {
-            "Authorization": []
-          }
-        ],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "serverId": {
-                    "anyOf": [
+                  "config": {
+                    "oneOf": [
                       {
-                        "type": "string"
+                        "type": "object",
+                        "properties": {
+                          "drainType": {
+                            "type": "string",
+                            "const": "loki"
+                          },
+                          "endpoint": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "username": {
+                            "type": "string"
+                          },
+                          "password": {
+                            "type": "string"
+                          },
+                          "labels": {
+                            "default": {},
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "required": [
+                          "drainType",
+                          "endpoint"
+                        ]
                       },
                       {
-                        "type": "null"
+                        "type": "object",
+                        "properties": {
+                          "drainType": {
+                            "type": "string",
+                            "const": "datadog"
+                          },
+                          "endpoint": {
+                            "default": "https://http-intake.logs.datadoghq.com",
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "apiKey": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "site": {
+                            "default": "datadoghq.com",
+                            "type": "string"
+                          },
+                          "tags": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "drainType",
+                          "apiKey"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "drainType": {
+                            "type": "string",
+                            "const": "http"
+                          },
+                          "endpoint": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "headers": {
+                            "default": {},
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          },
+                          "encoding": {
+                            "default": "json",
+                            "type": "string",
+                            "enum": [
+                              "json",
+                              "text"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "drainType",
+                          "endpoint"
+                        ]
                       }
-                    ]
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "serverId"
+                  "name",
+                  "config"
                 ]
               }
             }
@@ -59053,165 +57671,11 @@
         }
       }
     },
-    "/forwardAuth.listProviders": {
-      "get": {
-        "operationId": "forwardAuth-listProviders",
-        "tags": [
-          "forwardAuth"
-        ],
-        "security": [
-          {
-            "Authorization": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.BAD_REQUEST"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authorization not provided",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.FORBIDDEN"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.NOT_FOUND"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/forwardAuth.serverStatus": {
-      "get": {
-        "operationId": "forwardAuth-serverStatus",
-        "tags": [
-          "forwardAuth"
-        ],
-        "security": [
-          {
-            "Authorization": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.BAD_REQUEST"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authorization not provided",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.FORBIDDEN"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.NOT_FOUND"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/forwardAuth.deployOnServer": {
+    "/logDrain.update": {
       "post": {
-        "operationId": "forwardAuth-deployOnServer",
+        "operationId": "logDrain-update",
         "tags": [
-          "forwardAuth"
+          "logDrain"
         ],
         "security": [
           {
@@ -59226,6 +57690,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
                   "serverId": {
                     "anyOf": [
                       {
@@ -59236,107 +57704,119 @@
                       }
                     ]
                   },
-                  "providerId": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                },
-                "required": [
-                  "serverId",
-                  "providerId"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.BAD_REQUEST"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authorization not provided",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.FORBIDDEN"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/forwardAuth.removeOnServer": {
-      "post": {
-        "operationId": "forwardAuth-removeOnServer",
-        "tags": [
-          "forwardAuth"
-        ],
-        "security": [
-          {
-            "Authorization": []
-          }
-        ],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "serverId": {
-                    "anyOf": [
+                  "enabled": {
+                    "default": true,
+                    "type": "boolean"
+                  },
+                  "config": {
+                    "oneOf": [
                       {
-                        "type": "string"
+                        "type": "object",
+                        "properties": {
+                          "drainType": {
+                            "type": "string",
+                            "const": "loki"
+                          },
+                          "endpoint": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "username": {
+                            "type": "string"
+                          },
+                          "password": {
+                            "type": "string"
+                          },
+                          "labels": {
+                            "default": {},
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "required": [
+                          "drainType",
+                          "endpoint"
+                        ]
                       },
                       {
-                        "type": "null"
+                        "type": "object",
+                        "properties": {
+                          "drainType": {
+                            "type": "string",
+                            "const": "datadog"
+                          },
+                          "endpoint": {
+                            "default": "https://http-intake.logs.datadoghq.com",
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "apiKey": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "site": {
+                            "default": "datadoghq.com",
+                            "type": "string"
+                          },
+                          "tags": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "drainType",
+                          "apiKey"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "drainType": {
+                            "type": "string",
+                            "const": "http"
+                          },
+                          "endpoint": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "headers": {
+                            "default": {},
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          },
+                          "encoding": {
+                            "default": "json",
+                            "type": "string",
+                            "enum": [
+                              "json",
+                              "text"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "drainType",
+                          "endpoint"
+                        ]
                       }
-                    ]
+                    ],
+                    "type": "object"
+                  },
+                  "logDrainId": {
+                    "type": "string",
+                    "minLength": 1
                   }
                 },
                 "required": [
-                  "serverId"
+                  "logDrainId"
                 ]
               }
             }
@@ -59398,99 +57878,11 @@
         }
       }
     },
-    "/forwardAuth.status": {
-      "get": {
-        "operationId": "forwardAuth-status",
-        "tags": [
-          "forwardAuth"
-        ],
-        "security": [
-          {
-            "Authorization": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "domainId",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.BAD_REQUEST"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authorization not provided",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient access",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.FORBIDDEN"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.NOT_FOUND"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/forwardAuth.enable": {
+    "/logDrain.remove": {
       "post": {
-        "operationId": "forwardAuth-enable",
+        "operationId": "logDrain-remove",
         "tags": [
-          "forwardAuth"
+          "logDrain"
         ],
         "security": [
           {
@@ -59505,13 +57897,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "domainId": {
+                  "logDrainId": {
                     "type": "string",
                     "minLength": 1
                   }
                 },
                 "required": [
-                  "domainId"
+                  "logDrainId"
                 ]
               }
             }
@@ -59573,11 +57965,11 @@
         }
       }
     },
-    "/forwardAuth.disable": {
+    "/logDrain.validate": {
       "post": {
-        "operationId": "forwardAuth-disable",
+        "operationId": "logDrain-validate",
         "tags": [
-          "forwardAuth"
+          "logDrain"
         ],
         "security": [
           {
@@ -59592,13 +57984,187 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "domainId": {
+                  "logDrainId": {
                     "type": "string",
                     "minLength": 1
                   }
                 },
                 "required": [
-                  "domainId"
+                  "logDrainId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.BAD_REQUEST"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization not provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.FORBIDDEN"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/logDrain.deploy": {
+      "post": {
+        "operationId": "logDrain-deploy",
+        "tags": [
+          "logDrain"
+        ],
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "logDrainId": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "logDrainId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.BAD_REQUEST"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization not provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.FORBIDDEN"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/logDrain.stop": {
+      "post": {
+        "operationId": "logDrain-stop",
+        "tags": [
+          "logDrain"
+        ],
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "logDrainId": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "logDrainId"
                 ]
               }
             }
