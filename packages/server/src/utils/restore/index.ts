@@ -1,3 +1,5 @@
+export * from "./drill";
+export { runRestoreDrill } from "./run-drill";
 export { restoreComposeBackup } from "./compose";
 export { restoreLibsqlBackup } from "./libsql";
 export { restoreMariadbBackup } from "./mariadb";

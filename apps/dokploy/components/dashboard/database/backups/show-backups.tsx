@@ -36,6 +36,7 @@ import type { ServiceType } from "../../application/advanced/show-resources";
 import { ShowDeploymentsModal } from "../../application/deployments/show-deployments-modal";
 import { HandleBackup } from "./handle-backup";
 import { RestoreBackup } from "./restore-backup";
+import { VerifyBackup } from "./verify-backup";
 
 interface Props {
 	id: string;
@@ -282,6 +283,12 @@ export const ShowBackups = ({
 													</div>
 
 													<div className="flex shrink-0 flex-row flex-wrap items-center gap-1.5 md:self-center">
+														<VerifyBackup
+															databaseId={id}
+															databaseType={backup.databaseType}
+															destinationId={backup.destinationId}
+															serverId={serverId}
+														/>
 														<ShowDeploymentsModal
 															id={backup.backupId}
 															type="backup"

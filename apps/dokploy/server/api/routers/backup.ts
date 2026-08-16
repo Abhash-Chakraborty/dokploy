@@ -47,6 +47,7 @@ import {
 	restoreMongoBackup,
 	restoreMySqlBackup,
 	restorePostgresBackup,
+	runRestoreDrill,
 	restoreWebServerBackup,
 } from "@dokploy/server/utils/restore";
 import { TRPCError } from "@trpc/server";
@@ -569,6 +570,63 @@ export const backupRouter = createTRPCRouter({
 			}
 		}),
 
+	/**
+	 * Restores a real backup into a throwaway database beside the live one,
+	 * counts what landed, and drops it again. A backup nobody has restored is
+	 * a hypothesis; this is how you turn it into a fact without betting the
+	 * production data on finding out.
+	 */
+	restoreDrill: protectedProcedure
+		.meta({ openapi: { enabled: false, path: "/restore-drill", method: "POST", override: true } })
+		.input(
+			z.object({
+				databaseId: z.string().min(1),
+				databaseType: z.enum(["postgres", "mysql", "mariadb"]),
+				destinationId: z.string().min(1),
+				backupFile: z.string().min(1),
+			}),
+		)
+		.mutation(async ({ input, ctx }) => {
+			await checkServicePermissionAndAccess(ctx, input.databaseId, {
+				backup: ["restore"],
+			});
+			const destination = await findDestinationById(input.destinationId);
+
+			if (input.databaseType === "postgres") {
+				const db = await findPostgresById(input.databaseId);
+				return runRestoreDrill({
+					type: "postgres",
+					appName: db.appName,
+					databaseUser: db.databaseUser,
+					databasePassword: db.databasePassword,
+					backupFile: input.backupFile,
+					destination,
+					serverId: db.serverId,
+				});
+			}
+			if (input.databaseType === "mysql") {
+				const db = await findMySqlById(input.databaseId);
+				return runRestoreDrill({
+					type: "mysql",
+					appName: db.appName,
+					databaseUser: db.databaseUser,
+					databasePassword: db.databaseRootPassword,
+					backupFile: input.backupFile,
+					destination,
+					serverId: db.serverId,
+				});
+			}
+			const db = await findMariadbById(input.databaseId);
+			return runRestoreDrill({
+				type: "mariadb",
+				appName: db.appName,
+				databaseUser: db.databaseUser,
+				databasePassword: db.databasePassword,
+				backupFile: input.backupFile,
+				destination,
+				serverId: db.serverId,
+			});
+		}),
 	restoreBackupWithLogs: protectedProcedure
 		.meta({
 			openapi: {
