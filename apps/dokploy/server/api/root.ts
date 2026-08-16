@@ -24,6 +24,7 @@ import { giteaRouter } from "./routers/gitea";
 import { githubRouter } from "./routers/github";
 import { gitlabRouter } from "./routers/gitlab";
 import { libsqlRouter } from "./routers/libsql";
+import { logDrainRouter } from "./routers/log-drain";
 import { mariadbRouter } from "./routers/mariadb";
 import { mongoRouter } from "./routers/mongo";
 import { mountRouter } from "./routers/mount";
@@ -108,6 +109,7 @@ export const appRouter = createTRPCRouter({
 	// removed, so leaving them routable exposed API surface nothing could
 	// reach. The router files stay in the tree to keep upstream merges clean —
 	// re-add the three lines here to turn the feature back on.
+	logDrain: logDrainRouter,
 	whitelabeling: abhashWhitelabelingRouter,
 	customRole: customRoleRouter,
 	auditLog: abhashAuditLogRouter,

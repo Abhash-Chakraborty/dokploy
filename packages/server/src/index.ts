@@ -29,6 +29,7 @@ export * from "./services/github";
 export * from "./services/gitlab";
 export * from "./services/host-capabilities";
 export * from "./services/libsql";
+export * from "./services/log-drain";
 export * from "./services/mariadb";
 export * from "./services/mongo";
 export * from "./services/mount";

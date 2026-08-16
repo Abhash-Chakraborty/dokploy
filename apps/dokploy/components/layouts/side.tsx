@@ -40,6 +40,7 @@ import {
 	User,
 	Users,
 	Vault,
+	Waypoints,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -430,6 +431,13 @@ const MENU: Menu = {
 					url: "/dashboard/settings/notifications",
 					icon: Bell,
 					isEnabled: ({ permissions }) => !!permissions?.notification.read,
+				},
+				{
+					title: "Log Drains",
+					url: "/dashboard/settings/log-drains",
+					icon: Waypoints,
+					isEnabled: ({ auth }) =>
+						auth?.role === "owner" || auth?.role === "admin",
 				},
 				{
 					title: "Backups",
