@@ -19,6 +19,7 @@ import type { CreateNextContextOptions } from "@trpc/server/adapters/next";
 import type { Session, User } from "better-auth";
 import superjson from "superjson";
 import { ZodError } from "zod";
+import { consume, rateLimitError } from "./rate-limit";
 
 type Resource = keyof typeof statements;
 type ActionOf<R extends Resource> = (typeof statements)[R][number];
@@ -151,6 +152,48 @@ export const createTRPCRouter = t.router;
 export const publicProcedure = t.procedure;
 
 /**
+ * Identifies the caller for rate limiting: the user when signed in (so one
+ * account can't multiply its budget across IPs), otherwise the client address.
+ */
+const rateLimitKey = (ctx: {
+	user?: { id?: string } | null;
+	req?: {
+		headers?: Record<string, unknown>;
+		socket?: { remoteAddress?: string };
+	};
+}) => {
+	if (ctx.user?.id) return `user:${ctx.user.id}`;
+	const forwarded = ctx.req?.headers?.["x-forwarded-for"];
+	const realIp = ctx.req?.headers?.["x-real-ip"];
+	const ip =
+		(typeof forwarded === "string" ? forwarded.split(",")[0]?.trim() : null) ||
+		(typeof realIp === "string" ? realIp : null) ||
+		ctx.req?.socket?.remoteAddress ||
+		"unknown";
+	return `ip:${ip}`;
+};
+
+/**
+ * Applies a per-caller ceiling. Queries are left alone — a dashboard page
+ * fires dozens and throttling them would break the UI — but every mutation
+ * goes through here, which is the surface that changes state.
+ */
+export const withRateLimit = (limit: number, windowSeconds: number) =>
+	t.middleware(({ ctx, path, type, next }) => {
+		if (type !== "mutation") return next();
+		const result = consume(
+			`${rateLimitKey(ctx)}:${path}`,
+			limit,
+			windowSeconds,
+		);
+		if (!result.allowed) throw rateLimitError(result.retryAfterSeconds);
+		return next();
+	});
+
+/** Default mutation ceiling: generous for humans, a wall for scripts. */
+const defaultMutationRateLimit = withRateLimit(60, 60);
+
+/**
  * Protected (authenticated) procedure
  *
  * If you want a query or mutation to ONLY be accessible to logged in users, use this. It verifies
@@ -158,88 +201,96 @@ export const publicProcedure = t.procedure;
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
-	if (!ctx.session || !ctx.user) {
-		throw new TRPCError({ code: "UNAUTHORIZED" });
-	}
-	return next({
-		ctx: {
-			// infers the `session` as non-nullable
-			session: ctx.session,
-			user: ctx.user,
-			// session: { ...ctx.session, user: ctx.user },
-		},
+export const protectedProcedure = t.procedure
+	.use(defaultMutationRateLimit)
+	.use(({ ctx, next }) => {
+		if (!ctx.session || !ctx.user) {
+			throw new TRPCError({ code: "UNAUTHORIZED" });
+		}
+		return next({
+			ctx: {
+				// infers the `session` as non-nullable
+				session: ctx.session,
+				user: ctx.user,
+				// session: { ...ctx.session, user: ctx.user },
+			},
+		});
 	});
-});
 
-export const cliProcedure = t.procedure.use(({ ctx, next }) => {
-	if (
-		!ctx.session ||
-		!ctx.user ||
-		(ctx.user.role !== "owner" && ctx.user.role !== "admin")
-	) {
-		throw new TRPCError({ code: "UNAUTHORIZED" });
-	}
-	return next({
-		ctx: {
-			// infers the `session` as non-nullable
-			session: ctx.session,
-			user: ctx.user,
-			// session: { ...ctx.session, user: ctx.user },
-		},
+export const cliProcedure = t.procedure
+	.use(defaultMutationRateLimit)
+	.use(({ ctx, next }) => {
+		if (
+			!ctx.session ||
+			!ctx.user ||
+			(ctx.user.role !== "owner" && ctx.user.role !== "admin")
+		) {
+			throw new TRPCError({ code: "UNAUTHORIZED" });
+		}
+		return next({
+			ctx: {
+				// infers the `session` as non-nullable
+				session: ctx.session,
+				user: ctx.user,
+				// session: { ...ctx.session, user: ctx.user },
+			},
+		});
 	});
-});
 
-export const adminProcedure = t.procedure.use(({ ctx, next }) => {
-	if (
-		!ctx.session ||
-		!ctx.user ||
-		(ctx.user.role !== "owner" && ctx.user.role !== "admin")
-	) {
-		throw new TRPCError({ code: "UNAUTHORIZED" });
-	}
-	return next({
-		ctx: {
-			// infers the `session` as non-nullable
-			session: ctx.session,
-			user: ctx.user,
-			// session: { ...ctx.session, user: ctx.user },
-		},
+export const adminProcedure = t.procedure
+	.use(defaultMutationRateLimit)
+	.use(({ ctx, next }) => {
+		if (
+			!ctx.session ||
+			!ctx.user ||
+			(ctx.user.role !== "owner" && ctx.user.role !== "admin")
+		) {
+			throw new TRPCError({ code: "UNAUTHORIZED" });
+		}
+		return next({
+			ctx: {
+				// infers the `session` as non-nullable
+				session: ctx.session,
+				user: ctx.user,
+				// session: { ...ctx.session, user: ctx.user },
+			},
+		});
 	});
-});
 
 /**
  * Requires admin/owner role AND enterprise enabled with a license key in DB.
  * Does NOT call the license server on every request; full validation (haveValidLicenseKey)
  * is used in the UI gate and when activating/validating keys.
  */
-export const enterpriseProcedure = t.procedure.use(async ({ ctx, next }) => {
-	if (
-		!ctx.session ||
-		!ctx.user ||
-		(ctx.user.role !== "owner" && ctx.user.role !== "admin")
-	) {
-		throw new TRPCError({ code: "UNAUTHORIZED" });
-	}
+export const enterpriseProcedure = t.procedure
+	.use(defaultMutationRateLimit)
+	.use(async ({ ctx, next }) => {
+		if (
+			!ctx.session ||
+			!ctx.user ||
+			(ctx.user.role !== "owner" && ctx.user.role !== "admin")
+		) {
+			throw new TRPCError({ code: "UNAUTHORIZED" });
+		}
 
-	const hasValidLicenseResult = await hasValidLicense(
-		ctx.session.activeOrganizationId,
-	);
+		const hasValidLicenseResult = await hasValidLicense(
+			ctx.session.activeOrganizationId,
+		);
 
-	if (!hasValidLicenseResult) {
-		throw new TRPCError({
-			code: "FORBIDDEN",
-			message: "Valid enterprise license required",
+		if (!hasValidLicenseResult) {
+			throw new TRPCError({
+				code: "FORBIDDEN",
+				message: "Valid enterprise license required",
+			});
+		}
+
+		return next({
+			ctx: {
+				session: ctx.session,
+				user: ctx.user,
+			},
 		});
-	}
-
-	return next({
-		ctx: {
-			session: ctx.session,
-			user: ctx.user,
-		},
 	});
-});
 
 /**
  * Permission-checked procedure factory.

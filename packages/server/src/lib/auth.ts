@@ -87,6 +87,28 @@ const { handler, api } = betterAuth({
 	onAPIError: {
 		errorURL: "/",
 	},
+	// Better Auth enables rate limiting in production but only with its global
+	// 100-per-10s budget, which is no obstacle to credential stuffing. These
+	// rules put a real ceiling on the endpoints where guessing pays off.
+	// Keyed by IP, so sign-in stays loose enough for a team behind one NAT while
+	// still cutting the brute-force budget by three orders of magnitude.
+	rateLimit: {
+		enabled: true,
+		window: 10,
+		max: 100,
+		customRules: {
+			"/sign-in/email": { window: 60, max: 10 },
+			"/sign-up/email": { window: 60, max: 10 },
+			"/forget-password": { window: 300, max: 3 },
+			"/reset-password": { window: 300, max: 5 },
+			"/two-factor/verify-totp": { window: 60, max: 5 },
+			"/two-factor/verify-backup-code": { window: 300, max: 5 },
+			"/two-factor/verify-otp": { window: 60, max: 5 },
+			"/sign-in/passkey": { window: 60, max: 10 },
+			"/change-password": { window: 300, max: 5 },
+			"/change-email": { window: 300, max: 5 },
+		},
+	},
 	...(authBaseURL ? { baseURL: authBaseURL } : {}),
 	...(!IS_CLOUD
 		? {
