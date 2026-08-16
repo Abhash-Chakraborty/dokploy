@@ -38,9 +38,6 @@ import { postgresRouter } from "./routers/postgres";
 import { previewDeploymentRouter } from "./routers/preview-deployment";
 import { projectRouter } from "./routers/project";
 import { customRoleRouter } from "./routers/proprietary/custom-role";
-import { forwardAuthRouter } from "./routers/proprietary/forward-auth";
-import { scimRouter } from "./routers/proprietary/scim";
-import { ssoRouter } from "./routers/proprietary/sso";
 import { redirectsRouter } from "./routers/redirects";
 import { redisRouter } from "./routers/redis";
 import { registryRouter } from "./routers/registry";
@@ -107,9 +104,10 @@ export const appRouter = createTRPCRouter({
 	ai: aiRouter,
 	organization: organizationRouter,
 	licenseKey: abhashLicenseKeyRouter,
-	sso: ssoRouter,
-	scim: scimRouter,
-	forwardAuth: forwardAuthRouter,
+	// SSO, SCIM and forward-auth are unmounted in this fork: their UI was
+	// removed, so leaving them routable exposed API surface nothing could
+	// reach. The router files stay in the tree to keep upstream merges clean —
+	// re-add the three lines here to turn the feature back on.
 	whitelabeling: abhashWhitelabelingRouter,
 	customRole: customRoleRouter,
 	auditLog: abhashAuditLogRouter,

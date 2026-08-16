@@ -38,6 +38,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { authClient } from "@/lib/auth-client";
 import { api } from "@/utils/api";
 
 type SessionRow = {
@@ -87,6 +88,25 @@ export const ShowSessions = () => {
 	const { data: members } = api.user.all.useQuery(undefined, {
 		enabled: isOwner,
 	});
+
+	const [isRevokingOthers, setIsRevokingOthers] = useState(false);
+	const revokeOtherSessions = async () => {
+		setIsRevokingOthers(true);
+		try {
+			const result = await authClient.revokeOtherSessions();
+			if (result.error) throw result.error;
+			await refetch();
+			toast.success("Signed out of your other devices");
+		} catch (error) {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Unable to sign out other devices",
+			);
+		} finally {
+			setIsRevokingOthers(false);
+		}
+	};
 
 	const [statusFilter, setStatusFilter] = useState<
 		"all" | "active" | "expired"
@@ -277,16 +297,29 @@ export const ShowSessions = () => {
 		<div className="w-full">
 			<Card className="h-full bg-sidebar p-2.5 rounded-xl max-w-6xl mx-auto">
 				<div className="rounded-xl bg-background shadow-md">
-					<CardHeader>
-						<CardTitle className="text-xl flex flex-row gap-2">
-							<Smartphone className="size-6 text-muted-foreground self-center" />
-							Sessions
-						</CardTitle>
-						<CardDescription>
-							{isOwner
-								? "Manage active sessions across your organization. Revoke sessions to force logout."
-								: "Manage your active sessions. Revoke sessions to force logout."}
-						</CardDescription>
+					<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
+						<div className="flex flex-col gap-1.5">
+							<CardTitle className="text-xl flex flex-row gap-2">
+								<Smartphone className="size-6 text-muted-foreground self-center" />
+								Sessions
+							</CardTitle>
+							<CardDescription>
+								{isOwner
+									? "Manage active sessions across your organization. Revoke sessions to force logout."
+									: "Manage your active sessions. Revoke sessions to force logout."}
+							</CardDescription>
+						</div>
+						<DialogAction
+							title="Sign out other devices"
+							description="This signs you out everywhere except this device. Other members are not affected."
+							type="destructive"
+							onClick={revokeOtherSessions}
+						>
+							<Button variant="outline" isLoading={isRevokingOthers}>
+								<LogOut className="size-4" />
+								Sign out other devices
+							</Button>
+						</DialogAction>
 					</CardHeader>
 					<CardContent className="space-y-4 py-8 border-t">
 						{isPending ? (

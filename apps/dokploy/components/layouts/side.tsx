@@ -30,11 +30,9 @@ import {
 	type LucideIcon,
 	Package,
 	Palette,
-	PieChart,
 	Rocket,
 	Server,
 	ShieldCheck,
-	Smartphone,
 	SquareTerminal,
 	Star,
 	Tags,
@@ -237,14 +235,6 @@ const MENU: Menu = {
 		},
 		{
 			isSingle: true,
-			title: "Swarm",
-			url: "/dashboard/swarm",
-			icon: PieChart,
-			// Only enabled for users with access to Docker
-			isEnabled: ({ permissions }) => !!permissions?.docker.read,
-		},
-		{
-			isSingle: true,
 			title: "Requests",
 			url: "/dashboard/requests",
 			icon: Forward,
@@ -321,11 +311,6 @@ const MENU: Menu = {
 					title: "Security & Devices",
 					url: "/dashboard/settings/devices",
 					icon: ShieldCheck,
-				},
-				{
-					title: "Sessions",
-					url: "/dashboard/settings/sessions",
-					icon: Smartphone,
 				},
 				{
 					title: "Users",

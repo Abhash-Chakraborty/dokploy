@@ -3,15 +3,15 @@ import { createServerSideHelpers } from "@trpc/react-query/server";
 import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
 import superjson from "superjson";
-import { AbhashWhitelabelingSettings } from "@/components/abhash/whitelabeling/whitelabeling-settings";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { WhitelabelingSettings } from "@/components/proprietary/whitelabeling/whitelabeling-settings";
 import { PageContainer } from "@/components/shared/page-header";
 import { appRouter } from "@/server/api/root";
 
 const Page = () => {
 	return (
 		<PageContainer>
-			<AbhashWhitelabelingSettings />
+			<WhitelabelingSettings />
 		</PageContainer>
 	);
 };

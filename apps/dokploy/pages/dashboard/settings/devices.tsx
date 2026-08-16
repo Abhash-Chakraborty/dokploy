@@ -2,8 +2,8 @@ import { validateRequest } from "@dokploy/server";
 import { ShieldCheck } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
-import { LoginHistory } from "@/components/dashboard/settings/profile/login-history";
 import { PasskeyManager } from "@/components/dashboard/settings/profile/passkey-manager";
+import { ShowSessions } from "@/components/dashboard/settings/sessions/show-sessions";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { PageHeader } from "@/components/shared/page-header";
 
@@ -15,7 +15,7 @@ const DevicesPage = () => (
 			icon={<ShieldCheck className="size-5" />}
 		/>
 		<PasskeyManager />
-		<LoginHistory />
+		<ShowSessions />
 	</div>
 );
 

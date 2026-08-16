@@ -19,10 +19,13 @@ export function WhitelabelingProvider() {
 				? "/icon-light.svg"
 				: "/icon.svg");
 
+	// Fall back to the app name so setting only that still renames the tab.
+	const title = config?.metaTitle || config?.appName;
+
 	return (
 		<>
 			<Head>
-				{config?.metaTitle && <title>{config.metaTitle}</title>}
+				{title && <title>{title}</title>}
 				<link rel="icon" href={faviconHref} key="app-favicon" />
 			</Head>
 

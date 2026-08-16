@@ -56,7 +56,8 @@
 				"noArrayIndexKey": "off",
 				"noExplicitAny": "off",
 				"noRedeclare": "off",
-				"noTemplateCurlyInString": "off"
+				"noTemplateCurlyInString": "off",
+				"noTsIgnore": "off"
 			},
 			"a11y": {
 				"noSvgWithoutTitle": "off",

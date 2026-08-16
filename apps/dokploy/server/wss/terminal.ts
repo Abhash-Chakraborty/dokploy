@@ -6,7 +6,6 @@ import {
 	IS_CLOUD,
 	validateRequest,
 } from "@dokploy/server";
-import { publicIpv4, publicIpv6 } from "public-ip";
 import { Client, type ConnectConfig } from "ssh2";
 import { WebSocketServer } from "ws";
 import { getDockerHost } from "../utils/docker";
@@ -29,27 +28,6 @@ const COMMAND_TO_GRANT_PERMISSION_ACCESS = `
 sudo chown -R $USER:$USER /etc/dokploy/ssh
 # ----------------------------------------
 `;
-
-export const getPublicIpWithFallback = async () => {
-	let ip: string | null = null;
-	try {
-		ip = await publicIpv4();
-	} catch (error) {
-		console.log(
-			"Error to obtain public IPv4 address, falling back to IPv6",
-			// @ts-expect-error
-			error.message,
-		);
-		try {
-			ip = await publicIpv6();
-		} catch (error) {
-			// @ts-expect-error
-			console.error("Error to obtain public IPv6 address", error.message);
-			ip = null;
-		}
-	}
-	return ip;
-};
 
 export const getLocalServerIp = async () => {
 	try {
