@@ -7,122 +7,131 @@ on:
 
 permissions:
   contents: write
-  issues: write
   pull-requests: write
 
 env:
-  INTEGRATION_BRANCH: master
   PRODUCTION_BRANCH: main
+  # Bot-owned scratch branch. It is recreated from main on every run, so it is
+  # force-pushed and nothing should ever be committed to it by hand.
+  SYNC_BRANCH: sync/upstream
   UPSTREAM_BRANCH: canary
+  UPSTREAM_REMOTE: https://github.com/dokploy/dokploy.git
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout personal branch
-        uses: actions/checkout@v4
+      - name: Checkout production branch
+        uses: actions/checkout@v7
         with:
-          ref: ${{ env.INTEGRATION_BRANCH }}
+          ref: ${{ env.PRODUCTION_BRANCH }}
           fetch-depth: 0
 
       - name: Configure Git
         run: |
+          set -euo pipefail
           git config user.name "abhash-dokploy-sync"
           git config user.email "actions@github.com"
-          git config rerere.enabled true
-          git config rerere.autoupdate true
 
-      - name: Add upstream
+      - name: Fetch upstream
         run: |
-          git remote add upstream https://github.com/dokploy/dokploy.git
-          git fetch origin $PRODUCTION_BRANCH
-          git fetch upstream $UPSTREAM_BRANCH
+          set -euo pipefail
+          git remote add upstream "$UPSTREAM_REMOTE"
+          git fetch --no-tags upstream "$UPSTREAM_BRANCH"
 
-      - name: Rebase on upstream
-        id: rebase
-        continue-on-error: true
+      - name: Check for new upstream commits
+        id: check
         run: |
-          git rebase -X theirs upstream/$UPSTREAM_BRANCH
-
-      - name: Push merged branch
-        if: steps.rebase.outcome == 'success'
-        run: git push --force-with-lease origin HEAD:${{ env.INTEGRATION_BRANCH }}
-
-      - name: Check for production changes
-        if: steps.rebase.outcome == 'success'
-        id: changes
-        run: |
-          if [ "$(git rev-list --count origin/$PRODUCTION_BRANCH..HEAD)" -gt 0 ]; then
-            echo "has_changes=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          count=$(git rev-list --count "HEAD..upstream/$UPSTREAM_BRANCH")
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "Upstream commits not yet in $PRODUCTION_BRANCH: $count"
+          if [ "$count" -eq 0 ]; then
+            echo "Already up to date with \`upstream/$UPSTREAM_BRANCH\`." >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Open production PR
-        if: steps.rebase.outcome == 'success' && steps.changes.outputs.has_changes == 'true'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const head = process.env.INTEGRATION_BRANCH;
-            const base = process.env.PRODUCTION_BRANCH;
-            const version = require(`${process.env.GITHUB_WORKSPACE}/apps/dokploy/package.json`).version;
+      # Merge, not rebase: the fork carries its own commits on top of upstream
+      # and rewriting them nightly would make every sync PR a full-history diff.
+      # A merge keeps the PR to just what upstream actually changed.
+      - name: Merge upstream into a sync branch
+        id: merge
+        if: steps.check.outputs.count != '0'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          git switch -c "$SYNC_BRANCH"
+          git merge --no-edit "upstream/$UPSTREAM_BRANCH"
 
-            const existing = await github.rest.pulls.list({
-              owner,
-              repo,
-              state: 'open',
-              head: `${owner}:${head}`,
-              base,
-            });
+      - name: Report conflicts
+        if: steps.merge.outcome == 'failure'
+        run: |
+          set -uo pipefail
+          {
+            echo "## Upstream sync hit conflicts"
+            echo
+            echo "Conflicting paths:"
+            echo
+            echo '```'
+            git diff --name-only --diff-filter=U || true
+            echo '```'
+            echo
+            echo "Resolve locally:"
+            echo
+            echo '```bash'
+            echo "git remote add upstream $UPSTREAM_REMOTE   # once"
+            echo "git fetch upstream $UPSTREAM_BRANCH"
+            echo "git switch $PRODUCTION_BRANCH"
+            echo "git merge upstream/$UPSTREAM_BRANCH"
+            echo "# resolve, then:"
+            echo "git add -A && git commit"
+            echo "git push origin $PRODUCTION_BRANCH"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::Upstream merge conflicted; see the job summary for the affected paths."
+          exit 1
 
-            if (existing.data.length > 0) {
-              core.info(`Production PR already exists: #${existing.data[0].number}`);
-              return;
-            }
+      - name: Push sync branch and open PR
+        if: steps.merge.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-list --count "origin/$PRODUCTION_BRANCH..HEAD")" -eq 0 ]; then
+            echo "Merge produced no changes; nothing to promote." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
 
-            await github.rest.pulls.create({
-              owner,
-              repo,
-              title: `Release ${version}`,
-              head,
-              base,
-              body: [
-                `This PR promotes the rebased integration branch \`${head}\` into production branch \`${base}\`.`,
-                ``,
-                `Version: \`${version}\``,
-                `Upstream branch: \`dokploy/dokploy:${process.env.UPSTREAM_BRANCH}\``,
-                ``,
-                `After this PR is merged, the personal GHCR workflow will publish the production image tagged \`latest\` and \`${version}\`.`,
-              ].join('\n'),
-            });
+          # Force-push is safe here: SYNC_BRANCH is recreated from main above and
+          # exists only to carry this PR.
+          git push --force origin "HEAD:refs/heads/$SYNC_BRANCH"
 
-      - name: Open conflict issue
-        if: steps.rebase.outcome == 'failure'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const title = `Upstream sync conflict: ${process.env.UPSTREAM_BRANCH} into ${process.env.INTEGRATION_BRANCH}`;
-            const body = [
-              `Automated upstream sync failed on ${new Date().toISOString()}.`,
-              ``,
-              `Manual fix:`,
-              ``,
-              '```bash',
-              `git fetch upstream ${process.env.UPSTREAM_BRANCH}`,
-              `git switch ${process.env.INTEGRATION_BRANCH}`,
-              `git rebase upstream/${process.env.UPSTREAM_BRANCH}`,
-              `# resolve conflicts, then:`,
-              `git add -A`,
-              `git rebase --continue`,
-              `git push --force-with-lease origin ${process.env.INTEGRATION_BRANCH}`,
-              '```',
-            ].join('\n');
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title,
-              body,
-              labels: ['upstream-sync'],
-            });
+          existing=$(gh pr list \
+            --head "$SYNC_BRANCH" \
+            --base "$PRODUCTION_BRANCH" \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')
+
+          version=$(node -p "require('./apps/dokploy/package.json').version")
+
+          if [ -n "$existing" ]; then
+            echo "Refreshed existing PR #$existing." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          url=$(gh pr create \
+            --head "$SYNC_BRANCH" \
+            --base "$PRODUCTION_BRANCH" \
+            --title "Merge upstream dokploy ($UPSTREAM_BRANCH)" \
+            --body "$(printf '%s\n' \
+              "Merges \`dokploy/dokploy:$UPSTREAM_BRANCH\` into \`$PRODUCTION_BRANCH\`." \
+              "" \
+              "Fork version: \`$version\`" \
+              "" \
+              "Merging this publishes a new image through the Personal GHCR Release workflow.")")
+
+          echo "Opened $url" >> "$GITHUB_STEP_SUMMARY"
