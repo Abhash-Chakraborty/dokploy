@@ -3,6 +3,7 @@ import {
 	getImageConfig,
 	getImages,
 	removeImage,
+	scanImage,
 } from "@dokploy/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -43,6 +44,27 @@ export const dockerImageRouter = createTRPCRouter({
 			return await getImageConfig(input.imageRef, input.serverId);
 		}),
 
+	/**
+	 * Runs Trivy against the image. A scan pulls the vulnerability DB on first
+	 * use and inspects every layer, so it is a mutation rather than a query —
+	 * it should not fire on render or be retried automatically.
+	 */
+	scanImage: withPermission("docker", "read")
+		.input(
+			z.object({
+				imageRef: z.string().min(1),
+				serverId: z.string().optional(),
+			}),
+		)
+		.mutation(async ({ input, ctx }) => {
+			if (input.serverId) {
+				const server = await findServerById(input.serverId);
+				if (server.organizationId !== ctx.session?.activeOrganizationId) {
+					throw new TRPCError({ code: "UNAUTHORIZED" });
+				}
+			}
+			return await scanImage(input.imageRef, input.serverId);
+		}),
 	removeImage: withPermission("docker", "read")
 		.input(
 			z.object({

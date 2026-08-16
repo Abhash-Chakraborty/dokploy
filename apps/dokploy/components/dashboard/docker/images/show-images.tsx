@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/table";
 import type { AppRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
+import { ScanImageDialog } from "./scan-image-dialog";
 
 type ImageBase =
 	inferRouterOutputs<AppRouter>["dockerImage"]["getImages"][number];
@@ -285,6 +286,10 @@ export const ShowImages = ({ serverId }: Props) => {
 				cell: ({ row }) => (
 					<div className="flex items-center justify-end gap-3">
 						<ShowImageConfig
+							imageRef={getReference(row.original)}
+							serverId={serverId}
+						/>
+						<ScanImageDialog
 							imageRef={getReference(row.original)}
 							serverId={serverId}
 						/>
