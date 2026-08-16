@@ -6,6 +6,7 @@ import {
 	findServersByUserId,
 	findUserById,
 	getAccessibleServerIds,
+	getFleetOverview,
 	getPublicIpWithFallback,
 	haveActiveServices,
 	IS_CLOUD,
@@ -115,6 +116,11 @@ export const serverRouter = createTRPCRouter({
 			const isBuildServer = server.serverType === "build";
 			return defaultCommand(isBuildServer);
 		}),
+	fleetOverview: withPermission("server", "read").query(async ({ ctx }) =>
+		getFleetOverview(ctx.session.activeOrganizationId as string, {
+			includeLocal: !IS_CLOUD,
+		}),
+	),
 	all: withPermission("server", "read").query(async ({ ctx }) => {
 		const accessibleIds = await getAccessibleServerIds(ctx.session);
 

@@ -3,6 +3,7 @@ import { createServerSideHelpers } from "@trpc/react-query/server";
 import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
 import superjson from "superjson";
+import { FleetOverview } from "@/components/dashboard/settings/servers/fleet-overview";
 import { ShowServers } from "@/components/dashboard/settings/servers/show-servers";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { appRouter } from "@/server/api/root";
@@ -10,6 +11,7 @@ import { appRouter } from "@/server/api/root";
 const Page = () => {
 	return (
 		<div className="flex flex-col gap-4 w-full">
+			<FleetOverview />
 			<ShowServers />
 		</div>
 	);
