@@ -8,6 +8,7 @@ import { applicationRouter } from "./routers/application";
 import { backupRouter } from "./routers/backup";
 import { bitbucketRouter } from "./routers/bitbucket";
 import { certificateRouter } from "./routers/certificate";
+import { cloudflareTunnelRouter } from "./routers/cloudflare-tunnel";
 import { clusterRouter } from "./routers/cluster";
 import { composeRouter } from "./routers/compose";
 import { deploymentRouter } from "./routers/deployment";
@@ -110,6 +111,7 @@ export const appRouter = createTRPCRouter({
 	// reach. The router files stay in the tree to keep upstream merges clean —
 	// re-add the three lines here to turn the feature back on.
 	logDrain: logDrainRouter,
+	cloudflareTunnel: cloudflareTunnelRouter,
 	whitelabeling: abhashWhitelabelingRouter,
 	customRole: customRoleRouter,
 	auditLog: abhashAuditLogRouter,

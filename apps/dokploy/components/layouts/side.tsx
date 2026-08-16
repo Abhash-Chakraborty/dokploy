@@ -14,6 +14,7 @@ import {
 	CircleHelp,
 	ClipboardList,
 	Clock,
+	Cloud,
 	CreditCard,
 	Database,
 	Folder,
@@ -357,6 +358,13 @@ const MENU: Menu = {
 					url: "/dashboard/docker?tab=swarm&subtab=nodes",
 					icon: Boxes,
 					isEnabled: ({ permissions }) => !!permissions?.organization.update,
+				},
+				{
+					title: "Tunnels",
+					url: "/dashboard/settings/tunnels",
+					icon: Cloud,
+					isEnabled: ({ auth }) =>
+						auth?.role === "owner" || auth?.role === "admin",
 				},
 			],
 		},
