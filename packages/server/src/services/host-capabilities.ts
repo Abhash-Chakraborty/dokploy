@@ -54,7 +54,7 @@ export const getHostCapabilities = async (
 	serverId?: string | null,
 ): Promise<HostCapabilities> => {
 	const docker = await probe(
-		"docker version --format '{{.Server.Version}}'",
+		'docker version --format "{{.Server.Version}}"',
 		serverId,
 		"Docker isn't reachable from the panel. Check that the daemon is running and that the socket is mounted.",
 	);
@@ -72,12 +72,12 @@ export const getHostCapabilities = async (
 
 	const [swarm, traefik] = await Promise.all([
 		probe(
-			"docker info --format '{{.Swarm.LocalNodeState}}'",
+			'docker info --format "{{.Swarm.LocalNodeState}}"',
 			serverId,
 			"Swarm isn't active on this host.",
 		),
 		probe(
-			"docker inspect --format '{{.State.Status}}' dokploy-traefik",
+			'docker inspect --format "{{.State.Status}}" dokploy-traefik',
 			serverId,
 			"Traefik isn't managed by this Dokploy instance, so there's nothing to configure here.",
 		),

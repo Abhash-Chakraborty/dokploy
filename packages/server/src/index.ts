@@ -106,6 +106,7 @@ export * from "./utils/docker/compose/secrets";
 export * from "./utils/docker/compose/service";
 export * from "./utils/docker/compose/volume";
 export * from "./utils/docker/domain";
+export * from "./utils/docker/prune-preview";
 export * from "./utils/docker/types";
 export * from "./utils/docker/utils";
 export * from "./utils/filesystem/directory";

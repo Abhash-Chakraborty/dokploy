@@ -276,7 +276,7 @@ export interface DockerDiskUsageItem {
 	sizeBytes: number;
 }
 
-const parseSizeToBytes = (size: string): number => {
+export const parseSizeToBytes = (size: string): number => {
 	const match = size.match(/^([\d.]+)\s*([KMGT]?B)$/i);
 	if (!match) return 0;
 	const value = Number.parseFloat(match[1] as string);

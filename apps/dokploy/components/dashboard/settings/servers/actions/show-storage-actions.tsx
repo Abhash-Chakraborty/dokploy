@@ -10,6 +10,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { api } from "@/utils/api";
+import { ReclaimSpaceDialog } from "./reclaim-space-dialog";
 
 interface Props {
 	serverId?: string;
@@ -73,6 +74,18 @@ export const ShowStorageActions = ({ serverId }: Props) => {
 			<DropdownMenuContent className="w-64" align="start">
 				<DropdownMenuLabel>Actions</DropdownMenuLabel>
 				<DropdownMenuSeparator />
+				<ReclaimSpaceDialog serverId={serverId}>
+					<DropdownMenuItem
+						className="w-full cursor-pointer"
+						onSelect={(event) => event.preventDefault()}
+					>
+						<span>Reclaim space…</span>
+					</DropdownMenuItem>
+				</ReclaimSpaceDialog>
+				<DropdownMenuSeparator />
+				<DropdownMenuLabel className="text-muted-foreground">
+					Delete immediately
+				</DropdownMenuLabel>
 				<DropdownMenuGroup>
 					<DropdownMenuItem
 						className="w-full cursor-pointer"

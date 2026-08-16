@@ -18,6 +18,7 @@ import {
 	getDokployUpdateArguments,
 	getHostCapabilities,
 	getLogCleanupStatus,
+	getPrunePreview,
 	getUpdateData,
 	getWebServerSettings,
 	IS_CLOUD,
@@ -635,6 +636,10 @@ export const settingsRouter = createTRPCRouter({
 	getHostCapabilities: protectedProcedure
 		.input(apiServerSchema)
 		.query(async ({ input }) => getHostCapabilities(input?.serverId)),
+
+	getPrunePreview: adminProcedure
+		.input(apiServerSchema)
+		.query(async ({ input }) => getPrunePreview(input?.serverId)),
 
 	updateTraefikFile: protectedProcedure
 		.input(apiModifyTraefikConfig)
