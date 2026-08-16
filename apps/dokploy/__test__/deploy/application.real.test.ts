@@ -5,6 +5,7 @@ import { paths } from "@dokploy/server/constants";
 import { execAsync } from "@dokploy/server/utils/process/execAsync";
 import { format } from "date-fns";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { hasRealDeployToolchain } from "../utils/environment";
 
 const REAL_TEST_TIMEOUT = 180000; // 3 minutes
 
@@ -171,7 +172,9 @@ async function cleanupFiles(appName: string) {
 	}
 }
 
-describe(
+// Genuinely shells out to git, docker and nixpacks with POSIX semantics.
+// Skipped rather than failed where that toolchain is not present.
+describe.skipIf(!hasRealDeployToolchain())(
 	"deployApplication - REAL Execution Tests",
 	() => {
 		let currentAppName: string;

@@ -213,8 +213,14 @@ describe("security: existing symlink escape", () => {
 		const outside = path.join(APPLICATIONS_PATH, "..", "outside");
 		await fs.mkdir(outside, { recursive: true });
 
-		// attacker-controlled symlink inside project
-		await fs.symlink(outside, path.join(output, "logs"));
+		// attacker-controlled symlink inside project. On Windows a plain symlink
+		// needs elevation, but a junction doesn't and redirects a directory the
+		// same way — which is the escape this test is about.
+		await fs.symlink(
+			outside,
+			path.join(output, "logs"),
+			process.platform === "win32" ? "junction" : undefined,
+		);
 
 		// zip looks totally harmless
 		const zip = new AdmZip();

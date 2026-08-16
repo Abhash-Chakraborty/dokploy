@@ -1,12 +1,19 @@
-import { execFileSync, execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { chmodSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { defaultCommand, reportDockerVersion } from "@dokploy/server";
 import { describe, expect, it } from "vitest";
+import { findBash } from "../utils/environment";
 
-const resolveBin = (name: string) =>
-	execSync(`command -v ${name}`, { encoding: "utf8" }).trim();
+const shell = findBash();
+
+const resolveBin = (name: string) => {
+	if (!shell) throw new Error("No POSIX shell available");
+	return execFileSync(shell, ["-c", `command -v ${name}`], {
+		encoding: "utf8",
+	}).trim();
+};
 
 /**
  * Build a sandbox PATH so `command -v docker` only sees our fake docker
@@ -33,7 +40,7 @@ const runReport = (sandboxPath: string) => {
 		reportDockerVersion(),
 		'echo "$DOCKER_VERSION_REPORT"',
 	].join("\n");
-	return execFileSync(resolveBin("bash"), ["-c", script], {
+	return execFileSync(shell as string, ["-c", script], {
 		encoding: "utf8",
 		env: { ...process.env, PATH: sandboxPath },
 	})
@@ -42,7 +49,9 @@ const runReport = (sandboxPath: string) => {
 		.pop();
 };
 
-describe("reportDockerVersion", () => {
+// Skipped rather than failed where no POSIX shell exists: the thing under
+// test is generated shell, so there's nothing meaningful to assert without one.
+describe.skipIf(!shell)("reportDockerVersion", () => {
 	it("reports the engine version when docker and its daemon are available", () => {
 		const sandbox = makeSandbox(
 			[

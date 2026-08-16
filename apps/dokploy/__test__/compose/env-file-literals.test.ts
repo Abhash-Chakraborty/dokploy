@@ -3,6 +3,10 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { getCreateEnvFileCommand } from "@dokploy/server/utils/builders/compose";
 import { afterEach, describe, expect, it } from "vitest";
+import { findBash, hasDockerCompose } from "../utils/environment";
+
+const bash = findBash();
+const dockerCompose = hasDockerCompose();
 
 // Regression coverage for https://github.com/Dokploy/dokploy/issues/4694 —
 // values must survive Docker Compose's own `.env` parsing, not just base64 decode.
@@ -48,7 +52,9 @@ const inputEncoding: Record<string, string> = {
 	MULTILINE_PEM: '"-----BEGIN KEY-----\nabc123\n-----END KEY-----"',
 };
 
-describe("getCreateEnvFileCommand", () => {
+// Drives a real `docker compose run`, so it needs both bash and a reachable
+// daemon. Skipped rather than failed where either is missing.
+describe.skipIf(!bash || !dockerCompose)("getCreateEnvFileCommand", () => {
 	it("writes special environment values that Docker Compose reads back literally", () => {
 		mkdirSync(codePath, { recursive: true });
 
@@ -66,7 +72,7 @@ describe("getCreateEnvFileCommand", () => {
 			environment: { project: { env: "" }, env: "" },
 		} as Parameters<typeof getCreateEnvFileCommand>[0]);
 
-		execFileSync("bash", ["-c", command]);
+		execFileSync(bash as string, ["-c", command]);
 
 		const composeFile = `services:\n  test:\n    image: busybox\n    environment:\n${Object.keys(
 			cases,
