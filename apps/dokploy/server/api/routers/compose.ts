@@ -27,6 +27,8 @@ import {
 	removeComposeDirectory,
 	removeDeploymentsByComposeId,
 	removeDomainById,
+	restartComposeService,
+	scaleComposeService,
 	startCompose,
 	stopCompose,
 	updateCompose,
@@ -537,6 +539,57 @@ export const composeRouter = createTRPCRouter({
 				resourceType: "compose",
 				resourceId: input.composeId,
 				resourceName: composeForStart.name,
+			});
+			return true;
+		}),
+	/**
+	 * Restart a single service instead of redeploying the whole stack — the
+	 * common case when one container has wedged and the rest are fine.
+	 */
+	restartService: protectedProcedure
+		.input(
+			z.object({
+				composeId: z.string().min(1),
+				serviceName: z.string().min(1),
+			}),
+		)
+		.mutation(async ({ input, ctx }) => {
+			await checkServicePermissionAndAccess(ctx, input.composeId, {
+				deployment: ["create"],
+			});
+			await restartComposeService(input.composeId, input.serviceName);
+			const compose = await findComposeById(input.composeId);
+			await audit(ctx, {
+				action: "update",
+				resourceType: "compose",
+				resourceId: input.composeId,
+				resourceName: `${compose.name}:${input.serviceName}:restart`,
+			});
+			return true;
+		}),
+	scaleService: protectedProcedure
+		.input(
+			z.object({
+				composeId: z.string().min(1),
+				serviceName: z.string().min(1),
+				replicas: z.number().int().min(0).max(100),
+			}),
+		)
+		.mutation(async ({ input, ctx }) => {
+			await checkServicePermissionAndAccess(ctx, input.composeId, {
+				deployment: ["create"],
+			});
+			await scaleComposeService(
+				input.composeId,
+				input.serviceName,
+				input.replicas,
+			);
+			const compose = await findComposeById(input.composeId);
+			await audit(ctx, {
+				action: "update",
+				resourceType: "compose",
+				resourceId: input.composeId,
+				resourceName: `${compose.name}:${input.serviceName}:scale=${input.replicas}`,
 			});
 			return true;
 		}),

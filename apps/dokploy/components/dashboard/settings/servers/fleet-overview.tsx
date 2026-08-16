@@ -25,6 +25,14 @@ import {
 import { cn } from "@/lib/utils";
 import { api } from "@/utils/api";
 
+/** Megabytes to the largest sensible unit — 5927 reads better as 5.8 GB. */
+const formatMb = (mb: number) =>
+	mb >= 1024 * 1024
+		? `${(mb / 1024 / 1024).toFixed(1)} TB`
+		: mb >= 1024
+			? `${(mb / 1024).toFixed(1)} GB`
+			: `${Math.round(mb)} MB`;
+
 /** Headroom colouring: green under 70%, amber to 90%, red beyond. */
 const usageTone = (percent?: number) => {
 	if (percent === undefined) return "text-muted-foreground";
@@ -117,6 +125,7 @@ export const FleetOverview = () => {
 											<TableHead className="text-right">Disk</TableHead>
 											<TableHead className="text-right">Memory</TableHead>
 											<TableHead className="text-right">Load/core</TableHead>
+											<TableHead className="text-right">Capacity</TableHead>
 											<TableHead>Uptime</TableHead>
 										</TableRow>
 									</TableHeader>
@@ -227,6 +236,21 @@ export const FleetOverview = () => {
 													</TableCell>
 													<TableCell className="text-right tabular-nums text-sm text-muted-foreground">
 														{server.loadPerCore ?? "—"}
+													</TableCell>
+													<TableCell className="text-right text-xs text-muted-foreground">
+														{server.cpuCores === undefined ? (
+															"—"
+														) : (
+															<span className="whitespace-nowrap tabular-nums">
+																{server.cpuCores} vCPU
+																{server.memoryTotalMb
+																	? ` · ${formatMb(server.memoryTotalMb)}`
+																	: ""}
+																{server.diskTotalMb
+																	? ` · ${formatMb(server.diskTotalMb)} disk`
+																	: ""}
+															</span>
+														)}
 													</TableCell>
 													<TableCell className="text-xs text-muted-foreground">
 														{server.uptime ?? "—"}

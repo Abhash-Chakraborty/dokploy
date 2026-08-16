@@ -15,6 +15,7 @@ export * from "./services/certificate";
 export * from "./services/cloudflare-tunnel";
 export * from "./services/cluster";
 export * from "./services/compose";
+export * from "./services/compose-service";
 export * from "./services/deployment";
 export * from "./services/destination";
 export * from "./services/dns-provider";

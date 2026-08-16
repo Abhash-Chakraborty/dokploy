@@ -21,6 +21,10 @@ export interface FleetServerRow {
 	loadPerCore?: number;
 	uptime?: string;
 	kernel?: string;
+	/** Physical capacity, for committed-vs-available comparisons. */
+	cpuCores?: number;
+	memoryTotalMb?: number;
+	diskTotalMb?: number;
 }
 
 export interface FleetOverview {
@@ -48,12 +52,14 @@ containers_running=$(docker ps -q 2>/dev/null | wc -l | tr -d ' ')
 containers_total=$(docker ps -aq 2>/dev/null | wc -l | tr -d ' ')
 disk_pct=$(df -P / 2>/dev/null | awk 'NR==2 {gsub("%","",$5); print $5}')
 mem_pct=$(free 2>/dev/null | awk '/Mem:/ {printf "%.0f", $3/$2*100}')
+mem_total=$(free -m 2>/dev/null | awk '/Mem:/ {print $2}')
+disk_total=$(df -Pm / 2>/dev/null | awk 'NR==2 {print $2}')
 cores=$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
 load1=$(cut -d' ' -f1 /proc/loadavg 2>/dev/null || echo "")
 uptime_s=$(uptime -p 2>/dev/null | sed 's/^up //' || echo "")
 kernel=$(uname -r 2>/dev/null || echo "")
-printf '{"dockerVersion":"%s","swarmState":"%s","swarmRole":"%s","traefikVersion":"%s","containersRunning":"%s","containersTotal":"%s","diskUsedPercent":"%s","memUsedPercent":"%s","cores":"%s","load1":"%s","uptime":"%s","kernel":"%s"}' \\
-  "$docker_version" "$swarm_state" "$swarm_role" "$traefik_version" "$containers_running" "$containers_total" "$disk_pct" "$mem_pct" "$cores" "$load1" "$uptime_s" "$kernel"
+printf '{"dockerVersion":"%s","swarmState":"%s","swarmRole":"%s","traefikVersion":"%s","containersRunning":"%s","containersTotal":"%s","diskUsedPercent":"%s","memUsedPercent":"%s","memoryTotalMb":"%s","diskTotalMb":"%s","cores":"%s","load1":"%s","uptime":"%s","kernel":"%s"}' \\
+  "$docker_version" "$swarm_state" "$swarm_role" "$traefik_version" "$containers_running" "$containers_total" "$disk_pct" "$mem_pct" "$mem_total" "$disk_total" "$cores" "$load1" "$uptime_s" "$kernel"
 `;
 
 interface RawProbe {
@@ -65,6 +71,8 @@ interface RawProbe {
 	containersTotal: string;
 	diskUsedPercent: string;
 	memUsedPercent: string;
+	memoryTotalMb: string;
+	diskTotalMb: string;
 	cores: string;
 	load1: string;
 	uptime: string;
@@ -122,6 +130,9 @@ const probeOne = async (
 			containersTotal: num(raw.containersTotal),
 			diskUsedPercent: num(raw.diskUsedPercent),
 			memUsedPercent: num(raw.memUsedPercent),
+			cpuCores: num(raw.cores),
+			memoryTotalMb: num(raw.memoryTotalMb),
+			diskTotalMb: num(raw.diskTotalMb),
 			loadPerCore:
 				load1 === undefined
 					? undefined
