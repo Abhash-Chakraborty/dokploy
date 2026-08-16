@@ -9,6 +9,7 @@ import {
 	getAccessibleServerIds,
 	getApplicationStats,
 	getContainerLogs,
+	getRolloutStatus,
 	getWebServerSettings,
 	IS_CLOUD,
 	mechanizeDockerContainer,
@@ -137,6 +138,28 @@ export const applicationRouter = createTRPCRouter({
 					cause: error,
 				});
 			}
+		}),
+	/**
+	 * What Swarm actually did with the last deploy.
+	 * returns as soon as the orchestrator accepts the change, so a deploy can
+	 * report success while the new tasks crash-loop and Swarm quietly rolls
+	 * back. This reads the real outcome.
+	 */
+	rolloutStatus: protectedProcedure
+		.input(apiFindOneApplication)
+		.query(async ({ input, ctx }) => {
+			await checkServiceAccess(ctx, input.applicationId, "read");
+			const application = await findApplicationById(input.applicationId);
+			if (
+				application.environment.project.organizationId !==
+				ctx.session.activeOrganizationId
+			) {
+				throw new TRPCError({
+					code: "UNAUTHORIZED",
+					message: "You are not authorized to access this application",
+				});
+			}
+			return getRolloutStatus(application.appName, application.serverId);
 		}),
 	one: protectedProcedure
 		.input(apiFindOneApplication)

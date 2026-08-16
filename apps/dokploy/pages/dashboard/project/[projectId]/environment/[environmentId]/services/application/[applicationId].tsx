@@ -29,6 +29,7 @@ import { ShowIconSettings } from "@/components/dashboard/application/icon/show-i
 import { ShowDockerLogs } from "@/components/dashboard/application/logs/show";
 import { ShowPatches } from "@/components/dashboard/application/patches/show-patches";
 import { ShowPreviewDeployments } from "@/components/dashboard/application/preview-deployments/show-preview-deployments";
+import { RolloutStatus } from "@/components/dashboard/application/rollout-status";
 import { ShowSchedules } from "@/components/dashboard/application/schedules/show-schedules";
 import { UpdateApplication } from "@/components/dashboard/application/update-application";
 import { ShowVolumeBackups } from "@/components/dashboard/application/volume-backups/show-volume-backups";
@@ -358,13 +359,16 @@ const Service = (
 								)}
 								{permissions?.deployment.read && (
 									<TabsContent value="deployments" className="w-full pt-2.5">
-										<div className="flex flex-col gap-4 border rounded-lg">
-											<ShowDeployments
-												id={applicationId}
-												type="application"
-												serverId={data?.serverId || ""}
-												refreshToken={data?.refreshToken || ""}
-											/>
+										<div className="flex flex-col gap-4">
+											<RolloutStatus applicationId={applicationId} />
+											<div className="flex flex-col gap-4 border rounded-lg">
+												<ShowDeployments
+													id={applicationId}
+													type="application"
+													serverId={data?.serverId || ""}
+													refreshToken={data?.refreshToken || ""}
+												/>
+											</div>
 										</div>
 									</TabsContent>
 								)}
