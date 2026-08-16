@@ -2,6 +2,7 @@ import { api } from "@/utils/api";
 import { ImpersonationBar } from "../dashboard/impersonation/impersonation-bar";
 import { AiSidebar } from "../shared/ai-sidebar";
 import { HubSpotWidget } from "../shared/HubSpotWidget";
+import { RouteErrorBoundary } from "../shared/route-error-boundary";
 import Page from "./side";
 
 interface Props {
@@ -23,7 +24,9 @@ export const DashboardLayout = ({ children }: Props) => {
 
 	return (
 		<>
-			<Page>{children}</Page>
+			<Page>
+				<RouteErrorBoundary>{children}</RouteErrorBoundary>
+			</Page>
 			<AiSidebar />
 			{isChatEnabled && (
 				<>

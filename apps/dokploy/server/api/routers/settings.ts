@@ -16,6 +16,7 @@ import {
 	getDockerDiskUsage,
 	getDokployImageTag,
 	getDokployUpdateArguments,
+	getHostCapabilities,
 	getLogCleanupStatus,
 	getUpdateData,
 	getWebServerSettings,
@@ -263,7 +264,17 @@ export const settingsRouter = createTRPCRouter({
 		if (IS_CLOUD) {
 			return [];
 		}
-		return getDockerDiskUsage();
+		try {
+			return await getDockerDiskUsage();
+		} catch (error) {
+			// Docker may not be reachable yet (fresh host, provisioning in
+			// progress). Report no usage rather than failing the whole page.
+			console.warn(
+				"Unable to read Docker disk usage:",
+				error instanceof Error ? error.message : error,
+			);
+			return [];
+		}
 	}),
 	saveSSHPrivateKey: adminProcedure
 		.input(apiSaveSSHKey)
@@ -604,15 +615,26 @@ export const settingsRouter = createTRPCRouter({
 	readDirectories: protectedProcedure
 		.input(apiServerSchema)
 		.query(async ({ ctx, input }) => {
+			await checkPermission(ctx, { traefikFiles: ["read"] });
+			const { MAIN_TRAEFIK_PATH } = paths(!!input?.serverId);
 			try {
-				await checkPermission(ctx, { traefikFiles: ["read"] });
-				const { MAIN_TRAEFIK_PATH } = paths(!!input?.serverId);
 				const result = await readDirectory(MAIN_TRAEFIK_PATH, input?.serverId);
 				return result || [];
 			} catch (error) {
-				throw error;
+				// A host without a Dokploy-managed Traefik has no config directory.
+				// That is an expected state, so report "no files" and let the page
+				// explain why via settings.getHostCapabilities.
+				console.warn(
+					`Unable to read Traefik directory ${MAIN_TRAEFIK_PATH}:`,
+					error instanceof Error ? error.message : error,
+				);
+				return [];
 			}
 		}),
+
+	getHostCapabilities: protectedProcedure
+		.input(apiServerSchema)
+		.query(async ({ input }) => getHostCapabilities(input?.serverId)),
 
 	updateTraefikFile: protectedProcedure
 		.input(apiModifyTraefikConfig)
@@ -799,8 +821,14 @@ export const settingsRouter = createTRPCRouter({
 	haveTraefikDashboardPortEnabled: adminProcedure
 		.input(apiServerSchema)
 		.query(async ({ input }) => {
-			const ports = await readPorts("dokploy-traefik", input?.serverId);
-			return ports.some((port) => port.targetPort === 8080);
+			try {
+				const ports = await readPorts("dokploy-traefik", input?.serverId);
+				return ports.some((port) => port.targetPort === 8080);
+			} catch {
+				// No Dokploy-managed Traefik on this host, so the dashboard port
+				// is simply not enabled.
+				return false;
+			}
 		}),
 
 	readStatsLogs: protectedProcedure

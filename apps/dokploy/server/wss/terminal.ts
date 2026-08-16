@@ -44,6 +44,37 @@ export const getLocalServerIp = async () => {
 	}
 };
 
+/**
+ * ssh2 frequently surfaces failures with an empty `message`, which left the
+ * terminal printing just "SSH connection error: ❌". Build a line that names
+ * the failure and says what to do about it.
+ */
+const describeSshError = (err: Error & { code?: string; level?: string }) => {
+	const code = err.code ?? "";
+	const detail = err.message?.trim();
+
+	const known: Record<string, string> = {
+		ECONNREFUSED:
+			"the server refused the connection — check that sshd is running and the port is correct",
+		ETIMEDOUT:
+			"the connection timed out — check the host address, firewall rules and security groups",
+		EHOSTUNREACH:
+			"the host is unreachable from the panel — check networking and firewall rules",
+		ENETUNREACH: "the network is unreachable from the panel",
+		ENOTFOUND: "the hostname could not be resolved — check the server address",
+		ECONNRESET: "the server closed the connection unexpectedly",
+	};
+
+	const reason =
+		known[code] ??
+		detail ??
+		(err.level
+			? `the SSH client reported "${err.level}"`
+			: "no further detail was reported");
+
+	return `SSH connection failed: ${reason}${code ? ` (${code})` : ""}`;
+};
+
 export const setupTerminalWebSocketServer = (
 	server: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse>,
 ) => {
@@ -248,7 +279,9 @@ export const setupTerminalWebSocketServer = (
 							);
 						}
 					} else {
-						ws.send(`SSH connection error: ${err.message} ❌ `);
+						ws.send(`
+${describeSshError(err)}
+`);
 					}
 					conn.end();
 					if (ws.readyState === 1) {

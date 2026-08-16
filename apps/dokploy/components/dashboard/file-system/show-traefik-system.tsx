@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import React from "react";
 import { AlertBlock } from "@/components/shared/alert-block";
+import { CapabilityNotice } from "@/components/shared/capability-notice";
 import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { Tree } from "@/components/ui/file-tree";
@@ -33,6 +34,11 @@ export const ShowTraefikSystem = ({ serverId }: Props) => {
 			retry: 2,
 		},
 	);
+
+	const { data: capabilities } = api.settings.getHostCapabilities.useQuery({
+		serverId,
+	});
+	const traefikConfig = capabilities?.traefikConfig;
 
 	return (
 		<PageContainer>
@@ -64,25 +70,36 @@ export const ShowTraefikSystem = ({ serverId }: Props) => {
 							<Loader2 className="animate-spin size-8 text-muted-foreground" />
 						</div>
 					)}
-					{directories?.length === 0 && (
-						<div className="w-full flex-col gap-4 flex items-center justify-center h-[55vh] border border-dashed rounded-lg">
-							<div className="flex items-center justify-center size-14 rounded-full bg-muted">
-								<FolderOpen className="size-7 text-muted-foreground" />
+					{directories?.length === 0 &&
+						(traefikConfig && !traefikConfig.available ? (
+							<CapabilityNotice
+								title="Traefik isn't managed here"
+								detail={traefikConfig.detail}
+								icon={FolderOpen}
+								action={{
+									label: "Open server settings",
+									href: "/dashboard/settings/server",
+								}}
+							/>
+						) : (
+							<div className="w-full flex-col gap-4 flex items-center justify-center h-[55vh] border border-dashed rounded-lg">
+								<div className="flex items-center justify-center size-14 rounded-full bg-muted">
+									<FolderOpen className="size-7 text-muted-foreground" />
+								</div>
+								<div className="flex flex-col items-center gap-1 text-center px-4">
+									<span className="text-base font-medium">
+										No configuration files found
+									</span>
+									<span className="text-sm text-muted-foreground">
+										There are no directories or files in{" "}
+										<code className="bg-muted px-1.5 py-0.5 rounded text-xs">
+											/etc/dokploy/traefik
+										</code>{" "}
+										on this server yet.
+									</span>
+								</div>
 							</div>
-							<div className="flex flex-col items-center gap-1 text-center px-4">
-								<span className="text-base font-medium">
-									No configuration files found
-								</span>
-								<span className="text-sm text-muted-foreground">
-									There are no directories or files in{" "}
-									<code className="bg-muted px-1.5 py-0.5 rounded text-xs">
-										/etc/dokploy/traefik
-									</code>{" "}
-									on this server yet.
-								</span>
-							</div>
-						</div>
-					)}
+						))}
 					{directories && directories?.length > 0 && (
 						<>
 							<Tree

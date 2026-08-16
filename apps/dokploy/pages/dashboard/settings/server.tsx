@@ -4,6 +4,7 @@ import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
 import superjson from "superjson";
 import { ShowBackups } from "@/components/dashboard/database/backups/show-backups";
+import { ServerPreflight } from "@/components/dashboard/settings/servers/server-preflight";
 import { WebDomain } from "@/components/dashboard/settings/web-domain";
 import { WebServer } from "@/components/dashboard/settings/web-server";
 import { LoginMethods } from "@/components/dashboard/settings/web-server/login-methods";
@@ -16,6 +17,7 @@ const Page = () => {
 	return (
 		<div className="w-full">
 			<div className="h-full max-w-5xl mx-auto flex flex-col gap-4">
+				<ServerPreflight />
 				<WebDomain />
 				<WebServer />
 				<LoginMethods />
