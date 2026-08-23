@@ -162,7 +162,13 @@ export function TagSelector({
 										<span className="text-sm text-muted-foreground">
 											No tags found.
 										</span>
-										<HandleTag />
+										<HandleTag
+											onCreated={(tagId) => {
+												if (!selectedTags.includes(tagId)) {
+													onTagsChange([...selectedTags, tagId]);
+												}
+											}}
+										/>
 									</div>
 								)}
 							</CommandEmpty>
@@ -171,7 +177,13 @@ export function TagSelector({
 									<span className="text-sm text-muted-foreground">
 										No tags created yet.
 									</span>
-									<HandleTag />
+									<HandleTag
+											onCreated={(tagId) => {
+												if (!selectedTags.includes(tagId)) {
+													onTagsChange([...selectedTags, tagId]);
+												}
+											}}
+										/>
 								</div>
 							)}
 							{canQuickCreate && (
@@ -217,6 +229,15 @@ export function TagSelector({
 									);
 								})}
 							</CommandGroup>
+							<div className="flex items-center justify-center p-2 border-t">
+								<HandleTag
+									onCreated={(tagId) => {
+										if (!selectedTags.includes(tagId)) {
+											onTagsChange([...selectedTags, tagId]);
+										}
+									}}
+								/>
+							</div>
 						</CommandList>
 					</Command>
 				</PopoverContent>
