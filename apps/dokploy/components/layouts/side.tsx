@@ -9,6 +9,8 @@ import {
 	BookIcon,
 	BotIcon,
 	Boxes,
+	CalendarClock,
+	ChartLine,
 	ChevronRight,
 	ChevronsUpDown,
 	CircleHelp,
@@ -23,6 +25,7 @@ import {
 	GitBranch,
 	Globe,
 	HardDrive,
+	HeartPulse,
 	House,
 	Key,
 	KeyRound,
@@ -33,6 +36,7 @@ import {
 	Palette,
 	Rocket,
 	Server,
+	Settings,
 	ShieldCheck,
 	SquareTerminal,
 	Star,
@@ -181,127 +185,106 @@ const MENU: Menu = {
 			icon: Folder,
 		},
 		{
-			isSingle: true,
-			title: "Overview",
-			url: "/dashboard/overview",
-			icon: LayoutGrid,
-			// Only enabled for users with access to services
-			isEnabled: ({ permissions }) => !!permissions?.service.read,
+			isSingle: false,
+			title: "Monitor",
+			icon: ChartLine,
+			items: [
+				{
+					title: "Inventory",
+					url: "/dashboard/overview",
+					icon: LayoutGrid,
+					// Only enabled for users with access to services
+					isEnabled: ({ permissions }) => !!permissions?.service.read,
+				},
+				{
+					title: "Analytics",
+					url: "/dashboard/analytics",
+					icon: ChartLine,
+					isEnabled: ({ permissions }) => !!permissions?.service.read,
+				},
+				{
+					title: "Monitoring",
+					url: "/dashboard/monitoring",
+					icon: BarChartHorizontalBigIcon,
+					// Only enabled in non-cloud environments and if user has monitoring.read
+					isEnabled: ({ isCloud, permissions }) =>
+						!isCloud && !!permissions?.monitoring.read,
+				},
+				{
+					title: "System Health",
+					url: "/dashboard/system-health",
+					icon: HeartPulse,
+					// Composes existing docker/server probes, so gate on the same reads
+					isEnabled: ({ isCloud, permissions }) =>
+						!isCloud && !!permissions?.docker.read,
+				},
+			],
 		},
 		{
-			isSingle: true,
-			title: "Deployments",
-			url: "/dashboard/deployments",
+			isSingle: false,
+			title: "Operate",
 			icon: Rocket,
-			isEnabled: ({ permissions }) => !!permissions?.deployment.read,
+			items: [
+				{
+					title: "Deployments",
+					url: "/dashboard/deployments",
+					icon: Rocket,
+					isEnabled: ({ permissions }) => !!permissions?.deployment.read,
+				},
+				{
+					title: "Automation",
+					url: "/dashboard/schedules",
+					icon: CalendarClock,
+					// Matches the schedule.read gate the page and router enforce; the
+					// previous organization.update gate showed the entry to custom roles
+					// that the page then bounced.
+					isEnabled: ({ permissions }) => !!permissions?.schedule.read,
+				},
+				{
+					title: "Requests",
+					url: "/dashboard/requests",
+					icon: Forward,
+					// Only enabled for users with access to Docker in non-cloud environments
+					isEnabled: ({ permissions, isCloud }) =>
+						!!(permissions?.docker.read && !isCloud),
+				},
+			],
 		},
 		{
-			isSingle: true,
-			title: "Monitoring",
-			url: "/dashboard/monitoring",
-			icon: BarChartHorizontalBigIcon,
-			// Only enabled in non-cloud environments and if user has monitoring.read
-			isEnabled: ({ isCloud, permissions }) =>
-				!isCloud && !!permissions?.monitoring.read,
-		},
-		{
-			isSingle: true,
-			title: "Schedules",
-			url: "/dashboard/schedules",
-			icon: Clock,
-			isEnabled: ({ permissions }) => !!permissions?.organization.update,
-		},
-		{
-			isSingle: true,
-			title: "Traefik File System",
-			url: "/dashboard/traefik",
-			icon: GalleryVerticalEnd,
-			// Only enabled for users with access to Traefik files
-			isEnabled: ({ permissions }) => !!permissions?.traefikFiles.read,
-		},
-		{
-			isSingle: true,
-			title: "Docker",
-			url: "/dashboard/docker",
+			isSingle: false,
+			title: "Infrastructure",
 			icon: BlocksIcon,
-			// Only enabled for users with access to Docker
-			isEnabled: ({ permissions }) => !!permissions?.docker.read,
+			items: [
+				{
+					title: "Docker",
+					url: "/dashboard/docker",
+					icon: BlocksIcon,
+					// Only enabled for users with access to Docker
+					isEnabled: ({ permissions }) => !!permissions?.docker.read,
+				},
+				{
+					title: "Traefik File System",
+					url: "/dashboard/traefik",
+					icon: GalleryVerticalEnd,
+					// Only enabled for users with access to Traefik files
+					isEnabled: ({ permissions }) => !!permissions?.traefikFiles.read,
+				},
+				{
+					title: "Terminals",
+					url: "/dashboard/terminals",
+					icon: SquareTerminal,
+					// Master console -- gated behind docker/server access
+					isEnabled: ({ permissions }) => !!permissions?.docker.read,
+				},
+			],
 		},
 		{
 			isSingle: true,
-			title: "Terminals",
-			url: "/dashboard/terminals",
-			icon: SquareTerminal,
-			// Master console — gated behind docker/server access
-			isEnabled: ({ permissions }) => !!permissions?.docker.read,
+			title: "Settings",
+			url: "/dashboard/settings/profile",
+			icon: Settings,
 		},
-		{
-			isSingle: true,
-			title: "Requests",
-			url: "/dashboard/requests",
-			icon: Forward,
-			// Only enabled for users with access to Docker in non-cloud environments
-			isEnabled: ({ permissions, isCloud }) =>
-				!!(permissions?.docker.read && !isCloud),
-		},
-
-		// Legacy unused menu, adjusted to the new structure
-		// {
-		// 	isSingle: true,
-		// 	title: "Projects",
-		// 	url: "/dashboard/projects",
-		// 	icon: Folder,
-		// },
-		// {
-		// 	isSingle: true,
-		// 	title: "Monitoring",
-		// 	icon: BarChartHorizontalBigIcon,
-		// 	url: "/dashboard/settings/monitoring",
-		// },
-		// {
-		//   isSingle: false,
-		//   title: "Settings",
-		//   icon: Settings2,
-		//   items: [
-		//     {
-		//       title: "Profile",
-		//       url: "/dashboard/settings/profile",
-		//     },
-		//     {
-		//       title: "Users",
-		//       url: "/dashboard/settings/users",
-		//     },
-		//     {
-		//       title: "SSH Key",
-		//       url: "/dashboard/settings/ssh-keys",
-		//     },
-		//     {
-		//       title: "Git",
-		//       url: "/dashboard/settings/git-providers",
-		//     },
-		//   ],
-		// },
-		// {
-		//   isSingle: false,
-		//   title: "Integrations",
-		//   icon: BlocksIcon,
-		//   items: [
-		//     {
-		//       title: "S3 Destinations",
-		//       url: "/dashboard/settings/destinations",
-		//     },
-		//     {
-		//       title: "Registry",
-		//       url: "/dashboard/settings/registry",
-		//     },
-		//     {
-		//       title: "Notifications",
-		//       url: "/dashboard/settings/notifications",
-		//     },
-		//   ],
-		// },
 	],
-
 	settings: [
 		{
 			isSingle: false,
@@ -395,7 +378,7 @@ const MENU: Menu = {
 					title: "Secrets",
 					url: "/dashboard/settings/secrets",
 					icon: Vault,
-					isEnabled: ({ permissions }) => !!permissions?.vaultProvider.create,
+					isEnabled: ({ permissions }) => !!permissions?.vaultProvider.read,
 				},
 				{
 					title: "DNS Providers",

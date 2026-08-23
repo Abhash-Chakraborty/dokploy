@@ -283,6 +283,132 @@ export const scheduleRouter = createTRPCRouter({
 			});
 		}),
 
+	/**
+	 * Every schedule in the active organization, whatever it is attached to.
+	 *
+	 * `list` answers "what is scheduled on this one thing", which means
+	 * application and compose schedules are only ever visible inside their own
+	 * service tab. This answers "what is scheduled anywhere", so the automation
+	 * hub can show cron across every project on one screen. Host-level schedules
+	 * stay owner/admin-only, matching the gate `list` applies to them.
+	 */
+	allForOrganization: protectedProcedure.query(async ({ ctx }) => {
+		await checkPermission(ctx, { schedule: ["read"] });
+
+		const organizationId = ctx.session.activeOrganizationId;
+		const member = await findMemberByUserId(ctx.user.id, organizationId);
+		const canSeeHostSchedules =
+			member.role === "owner" || member.role === "admin";
+
+		const rows = await db.query.schedules.findMany({
+			orderBy: [asc(schedules.name)],
+			with: {
+				application: {
+					columns: {
+						applicationId: true,
+						appName: true,
+						name: true,
+						serverId: true,
+						environmentId: true,
+					},
+					with: {
+						environment: {
+							columns: { environmentId: true, name: true },
+							with: {
+								project: {
+									columns: {
+										projectId: true,
+										name: true,
+										organizationId: true,
+									},
+								},
+							},
+						},
+					},
+				},
+				compose: {
+					columns: {
+						composeId: true,
+						appName: true,
+						name: true,
+						serverId: true,
+						environmentId: true,
+					},
+					with: {
+						environment: {
+							columns: { environmentId: true, name: true },
+							with: {
+								project: {
+									columns: {
+										projectId: true,
+										name: true,
+										organizationId: true,
+									},
+								},
+							},
+						},
+					},
+				},
+				server: {
+					columns: { serverId: true, name: true, organizationId: true },
+				},
+				deployments: {
+					orderBy: [desc(deployments.createdAt)],
+					limit: 1,
+				},
+			},
+		});
+
+		// findMany cannot express "belongs to my organization" across four
+		// different parents, so scope in memory. Every branch must resolve to the
+		// active organization or the row is dropped rather than leaked.
+		return rows
+			.filter((row) => {
+				if (row.applicationId) {
+					return (
+						row.application?.environment?.project?.organizationId ===
+						organizationId
+					);
+				}
+				if (row.composeId) {
+					return (
+						row.compose?.environment?.project?.organizationId === organizationId
+					);
+				}
+				if (row.serverId) {
+					return row.server?.organizationId === organizationId;
+				}
+				return canSeeHostSchedules && row.organizationId === organizationId;
+			})
+			.map((row) => {
+				const service = row.application ?? row.compose ?? null;
+				const project = service?.environment?.project ?? null;
+				const lastDeployment = row.deployments?.[0] ?? null;
+
+				return {
+					...row,
+					target: {
+						projectId: project?.projectId ?? null,
+						projectName: project?.name ?? null,
+						environmentId: service?.environmentId ?? null,
+						environmentName: service?.environment?.name ?? null,
+						serviceId:
+							row.application?.applicationId ?? row.compose?.composeId ?? null,
+						serviceName: service?.name ?? null,
+						serverId: row.serverId ?? service?.serverId ?? null,
+						serverName: row.server?.name ?? null,
+					},
+					lastRun: lastDeployment
+						? {
+								status: lastDeployment.status,
+								createdAt: lastDeployment.createdAt,
+								logPath: lastDeployment.logPath,
+							}
+						: null,
+				};
+			});
+	}),
+
 	one: protectedProcedure
 		.input(z.object({ scheduleId: z.string() }))
 		.query(async ({ input, ctx }) => {
