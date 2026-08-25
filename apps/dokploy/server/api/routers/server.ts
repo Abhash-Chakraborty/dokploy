@@ -17,6 +17,7 @@ import {
 	serverValidate,
 	setupMonitoring,
 	updateServerById,
+	upgradeDockerOnServer,
 } from "@dokploy/server";
 import { db } from "@dokploy/server/db";
 import { hasValidLicense } from "@dokploy/server/services/proprietary/license-key";
@@ -26,6 +27,7 @@ import { and, desc, eq, getTableColumns, isNotNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { updateServersBasedOnQuantity } from "@/pages/api/stripe/webhook";
 import {
+	adminProcedure,
 	createTRPCRouter,
 	protectedProcedure,
 	withPermission,
@@ -121,6 +123,61 @@ export const serverRouter = createTRPCRouter({
 			includeLocal: !IS_CLOUD,
 		}),
 	),
+	/**
+	 * Aligns one server's Docker Engine with the rest of the fleet.
+	 *
+	 * Restricted to admins because it restarts the Docker daemon on that host.
+	 * The Dokploy host itself is intentionally not reachable here: the panel runs
+	 * in a container with only the Docker socket mounted, so it can talk to the
+	 * host daemon but has no shell on the host to install packages with. Callers
+	 * surface the manual command for that case instead.
+	 */
+	upgradeDocker: adminProcedure
+		.input(
+			z.object({
+				serverId: z.string().min(1),
+				targetVersion: z.string().regex(/^\d+\.\d+\.\d+$/),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			if (IS_CLOUD) {
+				throw new TRPCError({
+					code: "FORBIDDEN",
+					message: "Docker upgrades are not available on Dokploy Cloud.",
+				});
+			}
+
+			const currentServer = await findServerById(input.serverId);
+			if (currentServer.organizationId !== ctx.session.activeOrganizationId) {
+				throw new TRPCError({
+					code: "UNAUTHORIZED",
+					message: "You are not authorized to upgrade this server",
+				});
+			}
+
+			try {
+				const result = await upgradeDockerOnServer(
+					input.serverId,
+					input.targetVersion,
+				);
+				await audit(ctx, {
+					action: "update",
+					resourceType: "server",
+					resourceId: input.serverId,
+					resourceName: currentServer.name,
+				});
+				return { ...result, name: currentServer.name };
+			} catch (error) {
+				throw new TRPCError({
+					code: "INTERNAL_SERVER_ERROR",
+					message:
+						error instanceof Error
+							? error.message
+							: "Failed to upgrade Docker on this server",
+					cause: error,
+				});
+			}
+		}),
 	all: withPermission("server", "read").query(async ({ ctx }) => {
 		const accessibleIds = await getAccessibleServerIds(ctx.session);
 

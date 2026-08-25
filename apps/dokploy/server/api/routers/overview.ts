@@ -17,6 +17,10 @@ import { createTRPCRouter, protectedProcedure, withPermission } from "../trpc";
 /** Local date key (YYYY-MM-DD) used to bucket a deployment. */
 const dayKey = (iso: string) => iso.slice(0, 10);
 
+/** Ranges the analytics page offers, and the only ones the API accepts. */
+const ANALYTICS_RANGES = [7, 30, 90] as const;
+type AnalyticsRange = (typeof ANALYTICS_RANGES)[number];
+
 /**
  * Every day in the range, oldest first. Days with no deployments must still
  * appear, otherwise the chart silently compresses quiet periods and reads as
@@ -75,10 +79,22 @@ export const overviewRouter = createTRPCRouter({
 	analytics: withPermission("service", "read")
 		.input(
 			z.object({
-				rangeDays: z.union([z.literal(7), z.literal(30), z.literal(90)]),
+				// Every top-level key of a query input is emitted as a GET query
+				// parameter in the OpenAPI document, and those must be primitive Zod
+				// types. A union of literals is rejected by the generator and takes
+				// the *entire* document down with it (breaking /swagger), so the
+				// allowed values are checked in the resolver instead.
+				rangeDays: z.number().int(),
 			}),
 		)
 		.query(async ({ ctx, input }) => {
+			if (!ANALYTICS_RANGES.includes(input.rangeDays as AnalyticsRange)) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: `rangeDays must be one of: ${ANALYTICS_RANGES.join(", ")}.`,
+				});
+			}
+
 			const orgId = ctx.session.activeOrganizationId;
 			const accessedServices =
 				ctx.user.role !== "owner" && ctx.user.role !== "admin"

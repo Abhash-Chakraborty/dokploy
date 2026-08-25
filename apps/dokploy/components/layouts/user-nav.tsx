@@ -73,7 +73,9 @@ export const UserNav = () => {
 				<div className="flex items-center justify-between px-2 py-1.5">
 					<DropdownMenuLabel className="flex flex-col">
 						My Account
-						<span className="text-xs font-normal text-muted-foreground">
+						{/* DropdownMenuLabel uppercases its contents; an email address is
+						    case-sensitive-looking data, not a section heading. */}
+						<span className="text-xs font-normal normal-case text-muted-foreground">
 							{data?.user?.email}
 						</span>
 					</DropdownMenuLabel>

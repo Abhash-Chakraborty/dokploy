@@ -3,6 +3,13 @@ import { paths } from "../constants";
 import { execAsync, execAsyncRemote } from "../utils/process/execAsync";
 
 /**
+ * A fix the panel can apply itself for a missing capability. Consumers switch
+ * on this rather than matching `detail` strings, so the copy stays free to
+ * change.
+ */
+export type HostCapabilityRemediation = "publish-traefik-dashboard-port";
+
+/**
  * A single thing the panel needs from the host in order for some page to work.
  * `available: false` is a normal, expected state — a fresh box, a server that
  * hasn't finished provisioning, or an install where Traefik is managed
@@ -13,6 +20,8 @@ export interface HostCapability {
 	available: boolean;
 	/** Short, user-facing explanation shown when `available` is false. */
 	detail: string;
+	/** Set only when `available` is false and the panel can fix it in place. */
+	remediation?: HostCapabilityRemediation;
 }
 
 export interface HostCapabilities {
@@ -24,9 +33,13 @@ export interface HostCapabilities {
 }
 
 const ok = (detail = ""): HostCapability => ({ available: true, detail });
-const missing = (detail: string): HostCapability => ({
+const missing = (
+	detail: string,
+	remediation?: HostCapabilityRemediation,
+): HostCapability => ({
 	available: false,
 	detail,
+	remediation,
 });
 
 const run = async (command: string, serverId?: string | null) =>
@@ -92,14 +105,20 @@ export const getHostCapabilities = async (
 	if (!traefik.capability.available) {
 		traefikDashboard = missing("Requires a Dokploy-managed Traefik.");
 	} else {
+		// `docker port` exits 0 with empty output when the container is running
+		// but the port is not published, so the exit code alone is not enough.
 		const port = await probe(
 			"docker port dokploy-traefik 8080",
 			serverId,
 			"The Traefik dashboard port (8080) isn't published.",
 		);
-		traefikDashboard = port.capability.available
-			? ok()
-			: missing("The Traefik dashboard port (8080) isn't published.");
+		traefikDashboard =
+			port.capability.available && port.stdout.length > 0
+				? ok()
+				: missing(
+						"The Traefik dashboard port (8080) isn't published.",
+						"publish-traefik-dashboard-port",
+					);
 	}
 
 	// Remote servers keep their config under /etc/dokploy, which we can only

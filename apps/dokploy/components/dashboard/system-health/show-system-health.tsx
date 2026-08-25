@@ -5,8 +5,12 @@ import {
 	Loader2,
 	RefreshCw,
 	ServerIcon,
+	Wrench,
 	XCircle,
 } from "lucide-react";
+import { toast } from "sonner";
+import { AlertBlock } from "@/components/shared/alert-block";
+import { DialogAction } from "@/components/shared/dialog-action";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +23,9 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { useHealthCheckAfterMutation } from "@/hooks/use-health-check-after-mutation";
 import { api } from "@/utils/api";
+import { ResolveDockerDrift } from "./resolve-docker-drift";
 
 type Verdict = "pass" | "warn" | "fail" | "unknown";
 
@@ -109,10 +115,13 @@ const StatusRow = ({
 	label,
 	verdict,
 	detail,
+	action,
 }: {
 	label: string;
 	verdict: Verdict;
 	detail?: string;
+	/** A one-click fix, rendered next to the badge when the check can be fixed. */
+	action?: React.ReactNode;
 }) => (
 	<div className="flex items-start justify-between gap-4 border-b py-3 last:border-b-0">
 		<div className="flex flex-col gap-0.5">
@@ -121,7 +130,10 @@ const StatusRow = ({
 				<span className="text-sm text-muted-foreground">{detail}</span>
 			) : null}
 		</div>
-		<VerdictBadge verdict={verdict} />
+		<div className="flex shrink-0 items-center gap-2">
+			{action}
+			<VerdictBadge verdict={verdict} />
+		</div>
 	</div>
 );
 
@@ -155,6 +167,9 @@ export const ShowSystemHealth = ({ serverId }: { serverId?: string }) => {
 	const utils = api.useUtils();
 	const serverArg: { serverId?: string } = serverId ? { serverId } : {};
 
+	const { data: auth } = api.user.get.useQuery();
+	const isAdmin = auth?.role === "owner" || auth?.role === "admin";
+
 	const capabilities = api.settings.getHostCapabilities.useQuery(serverArg);
 	const infrastructure = api.settings.checkInfrastructureHealth.useQuery();
 	const fleet = api.server.fleetOverview.useQuery();
@@ -169,6 +184,80 @@ export const ShowSystemHealth = ({ serverId }: { serverId?: string }) => {
 		version,
 	] as const;
 	const anyLoading = queries.some((query) => query.isLoading);
+
+	const { mutateAsync: toggleDashboard, isPending: isTogglingDashboard } =
+		api.settings.toggleDashboard.useMutation();
+
+	// Publishing the port recreates the Traefik container, so the panel can go
+	// briefly unreachable behind it; wait for /api/health before re-probing.
+	const { execute: publishPortWithHealthCheck, isExecuting: isPublishingPort } =
+		useHealthCheckAfterMutation({
+			initialDelay: 5000,
+			pollInterval: 4000,
+			successMessage: "Traefik dashboard port published",
+			onSuccess: () => {
+				void utils.settings.getHostCapabilities.invalidate();
+				void utils.settings.haveTraefikDashboardPortEnabled.invalidate();
+			},
+		});
+
+	const publishTraefikDashboardPort = async () => {
+		try {
+			await publishPortWithHealthCheck(() =>
+				toggleDashboard({ enableDashboard: true, serverId }),
+			);
+		} catch (error) {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Failed to publish the Traefik dashboard port.",
+			);
+		}
+	};
+
+	/** The one-click fix for a capability, when the panel has one. */
+	const remediationFor = (
+		remediation: string | undefined | null,
+	): React.ReactNode => {
+		if (remediation !== "publish-traefik-dashboard-port" || !isAdmin) {
+			return null;
+		}
+		return (
+			<DialogAction
+				title="Publish the Traefik dashboard port"
+				description={
+					<div className="space-y-4">
+						<AlertBlock type="warning">
+							The Traefik container will be recreated. It is deleted and created
+							again, which can briefly interrupt traffic to your applications.
+						</AlertBlock>
+						<p>
+							This publishes port 8080 on this host. If something else is
+							already listening there the change is rejected and nothing is
+							recreated.
+						</p>
+					</div>
+				}
+				type="default"
+				disabled={isTogglingDashboard || isPublishingPort}
+				onClick={publishTraefikDashboardPort}
+			>
+				<Button
+					variant="outline"
+					size="sm"
+					className="gap-1.5"
+					disabled={isTogglingDashboard || isPublishingPort}
+				>
+					{isTogglingDashboard || isPublishingPort ? (
+						<Loader2 className="size-3.5 animate-spin" />
+					) : (
+						<Wrench className="size-3.5" />
+					)}
+					Publish &amp; retry
+				</Button>
+			</DialogAction>
+		);
+	};
 
 	const refreshAll = async () => {
 		await Promise.all([
@@ -293,6 +382,7 @@ export const ShowSystemHealth = ({ serverId }: { serverId?: string }) => {
 							}
 							verdict={value.available ? "pass" : "fail"}
 							detail={value.detail || undefined}
+							action={remediationFor(value.remediation)}
 						/>
 					))}
 				</div>
@@ -312,12 +402,29 @@ export const ShowSystemHealth = ({ serverId }: { serverId?: string }) => {
 					<div className="flex flex-col gap-4">
 						{fleet.data?.drift?.dockerVersions &&
 						fleet.data.drift.dockerVersions.length > 1 ? (
-							<div className="flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3">
-								<AlertTriangle className="size-4 text-amber-500" />
-								<span className="text-sm">
-									Docker version drift across servers:{" "}
-									{fleet.data.drift.dockerVersions.join(", ")}
-								</span>
+							<div className="flex flex-col gap-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 sm:flex-row sm:items-center sm:justify-between">
+								<div className="flex items-center gap-2">
+									<AlertTriangle className="size-4 shrink-0 text-amber-500" />
+									<span className="text-sm">
+										Docker version drift across servers:{" "}
+										{fleet.data.drift.dockerVersions.join(", ")}
+									</span>
+								</div>
+								{isAdmin ? (
+									<ResolveDockerDrift
+										servers={fleet.data.servers}
+										onUpgraded={() => utils.server.fleetOverview.invalidate()}
+									>
+										<Button
+											variant="outline"
+											size="sm"
+											className="shrink-0 gap-1.5"
+										>
+											<Wrench className="size-3.5" />
+											Resolve drift
+										</Button>
+									</ResolveDockerDrift>
+								) : null}
 							</div>
 						) : null}
 						<Table>
