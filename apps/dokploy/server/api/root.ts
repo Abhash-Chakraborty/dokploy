@@ -1,4 +1,5 @@
 import { createTRPCRouter } from "../api/trpc";
+import { abhashAccessRouter } from "./routers/abhash/access";
 import { abhashAuditLogRouter } from "./routers/abhash/audit-log";
 import { abhashCustomRoleRouter } from "./routers/abhash/custom-role";
 import { abhashLicenseKeyRouter } from "./routers/abhash/license-key";
@@ -115,6 +116,7 @@ export const appRouter = createTRPCRouter({
 	cloudflareTunnel: cloudflareTunnelRouter,
 	whitelabeling: abhashWhitelabelingRouter,
 	customRole: abhashCustomRoleRouter,
+	access: abhashAccessRouter,
 	auditLog: abhashAuditLogRouter,
 	schedule: scheduleRouter,
 	rollback: rollbackRouter,

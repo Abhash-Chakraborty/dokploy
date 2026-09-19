@@ -1,6 +1,7 @@
 import { db } from "@dokploy/server/db";
 import { gitProvider, member } from "@dokploy/server/db/schema";
 import { isEntitled } from "@dokploy/server/services/abhash/entitlements";
+import { rbacV2, rbacV2Enabled } from "@dokploy/server/services/abhash/rbac";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 
@@ -80,6 +81,31 @@ export const getAccessibleGitProviderIds = async (session: {
 	activeOrganizationId: string;
 }): Promise<Set<string>> => {
 	const { userId, activeOrganizationId } = session;
+	if (await rbacV2Enabled()) {
+		const assigned = await rbacV2.accessibleIds(
+			userId,
+			activeOrganizationId,
+			"gitProviders",
+		);
+		const all = await db.query.gitProvider.findMany({
+			where: eq(gitProvider.organizationId, activeOrganizationId),
+			columns: {
+				gitProviderId: true,
+				userId: true,
+				sharedWithOrganization: true,
+			},
+		});
+		return new Set(
+			all
+				.filter(
+					(p) =>
+						p.userId === userId ||
+						p.sharedWithOrganization ||
+						assigned.has(p.gitProviderId),
+				)
+				.map((p) => p.gitProviderId),
+		);
+	}
 
 	const allOrgProviders = await db.query.gitProvider.findMany({
 		where: eq(gitProvider.organizationId, activeOrganizationId),

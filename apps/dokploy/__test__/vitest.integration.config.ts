@@ -17,6 +17,8 @@ export default defineConfig({
 		passWithNoTests: true,
 		pool: "forks",
 		fileParallelism: false,
+		testTimeout: 180_000,
+		hookTimeout: 120_000,
 		env: databaseUrl ? { DATABASE_URL: databaseUrl } : {},
 	},
 	plugins: [

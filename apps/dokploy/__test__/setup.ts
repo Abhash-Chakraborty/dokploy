@@ -41,3 +41,12 @@ vi.mock("@dokploy/server/db", () => {
 		dbUrl: "postgres://mock:mock@localhost:5432/mock",
 	};
 });
+
+// Unit suites exercise the legacy permission engine against hand-built DB
+// mocks. The role-binding engine is covered by the integration suite, which
+// runs against a real database (__test__/integration).
+vi.mock("@dokploy/server/services/abhash/flags", () => ({
+	getSetting: vi.fn(async (_key: string, fallback: unknown) => fallback),
+	setSetting: vi.fn(async () => {}),
+	isFlagEnabled: vi.fn(async () => false),
+}));

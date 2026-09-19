@@ -35,6 +35,7 @@ import {
 	writeConfigRemote,
 } from "@dokploy/server";
 import { db } from "@dokploy/server/db";
+import { assertAppNameAccess } from "@dokploy/server/services/abhash/app-access";
 import { canEditDeployGitSource } from "@dokploy/server/services/git-provider";
 import {
 	addNewService,
@@ -1018,7 +1019,8 @@ export const applicationRouter = createTRPCRouter({
 		}),
 	readAppMonitoring: withPermission("monitoring", "read")
 		.input(apiFindMonitoringStats)
-		.query(async ({ input }) => {
+		.query(async ({ input, ctx }) => {
+			await assertAppNameAccess(ctx, input.appName, { monitoring: ["read"] });
 			if (IS_CLOUD) {
 				throw new TRPCError({
 					code: "UNAUTHORIZED",

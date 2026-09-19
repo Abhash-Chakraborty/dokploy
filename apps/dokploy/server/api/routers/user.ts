@@ -27,7 +27,9 @@ import {
 	session,
 	user,
 } from "@dokploy/server/db/schema";
+import { assertAppNameAccess } from "@dokploy/server/services/abhash/app-access";
 import { isEntitled } from "@dokploy/server/services/abhash/entitlements";
+import { syncLegacyBindingsForUser } from "@dokploy/server/services/abhash/rbac";
 import {
 	hasPermission,
 	resolvePermissions,
@@ -522,6 +524,10 @@ export const userRouter = createTRPCRouter({
 							),
 						),
 					);
+				await syncLegacyBindingsForUser(
+					input.id,
+					ctx.session?.activeOrganizationId || "",
+				);
 				await audit(ctx, {
 					action: "update",
 					resourceType: "user",
@@ -554,7 +560,12 @@ export const userRouter = createTRPCRouter({
 				dataPoints: z.string(),
 			}),
 		)
-		.query(async ({ input }) => {
+		.query(async ({ input, ctx }) => {
+			if (input.appName) {
+				await assertAppNameAccess(ctx, input.appName, {
+					monitoring: ["read"],
+				});
+			}
 			try {
 				if (!input.appName) {
 					throw new Error(

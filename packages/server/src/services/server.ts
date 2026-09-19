@@ -6,6 +6,7 @@ import {
 	server,
 } from "@dokploy/server/db/schema";
 import { isEntitled } from "@dokploy/server/services/abhash/entitlements";
+import { rbacV2, rbacV2Enabled } from "@dokploy/server/services/abhash/rbac";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import type { z } from "zod";
@@ -251,6 +252,9 @@ export const getAccessibleServerIds = async (session: {
 	activeOrganizationId: string;
 }): Promise<Set<string>> => {
 	const { userId, activeOrganizationId } = session;
+	if (await rbacV2Enabled()) {
+		return rbacV2.accessibleIds(userId, activeOrganizationId, "servers");
+	}
 
 	const allOrgServers = await db.query.server.findMany({
 		where: eq(server.organizationId, activeOrganizationId),

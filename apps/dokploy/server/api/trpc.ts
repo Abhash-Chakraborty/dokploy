@@ -312,5 +312,17 @@ export const withPermission = <R extends Resource>(
 ) =>
 	protectedProcedure.use(async ({ ctx, next }) => {
 		await checkPermission(ctx, { [resource]: [action] } as any);
-		return next();
+		// Carried to the scoped checks (checkServiceAccess and friends), which
+		// then require the route's permission on the specific target rather
+		// than anywhere in the organization.
+		const required = (ctx as { abhashRequired?: Record<string, string[]> })
+			.abhashRequired;
+		return next({
+			ctx: {
+				abhashRequired: {
+					...required,
+					[resource]: [...(required?.[resource] ?? []), action],
+				},
+			},
+		});
 	});

@@ -1,3 +1,4 @@
+export * from "./abhash-rbac";
 export * from "./account";
 export * from "./ai";
 export * from "./application";

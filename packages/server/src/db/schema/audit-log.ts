@@ -59,7 +59,9 @@ export type AuditAction =
 	| "stop"
 	| "reload"
 	| "rebuild"
-	| "move";
+	| "move"
+	| "suspend"
+	| "reactivate";
 
 export type AuditResourceType =
 	| "project"
@@ -94,4 +96,7 @@ export type AuditResourceType =
 	| "compose"
 	| "network"
 	| "vaultProvider"
-	| "dnsProvider";
+	| "dnsProvider"
+	| "team"
+	| "roleBinding"
+	| "featureFlag";

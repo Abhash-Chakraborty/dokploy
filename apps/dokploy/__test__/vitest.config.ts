@@ -27,6 +27,8 @@ export default defineConfig({
 			"**/node_modules/**",
 			"**/dist/**",
 			"**/.docker/**",
+			// DB-backed; run via vitest.integration.config.ts in the sandbox.
+			"__test__/integration/**",
 			...(sandboxDockerHost ? [] : ["**/*.real.test.ts"]),
 		],
 		pool: "forks",

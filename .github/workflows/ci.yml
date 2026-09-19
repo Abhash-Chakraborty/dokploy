@@ -47,3 +47,37 @@ jobs:
             echo "::error::Duplicate migration indices: $dupes"
             exit 1
           fi
+
+  # DB-backed tests (role-binding engine, migrations) against a throwaway
+  # Postgres service container.
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dokploy
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: dokploy
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U dokploy"
+          --health-interval 2s
+          --health-retries 30
+    env:
+      DATABASE_URL: postgres://dokploy:ci@127.0.0.1:5432/dokploy
+      SANDBOX_DATABASE_URL: postgres://dokploy:ci@127.0.0.1:5432/dokploy
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.17.0
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter=@dokploy/server run build
+      - run: pnpm --filter=dokploy run migration:run
+      # Applying twice proves the fork's migrations are idempotent.
+      - run: psql "$DATABASE_URL" -c "DELETE FROM drizzle.__drizzle_migrations WHERE created_at > 1788995453103"
+      - run: pnpm --filter=dokploy run migration:run
+      - run: pnpm --filter=dokploy run test:integration
