@@ -1,14 +1,15 @@
 import { validateRequest } from "@dokploy/server/lib/auth";
 import { createServerSideHelpers } from "@trpc/react-query/server";
+import { LayoutList } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import type { ReactElement } from "react";
 import superjson from "superjson";
 import { ShowOverviewBackups } from "@/components/dashboard/overview/show-overview-backups";
-import { ShowOverviewDeployments } from "@/components/dashboard/overview/show-overview-deployments";
 import { ShowOverviewDomains } from "@/components/dashboard/overview/show-overview-domains";
 import { ShowOverviewServices } from "@/components/dashboard/overview/show-overview-services";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { appRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
@@ -21,14 +22,12 @@ const Overview = () => {
 	const canSeeBackups =
 		!!permissions?.backup.read && !!permissions?.volumeBackup.read;
 	const canSeeDomains = !!permissions?.domain.read;
-	const canSeeDeployments = !!permissions?.deployment.read;
 
 	const queryTab =
 		typeof router.query.tab === "string" ? router.query.tab : DEFAULT_TAB;
 	const activeTab =
 		(queryTab === "backups" && !canSeeBackups) ||
-		(queryTab === "domains" && !canSeeDomains) ||
-		(queryTab === "deployments" && !canSeeDeployments)
+		(queryTab === "domains" && !canSeeDomains)
 			? DEFAULT_TAB
 			: queryTab;
 
@@ -45,34 +44,33 @@ const Overview = () => {
 	};
 
 	return (
-		<Tabs value={activeTab} onValueChange={setTab}>
-			<TabsList>
-				<TabsTrigger value="services">Services</TabsTrigger>
-				{canSeeBackups && <TabsTrigger value="backups">Backups</TabsTrigger>}
-				{canSeeDomains && <TabsTrigger value="domains">Domains</TabsTrigger>}
-				{canSeeDeployments && (
-					<TabsTrigger value="deployments">Deployments</TabsTrigger>
+		<PageContainer>
+			<PageHeader
+				title="Inventory"
+				description="Every service, backup and domain you can reach, in one place."
+				icon={<LayoutList className="size-5" />}
+			/>
+			<Tabs value={activeTab} onValueChange={setTab}>
+				<TabsList>
+					<TabsTrigger value="services">Services</TabsTrigger>
+					{canSeeBackups && <TabsTrigger value="backups">Backups</TabsTrigger>}
+					{canSeeDomains && <TabsTrigger value="domains">Domains</TabsTrigger>}
+				</TabsList>
+				<TabsContent value="services">
+					<ShowOverviewServices />
+				</TabsContent>
+				{canSeeBackups && (
+					<TabsContent value="backups">
+						<ShowOverviewBackups />
+					</TabsContent>
 				)}
-			</TabsList>
-			<TabsContent value="services">
-				<ShowOverviewServices />
-			</TabsContent>
-			{canSeeBackups && (
-				<TabsContent value="backups">
-					<ShowOverviewBackups />
-				</TabsContent>
-			)}
-			{canSeeDomains && (
-				<TabsContent value="domains">
-					<ShowOverviewDomains />
-				</TabsContent>
-			)}
-			{canSeeDeployments && (
-				<TabsContent value="deployments">
-					<ShowOverviewDeployments />
-				</TabsContent>
-			)}
-		</Tabs>
+				{canSeeDomains && (
+					<TabsContent value="domains">
+						<ShowOverviewDomains />
+					</TabsContent>
+				)}
+			</Tabs>
+		</PageContainer>
 	);
 };
 
@@ -89,6 +87,18 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
 			redirect: {
 				permanent: false,
 				destination: "/",
+			},
+		};
+	}
+	// Deployments moved to their own page; keep old links working.
+	if (ctx.query.tab === "deployments") {
+		return {
+			redirect: {
+				permanent: false,
+				destination:
+					ctx.query.subtab === "queue"
+						? "/dashboard/deployments?tab=queue"
+						: "/dashboard/deployments",
 			},
 		};
 	}

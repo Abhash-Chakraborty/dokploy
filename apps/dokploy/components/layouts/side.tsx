@@ -9,6 +9,7 @@ import {
 	BookIcon,
 	BotIcon,
 	Boxes,
+	Building2,
 	CalendarClock,
 	ChartLine,
 	ChevronRight,
@@ -19,6 +20,7 @@ import {
 	Cloud,
 	CreditCard,
 	Database,
+	FileLock,
 	Folder,
 	Forward,
 	GalleryVerticalEnd,
@@ -235,7 +237,7 @@ const MENU: Menu = {
 					isEnabled: ({ permissions }) => !!permissions?.deployment.read,
 				},
 				{
-					title: "Automation",
+					title: "Schedules",
 					url: "/dashboard/schedules",
 					icon: CalendarClock,
 					// Matches the schedule.read gate the page and router enforce; the
@@ -296,21 +298,70 @@ const MENU: Menu = {
 			items: [
 				{ title: "Profile", url: "/dashboard/settings/profile", icon: User },
 				{
-					title: "Security & Devices",
+					title: "Security",
 					url: "/dashboard/settings/devices",
 					icon: ShieldCheck,
 				},
+			],
+		},
+		{
+			isSingle: false,
+			title: "Organization",
+			icon: Building2,
+			items: [
 				{
-					title: "Users",
+					title: "Members & access",
 					url: "/dashboard/settings/users",
 					icon: Users,
 					isEnabled: ({ permissions }) => !!permissions?.member.read,
 				},
 				{
-					title: "Audit Logs",
+					title: "Authentication",
+					url: "/dashboard/settings/authentication",
+					icon: LockKeyhole,
+					isEnabled: ({ auth, isCloud }) =>
+						!!(auth?.role === "owner" || auth?.role === "admin") && !isCloud,
+				},
+				{
+					title: "Audit log",
 					url: "/dashboard/settings/audit-logs",
 					icon: ClipboardList,
 					isEnabled: ({ permissions }) => !!permissions?.auditLog.read,
+				},
+				{
+					title: "Whitelabeling",
+					url: "/dashboard/settings/whitelabeling",
+					icon: Palette,
+					isEnabled: ({ auth, isCloud }) =>
+						!!(auth?.role === "owner" && !isCloud),
+				},
+				{
+					title: "Billing",
+					url: "/dashboard/settings/billing",
+					icon: CreditCard,
+					isEnabled: ({ auth, isCloud }) =>
+						!!(auth?.role === "owner" && isCloud),
+				},
+			],
+		},
+		{
+			isSingle: false,
+			title: "Web Server",
+			icon: Activity,
+			items: [
+				{
+					title: "Overview",
+					url: "/dashboard/settings/server",
+					icon: Activity,
+					isEnabled: ({ permissions, isCloud }) =>
+						!!(permissions?.organization.update && !isCloud),
+				},
+				{
+					title: "Builds",
+					url: "/dashboard/settings/deployments",
+					icon: Boxes,
+					isEnabled: ({ permissions, isCloud }) =>
+						!!(permissions?.server.read && !isCloud),
 				},
 			],
 		},
@@ -320,30 +371,10 @@ const MENU: Menu = {
 			icon: Server,
 			items: [
 				{
-					title: "Web Server",
-					url: "/dashboard/settings/server",
-					icon: Activity,
-					isEnabled: ({ permissions, isCloud }) =>
-						!!(permissions?.organization.update && !isCloud),
-				},
-				{
-					title: "Remote Servers",
+					title: "Remote servers",
 					url: "/dashboard/settings/servers",
 					icon: Server,
 					isEnabled: ({ permissions }) => !!permissions?.server.read,
-				},
-				{
-					title: "Deployments",
-					url: "/dashboard/settings/deployments",
-					icon: Boxes,
-					isEnabled: ({ permissions, isCloud }) =>
-						!!(permissions?.server.read && !isCloud),
-				},
-				{
-					title: "Cluster",
-					url: "/dashboard/docker?tab=swarm&subtab=nodes",
-					icon: Boxes,
-					isEnabled: ({ permissions }) => !!permissions?.organization.update,
 				},
 				{
 					title: "Tunnels",
@@ -352,30 +383,42 @@ const MENU: Menu = {
 					isEnabled: ({ auth }) =>
 						auth?.role === "owner" || auth?.role === "admin",
 				},
+				{
+					title: "Certificates",
+					url: "/dashboard/settings/certificates",
+					icon: FileLock,
+					isEnabled: ({ permissions }) => !!permissions?.certificate.read,
+				},
+				{
+					title: "DNS providers",
+					url: "/dashboard/settings/dns",
+					icon: Globe,
+					isEnabled: ({ permissions }) => !!permissions?.dnsProvider.read,
+				},
+				{
+					title: "Registries",
+					url: "/dashboard/settings/registry",
+					icon: Package,
+					isEnabled: ({ permissions }) => !!permissions?.registry.read,
+				},
 			],
 		},
 		{
 			isSingle: false,
-			title: "Access & Sources",
+			title: "Sources & Secrets",
 			icon: KeyRound,
 			items: [
 				{
-					title: "SSH Keys",
-					url: "/dashboard/settings/ssh-keys",
-					icon: KeyRound,
-					isEnabled: ({ permissions }) => !!permissions?.sshKeys.read,
-				},
-				{
-					title: "Git",
+					title: "Git providers",
 					url: "/dashboard/settings/git-providers",
 					icon: GitBranch,
 					isEnabled: ({ permissions }) => !!permissions?.gitProviders.read,
 				},
 				{
-					title: "Registry",
-					url: "/dashboard/settings/registry",
-					icon: Package,
-					isEnabled: ({ permissions }) => !!permissions?.registry.read,
+					title: "SSH keys",
+					url: "/dashboard/settings/ssh-keys",
+					icon: KeyRound,
+					isEnabled: ({ permissions }) => !!permissions?.sshKeys.read,
 				},
 				{
 					title: "Secrets",
@@ -384,30 +427,37 @@ const MENU: Menu = {
 					isEnabled: ({ permissions }) => !!permissions?.vaultProvider.read,
 				},
 				{
-					title: "DNS Providers",
-					url: "/dashboard/settings/dns",
-					icon: Globe,
-					isEnabled: ({ permissions }) => !!permissions?.dnsProvider.read,
-				},
-				{
-					title: "S3 Destinations",
+					title: "S3 destinations",
 					url: "/dashboard/settings/destinations",
 					icon: HardDrive,
 					isEnabled: ({ permissions }) => !!permissions?.destination.read,
-				},
-				{
-					title: "Certificates",
-					url: "/dashboard/settings/certificates",
-					icon: ShieldCheck,
-					isEnabled: ({ permissions }) => !!permissions?.certificate.read,
 				},
 			],
 		},
 		{
 			isSingle: false,
-			title: "Automation",
-			icon: BotIcon,
+			title: "Integrations",
+			icon: Waypoints,
 			items: [
+				{
+					title: "Backups",
+					url: "/dashboard/settings/backups",
+					icon: Database,
+					isEnabled: ({ permissions }) => !!permissions?.backup?.read,
+				},
+				{
+					title: "Notifications",
+					url: "/dashboard/settings/notifications",
+					icon: Bell,
+					isEnabled: ({ permissions }) => !!permissions?.notification.read,
+				},
+				{
+					title: "Log drains",
+					url: "/dashboard/settings/log-drains",
+					icon: Waypoints,
+					isEnabled: ({ auth }) =>
+						auth?.role === "owner" || auth?.role === "admin",
+				},
 				{
 					title: "AI",
 					url: "/dashboard/settings/ai",
@@ -419,59 +469,6 @@ const MENU: Menu = {
 					url: "/dashboard/settings/tags",
 					icon: Tags,
 					isEnabled: ({ permissions }) => !!permissions?.tag.read,
-				},
-				{
-					title: "Notifications",
-					url: "/dashboard/settings/notifications",
-					icon: Bell,
-					isEnabled: ({ permissions }) => !!permissions?.notification.read,
-				},
-				{
-					title: "Log Drains",
-					url: "/dashboard/settings/log-drains",
-					icon: Waypoints,
-					isEnabled: ({ auth }) =>
-						auth?.role === "owner" || auth?.role === "admin",
-				},
-				{
-					title: "Backups",
-					url: "/dashboard/settings/backups",
-					icon: Database,
-					isEnabled: ({ permissions }) => !!permissions?.backup?.read,
-				},
-			],
-		},
-		{
-			isSingle: false,
-			title: "Organization",
-			icon: Palette,
-			items: [
-				{
-					title: "Billing",
-					url: "/dashboard/settings/billing",
-					icon: CreditCard,
-					isEnabled: ({ auth, isCloud }) =>
-						!!(auth?.role === "owner" && isCloud),
-				},
-				{
-					title: "License",
-					url: "/dashboard/settings/license",
-					icon: Key,
-					isEnabled: ({ auth }) => !!(auth?.role === "owner"),
-				},
-				{
-					title: "Authentication",
-					url: "/dashboard/settings/authentication",
-					icon: LockKeyhole,
-					isEnabled: ({ auth, isCloud }) =>
-						!!(auth?.role === "owner" || auth?.role === "admin") && !isCloud,
-				},
-				{
-					title: "Whitelabeling",
-					url: "/dashboard/settings/whitelabeling",
-					icon: Palette,
-					isEnabled: ({ auth, isCloud }) =>
-						!!(auth?.role === "owner" && !isCloud),
 				},
 			],
 		},
@@ -1058,16 +1055,13 @@ export default function Page({ children }: Props) {
 		: [];
 	const { data: isCloud } = api.settings.isCloud.useQuery();
 
-	const {
-		home: filteredHome,
-		settings: filteredSettings,
-		help,
-	} = createMenuForAuthUser({
-		auth,
-		permissions,
-		isCloud: !!isCloud,
-		whitelabeling,
-	});
+	const { home: filteredHome, settings: filteredSettings } =
+		createMenuForAuthUser({
+			auth,
+			permissions,
+			isCloud: !!isCloud,
+			whitelabeling,
+		});
 
 	const activeItem = findActiveNavItem(
 		[...filteredHome, ...filteredSettings],
@@ -1244,7 +1238,7 @@ export default function Page({ children }: Props) {
 						</SidebarMenuItem>
 						{whitelabeling?.footerText && (
 							<div className="px-3 text-center text-xs text-foreground truncate group-data-[collapsible=icon]:hidden">
-								{whitelabeling?.footerText || "Made with ♥ by Abhash"}
+								{whitelabeling.footerText}
 							</div>
 						)}
 					</SidebarMenu>

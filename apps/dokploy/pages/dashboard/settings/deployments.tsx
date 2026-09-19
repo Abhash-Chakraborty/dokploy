@@ -1,17 +1,13 @@
 import { IS_CLOUD, validateRequest } from "@dokploy/server";
 import { createServerSideHelpers } from "@trpc/react-query/server";
+import { Hammer } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
 import superjson from "superjson";
 import { BuildsConcurrency } from "@/components/dashboard/settings/servers/actions/builds-concurrency";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { AlertBlock } from "@/components/shared/alert-block";
-import {
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { appRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
 
@@ -19,64 +15,55 @@ const Page = () => {
 	const { data: servers } = api.server.all.useQuery();
 
 	return (
-		<div className="w-full">
-			<div className="h-full max-w-5xl mx-auto flex flex-col gap-4">
-				<div className="flex w-full flex-col">
-					<CardHeader className="px-0">
-						<CardTitle className="text-xl">Concurrent Builds</CardTitle>
-						<CardDescription>
-							Configure how many deployments can build at the same time on each
-							server. Builds of the same service are always serialized. Free
-							plan allows up to 2 concurrent builds; an enterprise license
-							unlocks more.
-						</CardDescription>
-					</CardHeader>
-					<CardContent className="flex flex-col gap-6 px-0">
-						<AlertBlock type="warning">
-							Running multiple builds at once increases CPU, memory and disk
-							usage on each server. Each concurrent build runs its own builder
-							and image build, so set this based on the resources the machine
-							can handle — too high a value can exhaust memory and make
-							deployments fail.
-						</AlertBlock>
-						<div className="flex flex-col gap-2">
-							<p className="text-sm font-medium text-muted-foreground">
-								Dokploy Server
-							</p>
-							<BuildsConcurrency />
-						</div>
+		<PageContainer>
+			<PageHeader
+				title="Builds"
+				description="How many deployments may build at the same time on each server. Builds of the same service always run one after another."
+				icon={<Hammer className="size-5" />}
+			/>
+			<div className="flex flex-col gap-6">
+				<AlertBlock type="warning">
+					Running multiple builds at once increases CPU, memory and disk usage
+					on each server. Each concurrent build runs its own builder and image
+					build, so set this based on the resources the machine can handle — too
+					high a value can exhaust memory and make deployments fail.
+				</AlertBlock>
+				<div className="flex flex-col gap-2">
+					<p className="text-sm font-medium text-muted-foreground">
+						Dokploy Server
+					</p>
+					<BuildsConcurrency />
+				</div>
 
-						<div className="flex flex-col gap-2">
-							<p className="text-sm font-medium text-muted-foreground">
-								Remote Servers
-							</p>
-							{servers && servers.length > 0 ? (
-								<div className="flex flex-col gap-3">
-									{servers.map((server) => (
-										<BuildsConcurrency
-											key={server.serverId}
-											serverId={server.serverId}
-											label={server.name}
-										/>
-									))}
-								</div>
-							) : (
-								<p className="text-sm text-muted-foreground rounded-lg border border-dashed p-4 text-center">
-									No remote servers added yet.
-								</p>
-							)}
+				<div className="flex flex-col gap-2">
+					<p className="text-sm font-medium text-muted-foreground">
+						Remote Servers
+					</p>
+					{servers && servers.length > 0 ? (
+						<div className="flex flex-col gap-3">
+							{servers.map((server) => (
+								<BuildsConcurrency
+									key={server.serverId}
+									serverId={server.serverId}
+									label={server.name}
+								/>
+							))}
 						</div>
-					</CardContent>
+					) : (
+						<p className="text-sm text-muted-foreground rounded-lg border border-dashed p-4 text-center">
+							No remote servers added yet.
+						</p>
+					)}
 				</div>
 			</div>
-		</div>
+		</PageContainer>
 	);
 };
 
 export default Page;
 
 Page.getLayout = (page: ReactElement) => {
-	return <DashboardLayout metaName="Deployments">{page}</DashboardLayout>;
+	return <DashboardLayout metaName="Builds">{page}</DashboardLayout>;
 };
 
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {

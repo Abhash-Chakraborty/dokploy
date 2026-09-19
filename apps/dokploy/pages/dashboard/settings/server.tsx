@@ -14,17 +14,15 @@ import { api } from "@/utils/api";
 const Page = () => {
 	const { data: user } = api.user.get.useQuery();
 	return (
-		<div className="w-full">
-			<div className="h-full max-w-5xl mx-auto flex flex-col gap-4">
-				<ServerPreflight />
-				<WebDomain />
-				<WebServer />
-				<ShowBackups
-					id={user?.userId ?? ""}
-					databaseType="web-server"
-					backupType="database"
-				/>
-			</div>
+		<div className="flex w-full flex-col gap-8">
+			<WebServer />
+			<WebDomain />
+			<ServerPreflight />
+			<ShowBackups
+				id={user?.userId ?? ""}
+				databaseType="web-server"
+				backupType="database"
+			/>
 		</div>
 	);
 };

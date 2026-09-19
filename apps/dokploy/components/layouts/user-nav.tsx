@@ -3,7 +3,6 @@ import {
 	ChevronsUpDown,
 	CircleHelp,
 	ExternalLink,
-	Settings,
 	User,
 } from "lucide-react";
 import { useRouter } from "next/router";
@@ -89,13 +88,6 @@ export const UserNav = () => {
 					>
 						<User className="mr-2 size-4 text-muted-foreground" />
 						Profile
-					</DropdownMenuItem>
-					<DropdownMenuItem
-						className="cursor-pointer"
-						onClick={() => router.push("/dashboard/settings/server")}
-					>
-						<Settings className="mr-2 size-4 text-muted-foreground" />
-						Settings
 					</DropdownMenuItem>
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />

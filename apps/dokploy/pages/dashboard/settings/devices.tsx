@@ -5,24 +5,24 @@ import type { ReactElement } from "react";
 import { PasskeyManager } from "@/components/dashboard/settings/profile/passkey-manager";
 import { ShowSessions } from "@/components/dashboard/settings/sessions/show-sessions";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
-import { PageHeader } from "@/components/shared/page-header";
+import { PageContainer, PageHeader } from "@/components/shared/page-header";
 
 const DevicesPage = () => (
-	<div className="mx-auto flex h-full w-full max-w-5xl flex-col gap-4">
+	<PageContainer>
 		<PageHeader
-			title="Security & Devices"
-			description="Manage passkeys and active account sessions."
+			title="Security"
+			description="Passkeys and the devices signed in to your account."
 			icon={<ShieldCheck className="size-5" />}
 		/>
 		<PasskeyManager />
 		<ShowSessions />
-	</div>
+	</PageContainer>
 );
 
 export default DevicesPage;
 
 DevicesPage.getLayout = (page: ReactElement) => (
-	<DashboardLayout metaName="Security & Devices">{page}</DashboardLayout>
+	<DashboardLayout metaName="Security">{page}</DashboardLayout>
 );
 
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {

@@ -358,7 +358,9 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 					</div>
 				</h1>
 				<p className="text-sm text-muted-foreground">
-					Enter your email and password to sign in
+					{sso.providers.length > 0
+						? "Sign in to continue"
+						: "Enter your email and password to sign in"}
 				</p>
 			</div>
 			{error && (
