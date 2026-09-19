@@ -275,8 +275,8 @@ const MENU: Menu = {
 					title: "Terminals",
 					url: "/dashboard/terminals",
 					icon: SquareTerminal,
-					// Master console -- gated behind docker/server access
-					isEnabled: ({ permissions }) => !!permissions?.docker.read,
+					// Same permission the terminal WebSocket enforces.
+					isEnabled: ({ permissions }) => !!permissions?.server.terminal,
 				},
 			],
 		},
