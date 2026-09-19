@@ -13,6 +13,7 @@ import { IS_CLOUD } from "../constants";
 import { db } from "../db";
 import * as schema from "../db/schema";
 import { createAuditLog } from "../services/abhash/audit-log";
+import { abhashAuthBefore } from "../services/abhash/auth-guard";
 import {
 	getTrustedOrigins,
 	getTrustedProviders,
@@ -86,6 +87,9 @@ const { handler, api } = betterAuth({
 	secret: betterAuthSecret,
 	onAPIError: {
 		errorURL: "/",
+	},
+	hooks: {
+		before: abhashAuthBefore,
 	},
 	// Better Auth enables rate limiting in production but only with its global
 	// 100-per-10s budget, which is no obstacle to credential stuffing. These
@@ -242,7 +246,13 @@ const { handler, api } = betterAuth({
 									message: "Email does not match invitation",
 								});
 							}
-						} else if (!isSSORequest) {
+						} else if (isSSORequest) {
+							// Replaced by the fork's JIT provisioning check once SSO ships;
+							// until then an SSO callback must never mint an account.
+							throw new APIError("FORBIDDEN", {
+								message: "SSO sign-up is not enabled",
+							});
+						} else {
 							const isAdminPresent = await db.query.member.findFirst({
 								where: eq(schema.member.role, "owner"),
 							});
@@ -345,12 +355,17 @@ const { handler, api } = betterAuth({
 								message: "Provider not found",
 							});
 						}
-						const defaultRole = provider.organizationId
-							? await resolveOrganizationDefaultRole(provider.organizationId)
-							: "member";
+						if (!provider.organizationId) {
+							throw new APIError("FORBIDDEN", {
+								message: "SSO provider is not linked to an organization",
+							});
+						}
+						const defaultRole = await resolveOrganizationDefaultRole(
+							provider.organizationId,
+						);
 						await db.insert(schema.member).values({
 							userId: user.id,
-							organizationId: provider.organizationId || "",
+							organizationId: provider.organizationId,
 							role: defaultRole,
 							createdAt: new Date(),
 							isDefault: true,
@@ -572,7 +587,9 @@ export const validateRequest = async (request: IncomingMessage) => {
 				},
 			});
 
-			if (!apiKeyRecord) {
+			// The admin plugin blocks new sessions for banned users, but API keys
+			// bypass sessions entirely.
+			if (!apiKeyRecord || apiKeyRecord.user.banned) {
 				return {
 					session: null,
 					user: null,
@@ -646,7 +663,7 @@ export const validateRequest = async (request: IncomingMessage) => {
 		}),
 	});
 
-	if (!session?.session || !session.user) {
+	if (!session?.session || !session.user || session.user.banned) {
 		return {
 			session: null,
 			user: null,

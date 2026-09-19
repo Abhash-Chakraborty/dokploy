@@ -50,6 +50,11 @@ import {
 	writeTraefikSetup,
 } from "@dokploy/server";
 import { db } from "@dokploy/server/db";
+import {
+	getEffectiveAuthMethods,
+	invalidateAuthMethodsCache,
+	usableMethodsFor,
+} from "@dokploy/server/services/abhash/auth-guard";
 import { checkPermission } from "@dokploy/server/services/permission";
 import { generateOpenApiDocument } from "@dokploy/trpc-openapi";
 import { TRPCError } from "@trpc/server";
@@ -478,9 +483,22 @@ export const settingsRouter = createTRPCRouter({
 				});
 			}
 
+			const usable = await usableMethodsFor(
+				ctx.user.id,
+				input.authMethodsConfig,
+			);
+			if (usable.length === 0) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message:
+						"This would lock you out: keep at least one method enabled that you can sign in with (a password, a linked and configured GitHub/Google account, or a registered passkey).",
+				});
+			}
+
 			await updateWebServerSettings({
 				authMethodsConfig: input.authMethodsConfig,
 			});
+			invalidateAuthMethodsCache();
 
 			await audit(ctx, {
 				action: "update",
@@ -499,15 +517,7 @@ export const settingsRouter = createTRPCRouter({
 				passkey: true,
 			};
 		}
-		const settings = await getWebServerSettings();
-		return (
-			settings?.authMethodsConfig ?? {
-				emailPassword: true,
-				github: true,
-				google: true,
-				passkey: true,
-			}
-		);
+		return getEffectiveAuthMethods();
 	}),
 
 	readTraefikConfig: adminProcedure.query(() => {
