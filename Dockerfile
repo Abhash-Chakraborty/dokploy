@@ -9,13 +9,20 @@ RUN corepack prepare pnpm@10.22.0 --activate
 RUN find /root/.cache/node/corepack -type f -name gyp_main.py -exec chmod 755 {} +
 
 FROM base AS build
-COPY . /usr/src/app
 WORKDIR /usr/src/app
 
+# Toolchain first: it never depends on the source, so a code change must not
+# invalidate it.
 RUN apt-get update && apt-get install -y python3 make g++ git python3-pip pkg-config libsecret-1-dev && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+# Download dependencies from the lockfile alone, so this layer survives any
+# change that does not touch dependencies. The CI layer cache does not keep
+# BuildKit cache mounts, so without this every release re-downloads the store.
+COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm fetch --frozen-lockfile
+
+COPY . /usr/src/app
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 
 # Deploy only the dokploy app
 
@@ -36,18 +43,8 @@ ENV NODE_ENV=production
 
 RUN apt-get update && apt-get install -y tini curl unzip zip apache2-utils iproute2 rsync git-lfs && git lfs install && rm -rf /var/lib/apt/lists/*
 
-# Copy only the necessary files
-COPY --from=build /prod/dokploy/.next ./.next
-COPY --from=build /prod/dokploy/dist ./dist
-COPY --from=build /prod/dokploy/next.config.mjs ./next.config.mjs
-COPY --from=build /prod/dokploy/public ./public
-COPY --from=build /prod/dokploy/package.json ./package.json
-COPY --from=build /prod/dokploy/drizzle ./drizzle
-COPY .env.production ./.env
-COPY --from=build /prod/dokploy/components.json ./components.json
-COPY --from=build /prod/dokploy/node_modules ./node_modules
-
-
+# System tooling goes before the app copy so a code change reuses these layers
+# instead of reinstalling Docker, rclone, Nixpacks, Railpack and pack.
 # Install docker
 RUN curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh --version 28.5.2 && rm get-docker.sh && curl https://rclone.org/install.sh | bash
 
@@ -66,6 +63,18 @@ RUN curl -sSL https://railpack.com/install.sh | bash
 
 # Install buildpacks
 COPY --from=buildpacksio/pack:0.39.1 /usr/local/bin/pack /usr/local/bin/pack
+
+# Copy only the necessary files
+COPY --from=build /prod/dokploy/.next ./.next
+COPY --from=build /prod/dokploy/dist ./dist
+COPY --from=build /prod/dokploy/next.config.mjs ./next.config.mjs
+COPY --from=build /prod/dokploy/public ./public
+COPY --from=build /prod/dokploy/package.json ./package.json
+COPY --from=build /prod/dokploy/drizzle ./drizzle
+COPY .env.production ./.env
+COPY --from=build /prod/dokploy/components.json ./components.json
+COPY --from=build /prod/dokploy/node_modules ./node_modules
+
 
 EXPOSE 3000
 
