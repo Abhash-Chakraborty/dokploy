@@ -2,39 +2,7 @@
 //   scripts/sandbox/sandbox.sh exec -- node scripts/sandbox/e2e/auth-lockdown.mjs
 // Expects a fresh sandbox (it registers the first owner if none exists).
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
-
-const appRequire = createRequire(
-	new URL("../../../apps/dokploy/package.json", import.meta.url),
-);
-const { default: postgres } = await import(appRequire.resolve("postgres"));
-
-const base = process.env.BETTER_AUTH_URL;
-const dbUrl = process.env.SANDBOX_DATABASE_URL;
-assert.ok(base?.startsWith("http://127.0.0.1:"), "run through sandbox.sh exec");
-assert.ok(dbUrl?.includes("@127.0.0.1:"), "run through sandbox.sh exec");
-
-const sql = postgres(dbUrl, { max: 1, onnotice: () => {} });
-const owner = { email: "owner@sandbox.test", password: "Sandbox-pass-123" };
-
-const call = async (path, body, cookie) => {
-	const res = await fetch(`${base}/api/auth${path}`, {
-		method: body === undefined ? "GET" : "POST",
-		headers: {
-			"content-type": "application/json",
-			origin: base,
-			...(cookie ? { cookie } : {}),
-		},
-		body: body === undefined ? undefined : JSON.stringify(body),
-		redirect: "manual",
-	});
-	const setCookie = res.headers.getSetCookie?.() ?? [];
-	return {
-		status: res.status,
-		text: await res.text(),
-		cookie: setCookie.map((c) => c.split(";")[0]).join("; "),
-	};
-};
+import { auth as call, owner, runChecks, signInOwner, sql } from "./lib.mjs";
 
 const setMethods = async (config) => {
 	await sql`update "webServerSettings" set "authMethodsConfig" = ${sql.json(config)}`;
@@ -42,25 +10,8 @@ const setMethods = async (config) => {
 	await new Promise((r) => setTimeout(r, 10_500));
 };
 
-const results = [];
-const check = async (name, fn) => {
-	try {
-		await fn();
-		results.push(`ok   ${name}`);
-	} catch (e) {
-		results.push(`FAIL ${name}: ${e.message}`);
-	}
-};
-
-const [{ n }] =
-	await sql`select count(*)::int n from member where role = 'owner'`;
-if (n === 0) {
-	const r = await call("/sign-up/email", { ...owner, name: "Owner" });
-	assert.equal(r.status, 200, r.text);
-}
-const signIn = await call("/sign-in/email", owner);
-assert.equal(signIn.status, 200, signIn.text);
-const session = signIn.cookie;
+const { check, finish } = runChecks();
+const session = await signInOwner();
 
 await check("sign-up is closed once an owner exists", async () => {
 	const r = await call("/sign-up/email", {
@@ -153,6 +104,4 @@ await check("existing session still works", async () => {
 	assert.match(r.text, /owner@sandbox.test/);
 });
 
-await sql.end();
-console.log(results.join("\n"));
-if (results.some((r) => r.startsWith("FAIL"))) process.exit(1);
+await finish();

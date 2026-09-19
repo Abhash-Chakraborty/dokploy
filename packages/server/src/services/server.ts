@@ -5,7 +5,7 @@ import {
 	organization,
 	server,
 } from "@dokploy/server/db/schema";
-import { hasValidLicense } from "@dokploy/server/services/proprietary/license-key";
+import { isEntitled } from "@dokploy/server/services/abhash/entitlements";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import type { z } from "zod";
@@ -271,7 +271,7 @@ export const getAccessibleServerIds = async (session: {
 		return new Set(allOrgServers.map((s) => s.serverId));
 	}
 
-	const licensed = await hasValidLicense(activeOrganizationId);
+	const licensed = await isEntitled(activeOrganizationId);
 
 	if (!licensed) {
 		return new Set(allOrgServers.map((s) => s.serverId));

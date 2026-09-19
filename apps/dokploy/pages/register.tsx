@@ -8,10 +8,8 @@ import { type ReactElement, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { SocialSignInButton } from "@/components/abhash/auth/social-sign-in";
 import { OnboardingLayout } from "@/components/layouts/onboarding-layout";
-import { SignInWithGithub } from "@/components/proprietary/auth/sign-in-with-github";
-import { SignInWithGoogle } from "@/components/proprietary/auth/sign-in-with-google";
-import { SignupShowcase } from "@/components/proprietary/auth/signup-showcase";
 import { AlertBlock } from "@/components/shared/alert-block";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
@@ -166,8 +164,8 @@ const Register = ({ isCloud }: Props) => {
 						<CardContent className="p-0">
 							{isCloud && (
 								<div className="flex flex-col gap-2">
-									<SignInWithGithub />
-									<SignInWithGoogle />
+									<SocialSignInButton provider="github" />
+									<SocialSignInButton provider="google" />
 								</div>
 							)}
 							{isCloud && (
@@ -299,12 +297,7 @@ const Register = ({ isCloud }: Props) => {
 export default Register;
 
 Register.getLayout = (page: ReactElement) => {
-	const isCloud = (page.props as Props).isCloud;
-	return (
-		<OnboardingLayout leftPanel={isCloud ? <SignupShowcase /> : undefined}>
-			{page}
-		</OnboardingLayout>
-	);
+	return <OnboardingLayout>{page}</OnboardingLayout>;
 };
 export async function getServerSideProps(context: GetServerSidePropsContext) {
 	const helpers = generateServerSideHelper(appRouter, context);

@@ -27,11 +27,11 @@ import {
 	session,
 	user,
 } from "@dokploy/server/db/schema";
+import { isEntitled } from "@dokploy/server/services/abhash/entitlements";
 import {
 	hasPermission,
 	resolvePermissions,
 } from "@dokploy/server/services/permission";
-import { hasValidLicense } from "@dokploy/server/services/proprietary/license-key";
 import { TRPCError } from "@trpc/server";
 import * as bcrypt from "bcrypt";
 import { and, asc, desc, eq, gt, ne } from "drizzle-orm";
@@ -498,7 +498,7 @@ export const userRouter = createTRPCRouter({
 
 				const { id, accessedGitProviders, accessedServers, ...rest } = input;
 
-				const licensed = await hasValidLicense(
+				const licensed = await isEntitled(
 					ctx.session?.activeOrganizationId || "",
 				);
 

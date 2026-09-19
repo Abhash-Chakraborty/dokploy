@@ -21,8 +21,8 @@ import {
 	upgradeDockerOnServer,
 } from "@dokploy/server";
 import { db } from "@dokploy/server/db";
+import { isEntitled } from "@dokploy/server/services/abhash/entitlements";
 import { findMemberByUserId } from "@dokploy/server/services/permission";
-import { hasValidLicense } from "@dokploy/server/services/proprietary/license-key";
 import { TRPCError } from "@trpc/server";
 import { observable } from "@trpc/server/observable";
 import { and, desc, eq, getTableColumns, isNotNull, sql } from "drizzle-orm";
@@ -246,7 +246,7 @@ export const serverRouter = createTRPCRouter({
 	}),
 	allForPermissions: withPermission("member", "update")
 		.use(async ({ ctx, next }) => {
-			const licensed = await hasValidLicense(ctx.session.activeOrganizationId);
+			const licensed = await isEntitled(ctx.session.activeOrganizationId);
 			if (!licensed) {
 				throw new TRPCError({
 					code: "FORBIDDEN",

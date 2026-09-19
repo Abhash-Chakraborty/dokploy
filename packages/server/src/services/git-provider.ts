@@ -1,6 +1,6 @@
 import { db } from "@dokploy/server/db";
 import { gitProvider, member } from "@dokploy/server/db/schema";
-import { hasValidLicense } from "@dokploy/server/services/proprietary/license-key";
+import { isEntitled } from "@dokploy/server/services/abhash/entitlements";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 
@@ -102,7 +102,7 @@ export const getAccessibleGitProviderIds = async (session: {
 		return new Set(allOrgProviders.map((p) => p.gitProviderId));
 	}
 
-	const licensed = await hasValidLicense(activeOrganizationId);
+	const licensed = await isEntitled(activeOrganizationId);
 	const assignedSet = licensed
 		? new Set(memberRecord?.accessedGitProviders ?? [])
 		: new Set<string>();

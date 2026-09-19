@@ -17,9 +17,13 @@ const mockDb = vi.hoisted(() => ({
 vi.mock("@dokploy/server/db", () => ({ db: mockDb }));
 
 const mockHasValidLicense = vi.hoisted(() => vi.fn());
-vi.mock("@dokploy/server/services/proprietary/license-key", () => ({
-	hasValidLicense: mockHasValidLicense,
-}));
+vi.mock(
+	"@dokploy/server/services/abhash/entitlements",
+	async (importOriginal) => ({
+		...(await importOriginal<object>()),
+		isEntitled: mockHasValidLicense,
+	}),
+);
 
 import { assertGitProviderAccess } from "@dokploy/server/services/git-provider";
 

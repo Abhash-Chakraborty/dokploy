@@ -1,5 +1,6 @@
 import { createTRPCRouter } from "../api/trpc";
 import { abhashAuditLogRouter } from "./routers/abhash/audit-log";
+import { abhashCustomRoleRouter } from "./routers/abhash/custom-role";
 import { abhashLicenseKeyRouter } from "./routers/abhash/license-key";
 import { abhashWhitelabelingRouter } from "./routers/abhash/whitelabeling";
 import { adminRouter } from "./routers/admin";
@@ -39,7 +40,6 @@ import { portRouter } from "./routers/port";
 import { postgresRouter } from "./routers/postgres";
 import { previewDeploymentRouter } from "./routers/preview-deployment";
 import { projectRouter } from "./routers/project";
-import { customRoleRouter } from "./routers/proprietary/custom-role";
 import { redirectsRouter } from "./routers/redirects";
 import { redisRouter } from "./routers/redis";
 import { registryRouter } from "./routers/registry";
@@ -114,7 +114,7 @@ export const appRouter = createTRPCRouter({
 	logDrain: logDrainRouter,
 	cloudflareTunnel: cloudflareTunnelRouter,
 	whitelabeling: abhashWhitelabelingRouter,
-	customRole: customRoleRouter,
+	customRole: abhashCustomRoleRouter,
 	auditLog: abhashAuditLogRouter,
 	schedule: scheduleRouter,
 	rollback: rollbackRouter,

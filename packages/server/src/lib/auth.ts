@@ -19,7 +19,7 @@ import {
 	getTrustedProviders,
 	getUserByToken,
 } from "../services/admin";
-import { resolveOrganizationDefaultRole } from "../services/proprietary/license-key";
+import { resolveOrganizationDefaultRole } from "../services/abhash/entitlements";
 import {
 	getWebServerSettings,
 	updateWebServerSettings,

@@ -24,6 +24,7 @@ jobs:
         with:
           node-version: 24.17.0
           cache: "pnpm"
+      - run: node scripts/check-no-proprietary-imports.mjs
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter=@dokploy/server run typecheck
       - run: pnpm --filter=@dokploy/server run build

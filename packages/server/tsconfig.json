@@ -36,6 +36,7 @@
 		".next",
 		"webpack.config.server.js",
 		"migration.ts",
-		"setup.ts"
+		"setup.ts",
+		"**/proprietary/**"
 	]
 }

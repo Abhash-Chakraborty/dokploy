@@ -10,9 +10,8 @@ import { type ReactElement, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { SocialSignInButton } from "@/components/abhash/auth/social-sign-in";
 import { OnboardingLayout } from "@/components/layouts/onboarding-layout";
-import { SignInWithGithub } from "@/components/proprietary/auth/sign-in-with-github";
-import { SignInWithGoogle } from "@/components/proprietary/auth/sign-in-with-google";
 import { AlertBlock } from "@/components/shared/alert-block";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
@@ -249,8 +248,8 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 		<div className="flex flex-col gap-6">
 			{hasAlternativeMethod && (
 				<div className="flex flex-col gap-2">
-					{showGithub && <SignInWithGithub />}
-					{showGoogle && <SignInWithGoogle />}
+					{showGithub && <SocialSignInButton provider="github" />}
+					{showGoogle && <SocialSignInButton provider="google" />}
 					{showPasskey && (
 						<Button
 							type="button"

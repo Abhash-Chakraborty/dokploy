@@ -1,9 +1,6 @@
 import { db } from "@dokploy/server/db";
-import {
-	hasValidLicense,
-	IS_CLOUD,
-	sendInvitationEmail,
-} from "@dokploy/server/index";
+import { IS_CLOUD, sendInvitationEmail } from "@dokploy/server/index";
+import { isEntitled } from "@dokploy/server/services/abhash/entitlements";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, exists } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -198,7 +195,7 @@ export const organizationRouter = createTRPCRouter({
 						});
 					}
 
-					if (!(await hasValidLicense(input.organizationId))) {
+					if (!(await isEntitled(input.organizationId))) {
 						throw new TRPCError({
 							code: "FORBIDDEN",
 							message:
