@@ -8,6 +8,8 @@ RUN apt-get update \
 	&& DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 		openssh-server python3 python3-apt sudo iproute2 iptables ufw curl ca-certificates \
 	&& rm -rf /var/lib/apt/lists/* \
+	&& update-alternatives --set iptables /usr/sbin/iptables-nft \
+	&& update-alternatives --set ip6tables /usr/sbin/ip6tables-nft \
 	&& mkdir -p /run/sshd /root/.ssh \
 	&& chmod 700 /root/.ssh \
 	# StrictModes off: the authorized_keys file is bind-mounted from the

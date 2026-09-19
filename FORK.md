@@ -321,6 +321,33 @@ Tested against a stand-in provider API end to end (vault token, plan, the
 one-active rule, adoption) and with client-level tests for the request
 shapes and join commands. Enrolling a real host is exercised at rollout.
 
+### Firewall
+Infrastructure -> Firewall, per server, in one of three modes: **off**
+(untouched), **audit** (rules worked out and shown, never applied) or
+**enforce**. Rules are derived from what the server actually runs — SSH from
+the mesh (or rate-limited when there is none), 80/443 where Traefik runs,
+Swarm ports only between servers, the metrics port only from Dokploy, and a
+database's published port only from the mesh — each with a reason you can
+switch off, plus any rules you write.
+
+- **Published container ports are really filtered.** Docker writes its own
+  iptables rules that never pass ufw's INPUT chain, so Dokploy keeps a
+  `DOKPLOY-FW` chain called from `DOCKER-USER`, matching on
+  `--ctorigdstport`, which is the port the client asked for before Docker's
+  DNAT.
+- **Applying cannot lock you out.** A ruleset that does not allow SSH from
+  the path Dokploy uses is refused. The server snapshots its rules, arms a
+  rollback (systemd timer, or a background sleep where there is no systemd),
+  applies, and Dokploy then reconnects on a **new** connection to confirm.
+  No confirmation, no firewall change: it restores itself within two
+  minutes.
+- **Drift** is checked hourly by comparing a hash of what was applied with
+  what is live.
+- This host starts in `off`; switching it to enforce is your decision.
+
+Tested on a real server in the sandbox: applying, staying reachable,
+confirming, detecting drift, and the rollback firing when nobody confirms.
+
 ### Upstream files the fork hooks into
 Kept to one-line hooks or import swaps; expect these in merge conflicts:
 `packages/server/src/lib/auth.ts` (guard hooks, SSO/SCIM plugin options,
@@ -355,4 +382,5 @@ no-op: `0197`-`0199` (auth methods, log drains, Cloudflare tunnels),
 (SSO provider settings and group mappings), `0203` (forward-auth gates),
 `0204` (job history), `0205` (vault secrets, versions and usage), `0206`
 (agents, key policies and approvals), `0207` (Ansible projects and runs), `0208` (server groups and
-server metadata), `0209` (mesh providers and server peers).
+server metadata), `0209` (mesh providers and server peers), `0210` (firewall policies, rules
+and per-server state).

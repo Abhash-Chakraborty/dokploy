@@ -1,0 +1,245 @@
+import { eq } from "drizzle-orm";
+import { z } from "zod";
+import { db } from "../../../db";
+import {
+	abhashServerFirewall,
+	abhashServerMeta,
+	server,
+} from "../../../db/schema";
+import { defineJob } from "../jobs/registry";
+import { closeConnection, execPooled } from "../ssh/pool";
+import {
+	type CompileContext,
+	type CompiledRule,
+	compileRules,
+	meshSubnetFor,
+	wouldLockOut,
+} from "./compile";
+import {
+	applyScript,
+	confirmScript,
+	inspectScript,
+	type RenderedFirewall,
+	render,
+} from "./render";
+
+export const ROLLBACK_SECONDS = 120;
+
+export const contextFor = async (
+	serverId: string,
+	organizationId: string,
+): Promise<CompileContext> => {
+	const row = await db.query.server.findFirst({
+		where: eq(server.serverId, serverId),
+		columns: { port: true },
+	});
+	const meta = await db.query.abhashServerMeta.findFirst({
+		where: eq(abhashServerMeta.serverId, serverId),
+	});
+	const meshSubnet = await meshSubnetFor(serverId);
+	return {
+		serverId,
+		organizationId,
+		sshPort: row?.port ?? 22,
+		meshSubnet,
+		// Dokploy reaches the server over the mesh or its public address; the
+		// SSH rule must cover whichever it is.
+		controlAddress: meta?.connectVia === "mesh" ? meshSubnet : null,
+	};
+};
+
+export type FirewallPlan = {
+	rules: CompiledRule[];
+	rendered: RenderedFirewall;
+	lockout: string | null;
+	mode: "off" | "audit" | "enforce";
+};
+
+export const planFirewall = async (
+	serverId: string,
+	organizationId: string,
+): Promise<FirewallPlan> => {
+	const context = await contextFor(serverId, organizationId);
+	const rules = await compileRules(context);
+	const settings = await db.query.abhashServerFirewall.findFirst({
+		where: eq(abhashServerFirewall.serverId, serverId),
+	});
+	return {
+		rules,
+		rendered: render(rules),
+		lockout: wouldLockOut(rules, context),
+		mode: settings?.mode ?? "off",
+	};
+};
+
+export const ensureFirewallRow = async (
+	serverId: string,
+	organizationId: string,
+) => {
+	await db
+		.insert(abhashServerFirewall)
+		.values({ serverId, organizationId })
+		.onConflictDoNothing();
+	return db.query.abhashServerFirewall.findFirst({
+		where: eq(abhashServerFirewall.serverId, serverId),
+	});
+};
+
+/**
+ * Applies a ruleset with a dead-man switch: the server rolls the change
+ * back on its own unless Dokploy reconnects and confirms. A ruleset that
+ * would cut Dokploy's own path is refused before anything runs.
+ */
+export const applyFirewall = async (
+	serverId: string,
+	organizationId: string,
+	log: (line: string) => Promise<void> | void,
+) => {
+	const settings = await ensureFirewallRow(serverId, organizationId);
+	if (settings?.mode !== "enforce") {
+		throw new Error(
+			`The firewall is in ${settings?.mode ?? "off"} mode for this server; switch it to enforce first`,
+		);
+	}
+	const plan = await planFirewall(serverId, organizationId);
+	if (plan.lockout) throw new Error(plan.lockout);
+
+	await log(`Applying ${plan.rules.length} rules (hash ${plan.rendered.hash})`);
+	await log(
+		`A rollback is armed for ${ROLLBACK_SECONDS}s; it fires unless Dokploy can still reach this server`,
+	);
+	const applied = await execPooled(
+		serverId,
+		`sh -s <<'DOKPLOY_APPLY'\n${applyScript(plan.rendered, {
+			rollbackSeconds: ROLLBACK_SECONDS,
+			defaultIncoming: "deny",
+		})}\nDOKPLOY_APPLY`,
+		{ timeoutMs: 120_000 },
+	);
+	if (applied.exitCode !== 0 || !applied.stdout.includes("APPLIED")) {
+		throw new Error(
+			`Applying failed: ${applied.stderr.slice(0, 400) || applied.stdout.slice(0, 400)}`,
+		);
+	}
+
+	// A brand-new connection: if the rules broke SSH, this fails and the
+	// rollback the server armed puts everything back.
+	closeConnection(serverId);
+	try {
+		const confirmed = await execPooled(
+			serverId,
+			`sh -s <<'DOKPLOY_CONFIRM'\n${confirmScript()}\nDOKPLOY_CONFIRM`,
+			{ timeoutMs: 30_000 },
+		);
+		if (!confirmed.stdout.includes("CONFIRMED")) {
+			throw new Error("The server did not confirm");
+		}
+	} catch (error) {
+		await db
+			.update(abhashServerFirewall)
+			.set({
+				lastError: `Could not reach the server after applying; it is rolling back. ${error instanceof Error ? error.message : error}`,
+				updatedAt: new Date(),
+			})
+			.where(eq(abhashServerFirewall.serverId, serverId));
+		throw new Error(
+			"Could not reach the server after applying the rules. It rolls itself back within two minutes; nothing else is needed.",
+		);
+	}
+
+	await db
+		.update(abhashServerFirewall)
+		.set({
+			appliedHash: plan.rendered.hash,
+			appliedAt: new Date(),
+			driftedAt: null,
+			lastError: null,
+			updatedAt: new Date(),
+		})
+		.where(eq(abhashServerFirewall.serverId, serverId));
+	await log("Confirmed; the rollback is cancelled");
+	return { hash: plan.rendered.hash, rules: plan.rules.length };
+};
+
+export const checkDrift = async (serverId: string, organizationId: string) => {
+	const settings = await ensureFirewallRow(serverId, organizationId);
+	if (!settings || settings.mode === "off") return { drift: false as const };
+	const plan = await planFirewall(serverId, organizationId);
+	const result = await execPooled(
+		serverId,
+		`sh -s <<'DOKPLOY_INSPECT'\n${inspectScript()}\nDOKPLOY_INSPECT`,
+		{ timeoutMs: 30_000 },
+	);
+	const live = Object.fromEntries(
+		result.stdout
+			.split("\n")
+			.map((line) => line.split("="))
+			.filter((parts) => parts.length === 2)
+			.map(([key, value]) => [key as string, (value as string).trim()]),
+	);
+	const drift =
+		settings.mode === "enforce" &&
+		// "inactive" contains "active", so compare the word exactly.
+		(live.HASH !== plan.rendered.hash || live.UFW !== "active");
+	await db
+		.update(abhashServerFirewall)
+		.set({ driftedAt: drift ? new Date() : null, updatedAt: new Date() })
+		.where(eq(abhashServerFirewall.serverId, serverId));
+	return { drift, live, expected: plan.rendered.hash };
+};
+
+export const firewallApplyJob = defineJob({
+	type: "firewall.apply",
+	queue: "abhash-infra",
+	input: z.object({
+		organizationId: z.string(),
+		serverIds: z.array(z.string()).min(1).max(100),
+	}),
+	title: (input) => `Apply the firewall to ${input.serverIds.length} server(s)`,
+	destructive: true,
+	timeoutMs: 30 * 60_000,
+	lock: (input) => ({ key: `firewall:${input.serverIds[0]}`, limit: 1 }),
+	run: async ({ input, log, progress }) => {
+		const results: Record<string, string> = {};
+		let done = 0;
+		for (const serverId of input.serverIds) {
+			try {
+				const result = await applyFirewall(serverId, input.organizationId, log);
+				results[serverId] = `applied ${result.hash}`;
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error);
+				results[serverId] = `failed: ${message}`;
+				await log(`ERROR ${message}`);
+			}
+			done++;
+			await progress((done / input.serverIds.length) * 100);
+		}
+		return results;
+	},
+});
+
+export const firewallDriftJob = defineJob({
+	type: "firewall.check-drift",
+	queue: "abhash-infra",
+	input: z.object({ organizationId: z.string().optional() }),
+	title: () => "Check the firewalls for drift",
+	timeoutMs: 10 * 60_000,
+	run: async ({ input, log }) => {
+		const all = await db.query.abhashServerFirewall.findMany();
+		const rows = input.organizationId
+			? all.filter((row) => row.organizationId === input.organizationId)
+			: all;
+		const drifted: string[] = [];
+		for (const row of rows) {
+			if (row.mode === "off") continue;
+			const result = await checkDrift(row.serverId, row.organizationId).catch(
+				() => ({ drift: false as const }),
+			);
+			if (result.drift) {
+				drifted.push(row.serverId);
+				await log(`${row.serverId}: drifted from what Dokploy applied`);
+			}
+		}
+		return { checked: rows.length, drifted };
+	},
+});

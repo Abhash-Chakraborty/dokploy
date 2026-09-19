@@ -419,6 +419,12 @@ const MENU: Menu = {
 					isEnabled: ({ permissions }) => !!permissions?.dnsProvider.read,
 				},
 				{
+					title: "Firewall",
+					url: "/dashboard/settings/firewall",
+					icon: ShieldCheck,
+					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
+				},
+				{
 					title: "Secure network",
 					url: "/dashboard/settings/secure-network",
 					icon: Network,

@@ -1,4 +1,5 @@
 import "../ansible/service";
+import "../firewall/apply";
 import "../fleet/jobs";
 import "../mesh/jobs";
 import "../ssh/facts";
@@ -18,6 +19,13 @@ export * from "./worker";
 
 const startEngine = async () => {
 	await startJobWorkers();
+	await upsertSchedule({
+		id: "firewall.check-drift",
+		type: "firewall.check-drift",
+		input: {},
+		cron: "23 * * * *",
+		organizationId: null,
+	});
 	await upsertSchedule({
 		id: "fleet.collect-facts",
 		type: "fleet.collect-facts",
