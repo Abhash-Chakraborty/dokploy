@@ -2,6 +2,7 @@ import { exec, execFile } from "node:child_process";
 import util from "node:util";
 import { findServerById } from "@dokploy/server/services/server";
 import { Client } from "ssh2";
+import { execViaPool } from "../../services/abhash/ssh/hook";
 import { ExecError } from "./ExecError";
 
 export class WriteFileRemoteError extends Error {
@@ -158,6 +159,10 @@ export const execAsyncRemote = async (
 	onData?: (data: string) => void,
 ): Promise<{ stdout: string; stderr: string }> => {
 	if (!serverId) return { stdout: "", stderr: "" };
+	// Pooled connections with a pinned host key, when the fork's SSH layer
+	// is switched on; otherwise the original one-connection-per-call path.
+	const pooled = await execViaPool(serverId, command, onData);
+	if (pooled) return pooled;
 	const server = await findServerById(serverId);
 	if (!server.sshKeyId) throw new Error("No SSH key available for this server");
 

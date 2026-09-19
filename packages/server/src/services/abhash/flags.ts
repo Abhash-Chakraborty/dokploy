@@ -7,7 +7,8 @@ export type AbhashFlag =
 	| "sso.enabled"
 	| "scim.enabled"
 	| "jobs.enabled"
-	| "vault.enabled";
+	| "vault.enabled"
+	| "fleet.ssh";
 
 const TTL_MS = 5_000;
 

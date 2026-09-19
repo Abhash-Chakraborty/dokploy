@@ -262,6 +262,23 @@ to servers, variables and an optional schedule. Each run:
 these runs, and later the bootstrap, mesh and firewall work, are tested for
 real and for idempotency without touching anything outside the sandbox.
 
+### Fleet: SSH layer and inventory
+Off until `fleet.ssh` is on. `services/abhash/ssh` replaces one-connection-
+per-command with a pool: connections are reused and closed when idle,
+concurrent commands per server are capped and retried when sshd runs out of
+sessions, every command has a timeout and can be cancelled, and the exit
+code comes back instead of an exception. Upstream's `execAsyncRemote` routes
+through it with a one-line hook, so every existing feature benefits.
+
+**Host keys are trusted on first use and then enforced.** A changed key
+blocks the connection, flags the server and needs an admin to accept it.
+
+`abhash_server_meta` adds what the command centre needs: tags, a group, an
+environment label, whether to connect over the public address or the mesh,
+the pinned host key, health and facts. A `fleet.collect-facts` job runs every
+five minutes, in one SSH round trip per server, and marks a server online,
+degraded (for example a nearly full disk) or offline.
+
 ### Upstream files the fork hooks into
 Kept to one-line hooks or import swaps; expect these in merge conflicts:
 `packages/server/src/lib/auth.ts` (guard hooks, SSO/SCIM plugin options,
@@ -282,6 +299,7 @@ redaction), `apps/dokploy/server/api/utils/audit.ts` (records the actor),
 `apps/dokploy/pages/api/mcp.ts` (actor for MCP calls),
 `packages/server/src/lib/auth.ts` (exposes which API key authenticated),
 `packages/server/src/utils/vault/index.ts` (resolves `${{secret.*}}` first),
+`packages/server/src/utils/process/execAsync.ts` (pooled SSH),
 and the schema files whose credential columns now use `credentialText`
 (`ssh-key`, `destination`, `registry`, `github`, `gitlab`, `gitea`,
 `bitbucket`, `ai`, `cloudflare-tunnel`, `certificate`, `web-server-settings`,
@@ -294,4 +312,5 @@ no-op: `0197`-`0199` (auth methods, log drains, Cloudflare tunnels),
 `0200`-`0201` (teams, role bindings, suspension, cleanup triggers), `0202`
 (SSO provider settings and group mappings), `0203` (forward-auth gates),
 `0204` (job history), `0205` (vault secrets, versions and usage), `0206`
-(agents, key policies and approvals), `0207` (Ansible projects and runs).
+(agents, key policies and approvals), `0207` (Ansible projects and runs), `0208` (server groups and
+server metadata).

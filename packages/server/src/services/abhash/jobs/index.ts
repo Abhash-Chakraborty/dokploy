@@ -1,4 +1,5 @@
 import "../ansible/service";
+import "../ssh/facts";
 import "../vault/credentials";
 import { isFlagEnabled, setSetting } from "../flags";
 import { JOB_RETENTION_DAYS } from "./builtin";
@@ -15,6 +16,13 @@ export * from "./worker";
 
 const startEngine = async () => {
 	await startJobWorkers();
+	await upsertSchedule({
+		id: "fleet.collect-facts",
+		type: "fleet.collect-facts",
+		input: {},
+		cron: "*/5 * * * *",
+		organizationId: null,
+	});
 	await upsertSchedule({
 		id: "system.prune-jobs",
 		type: "system.prune-jobs",
