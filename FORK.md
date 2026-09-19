@@ -11,11 +11,21 @@ The goal is to keep the fork close to upstream while carrying a small number of 
 
 ## Branches
 
-- `master`: integration branch. The upstream sync workflow rebases this branch onto `dokploy/dokploy:canary` and opens a PR into `main` when it succeeds.
-- `main`: production branch. Merging a release PR here publishes the production GHCR image tagged `latest` and with the Dokploy version.
-- `abhash-dokploy`: setup branch used to bootstrap this fork.
+- `main`: production and default branch. Every push that changes app code
+  runs the Personal GHCR Release workflow, which builds the multi-arch image
+  and, when `apps/dokploy/package.json` carries a version with no GitHub
+  release yet, tags it `:<version>` and `:latest` and cuts the release.
+- `sync/upstream`: bot-owned. The nightly sync recreates it from `main`,
+  merges `upstream/canary` into it and opens a PR into `main`. Never commit
+  to it by hand; it is force-pushed.
+- Feature and fix work goes on short-lived branches (`feat/...`, `fix/...`,
+  `perf/...`) merged into `main` by PR.
+- `master`, `canary`, `abhash-dokploy`, `feat/dokploy-improvements` and
+  `codex/release-v0.29.12` are historical and fully contained in `main`.
 
-Set `main` as the repository default branch once it is pushed.
+The fork's version tracks upstream's released version. A fork-only patch
+release bumps the patch number; the next upstream merge takes upstream's
+version again.
 
 ## Local Setup
 
@@ -40,9 +50,37 @@ git config rerere.enabled true
 git config rerere.autoupdate true
 ```
 
-`rerere` lets Git remember conflict resolutions. It will not solve every conflict, but it helps when upstream repeatedly touches the same areas.
+`rerere` lets Git remember conflict resolutions, which pays off because
+upstream repeatedly touches the same files the fork restyled.
 
-The GitHub workflow `.github/workflows/sync-upstream.yml` periodically rebases `master` onto `upstream/canary` with Git's `rerere` conflict memory enabled and a `-X theirs` retry preference for replaying fork changes. If the rebase succeeds and `master` is ahead of `main`, it opens a release PR into `main`. If conflicts remain, the workflow opens an issue so you can fix them manually.
+`.github/workflows/sync-upstream.yml` runs nightly. It merges (never rebases)
+`upstream/canary` into `sync/upstream`, opens a PR into `main` and dispatches
+CI on that branch. If the merge conflicts it fails with the conflicting paths
+in the job summary; resolve locally:
+
+```bash
+git fetch upstream canary
+git switch -c merge/upstream-vX.Y.Z main
+git merge upstream/canary
+# resolve, verify, then merge into main
+```
+
+Recurring conflict patterns and how they have been resolved:
+
+- **Migrations.** Upstream keeps claiming the next migration indices. Keep
+  upstream's files untouched and renumber the fork's past them, with
+  `when` timestamps after upstream's last entry, and make the fork's SQL
+  idempotent (`IF NOT EXISTS`, `duplicate_object` guards) so databases that
+  already ran the old number re-apply it as a no-op. CI runs
+  `drizzle-kit check` and fails on schema drift or duplicate indices.
+- **Settings and service pages.** Keep the fork's edge-to-edge
+  `PageContainer`/`PageHeader` layout and port upstream's functional changes
+  into it.
+- **SSO.** Removed from this fork; drop upstream's SSO pages, dialogs and
+  enforcement hooks when they reappear.
+- **Enterprise gating.** The fork runs these features unlicensed through its
+  own `abhash` routers and services; check new upstream code paths that call
+  the licence-gated `proprietary` helpers.
 
 ## Licensing Note
 
