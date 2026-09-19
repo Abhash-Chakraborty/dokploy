@@ -190,8 +190,7 @@ export const ShowDomains = ({ id, type }: Props) => {
 		try {
 			const result = await validateDomain({
 				domain: host,
-				serverIp:
-					application?.server?.ipAddress?.toString() || ip?.toString() || "",
+				serverId: application?.serverId ?? undefined,
 			});
 
 			setValidationStates((prev) => ({

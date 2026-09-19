@@ -42,7 +42,9 @@ import {
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth-client";
+import { appRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
+import { generateServerSideHelper } from "@/utils/create-server-helpers";
 import { useWhitelabelingPublic } from "@/utils/hooks/use-whitelabeling";
 
 const LoginSchema = z.object({
@@ -134,8 +136,7 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 				return;
 			}
 
-			// @ts-expect-error
-			if (data?.twoFactorRedirect as boolean) {
+			if (data && "twoFactorRedirect" in data && data.twoFactorRedirect) {
 				setTwoFactorCode("");
 				setIsTwoFactor(true);
 				toast.info("Please enter your 2FA code");
@@ -508,6 +509,11 @@ Home.getLayout = (page: ReactElement) => {
 	return <OnboardingLayout>{page}</OnboardingLayout>;
 };
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+	const helpers = generateServerSideHelper(appRouter, context);
+	// Prefetch the public branding so the login/onboarding logo and app name
+	// render correctly on the server (no flash of default branding).
+	await helpers.whitelabeling.getPublic.prefetch();
+
 	if (IS_CLOUD) {
 		try {
 			const { user } = await validateRequest(context.req);
@@ -523,6 +529,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
 		return {
 			props: {
+				trpcState: helpers.dehydrate(),
 				IS_CLOUD: IS_CLOUD,
 				socialProviders: {
 					github: !!(
@@ -559,6 +566,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
 	return {
 		props: {
+			trpcState: helpers.dehydrate(),
 			hasAdmin,
 			socialProviders: {
 				github: !!(

@@ -439,6 +439,7 @@ export const apiCreateGotify = notificationsSchema
 		name: true,
 		appDeploy: true,
 		dockerCleanup: true,
+		serverThreshold: true,
 	})
 	.extend({
 		serverUrl: z.string().min(1),
@@ -474,6 +475,7 @@ export const apiCreateNtfy = notificationsSchema
 		name: true,
 		appDeploy: true,
 		dockerCleanup: true,
+		serverThreshold: true,
 	})
 	.extend({
 		serverUrl: z.string().min(1),

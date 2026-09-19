@@ -1,4 +1,5 @@
 import {
+	getAbhashPublicWhitelabelingConfig,
 	getWebServerSettings,
 	IS_CLOUD,
 	updateWebServerSettings,
@@ -23,8 +24,13 @@ const emptyWhitelabelingConfig = {
 	docsUrl: null,
 	errorPageTitle: null,
 	errorPageDescription: null,
-	metaTitle: null,
+	ogImageUrl: null,
 	footerText: null,
+};
+
+/** Invalidate the SSR branding cache in _document.tsx so the next request picks up fresh settings. */
+const clearBrandingSSRCache = () => {
+	globalThis.__SETTINGS_CACHE = null;
 };
 
 const getConfig = async () => {
@@ -59,6 +65,8 @@ export const abhashWhitelabelingRouter = createTRPCRouter({
 				whitelabelingConfig: input.whitelabelingConfig,
 			});
 
+			clearBrandingSSRCache();
+
 			return { success: true };
 		}),
 
@@ -81,24 +89,11 @@ export const abhashWhitelabelingRouter = createTRPCRouter({
 			whitelabelingConfig: emptyWhitelabelingConfig,
 		});
 
+		clearBrandingSSRCache();
+
 		return { success: true };
 	}),
 
-	getPublic: publicProcedure.query(async () => {
-		const config = await getConfig();
-		if (!config) return null;
-
-		return {
-			appName: config.appName,
-			appDescription: config.appDescription,
-			logoUrl: config.logoUrl,
-			loginLogoUrl: config.loginLogoUrl,
-			faviconUrl: config.faviconUrl,
-			customCss: config.customCss,
-			metaTitle: config.metaTitle,
-			errorPageTitle: config.errorPageTitle,
-			errorPageDescription: config.errorPageDescription,
-			footerText: config.footerText,
-		};
-	}),
+	// Public endpoint only for unauthenticated pages (login, register, error).
+	getPublic: publicProcedure.query(() => getAbhashPublicWhitelabelingConfig()),
 });
