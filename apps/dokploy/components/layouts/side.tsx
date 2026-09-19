@@ -422,7 +422,13 @@ const MENU: Menu = {
 					isEnabled: ({ permissions }) => !!permissions?.sshKeys.read,
 				},
 				{
-					title: "Secrets",
+					title: "Vault",
+					url: "/dashboard/settings/vault",
+					icon: Vault,
+					isEnabled: ({ isCloud }) => !isCloud,
+				},
+				{
+					title: "Secret providers",
 					url: "/dashboard/settings/secrets",
 					icon: Vault,
 					isEnabled: ({ permissions }) => !!permissions?.vaultProvider.read,

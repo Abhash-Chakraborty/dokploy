@@ -10,6 +10,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { credentialText } from "./abhash-credential";
 import { backups } from "./backups";
 import { environments } from "./environment";
 import { mounts } from "./mount";
@@ -56,7 +57,7 @@ export const mongo = pgTable("mongo", {
 		.unique(),
 	description: text("description"),
 	databaseUser: text("databaseUser").notNull(),
-	databasePassword: text("databasePassword").notNull(),
+	databasePassword: credentialText("databasePassword").notNull(),
 	dockerImage: text("dockerImage").notNull().default("mongo:8"),
 	command: text("command"),
 	args: text("args").array(),

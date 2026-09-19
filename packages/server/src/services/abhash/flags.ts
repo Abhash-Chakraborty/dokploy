@@ -6,7 +6,8 @@ export type AbhashFlag =
 	| "rbac.v2"
 	| "sso.enabled"
 	| "scim.enabled"
-	| "jobs.enabled";
+	| "jobs.enabled"
+	| "vault.enabled";
 
 const TTL_MS = 5_000;
 

@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import { integer, pgTable, text } from "drizzle-orm/pg-core";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { credentialText } from "./abhash-credential";
 import { gitProvider } from "./git-provider";
 
 export const github = pgTable("github", {
@@ -12,10 +13,10 @@ export const github = pgTable("github", {
 	githubAppName: text("githubAppName"),
 	githubAppId: integer("githubAppId"),
 	githubClientId: text("githubClientId"),
-	githubClientSecret: text("githubClientSecret"),
+	githubClientSecret: credentialText("githubClientSecret"),
 	githubInstallationId: text("githubInstallationId"),
-	githubPrivateKey: text("githubPrivateKey"),
-	githubWebhookSecret: text("githubWebhookSecret"),
+	githubPrivateKey: credentialText("githubPrivateKey"),
+	githubWebhookSecret: credentialText("githubWebhookSecret"),
 	githubUrl: text("githubUrl").default("https://github.com").notNull(),
 	gitProviderId: text("gitProviderId")
 		.notNull()

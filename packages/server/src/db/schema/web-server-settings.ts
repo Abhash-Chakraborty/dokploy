@@ -10,6 +10,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { credentialText } from "./abhash-credential";
 import { certificateType } from "./shared";
 
 export const webServerSettings = pgTable("webServerSettings", {
@@ -23,7 +24,7 @@ export const webServerSettings = pgTable("webServerSettings", {
 	https: boolean("https").notNull().default(false),
 	host: text("host"),
 	letsEncryptEmail: text("letsEncryptEmail"),
-	sshPrivateKey: text("sshPrivateKey"),
+	sshPrivateKey: credentialText("sshPrivateKey"),
 	enableDockerCleanup: boolean("enableDockerCleanup").notNull().default(true),
 	logCleanupCron: text("logCleanupCron").default("0 0 * * *"),
 	// Metrics Configuration

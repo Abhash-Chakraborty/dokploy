@@ -202,6 +202,28 @@ example, one firewall change per server. New job types register with
 `defineJob` in `registry.ts`. If Redis is unreachable only jobs pause;
 deploys and upstream schedules do not depend on it.
 
+### Vault
+Off until the owner turns it on (Settings -> Sources & Secrets -> Vault).
+Secrets are stored per version with envelope encryption: a data key per
+version encrypts the value, the instance master key only wraps data keys, and
+the AAD binds both to the secret and version. The master key lives in
+`<BASE_PATH>/abhash/vault-keyring.json` (root-only), can be rotated without
+decrypting anything, and is exported as a passphrase-sealed **recovery kit**
+— losing it loses every secret. People and agents see only a secret's name,
+description and scope; the value is write-only, and only the owner can reveal
+it, with their password and an audit entry. Reference a secret anywhere env
+vars are resolved with `${{secret.NAME}}`: the closest scope wins
+(environment, then project, then organization), resolution happens at deploy
+time in `resolveVaultReferences`, and usage is recorded per environment.
+
+**Encrypt stored credentials** (same page, owner only) turns the ~30
+credential columns upstream keeps in plain text — SSH keys, S3 and registry
+credentials, git tokens, notification tokens, database passwords,
+`vault_provider.config` — into the same `enc:v1:` format upstream already
+uses for env vars (`db/schema/abhash-credential.ts`). It is reversible:
+turning it off converts every value back, which is what keeps a rollback to
+an older image possible.
+
 ### Upstream files the fork hooks into
 Kept to one-line hooks or import swaps; expect these in merge conflicts:
 `packages/server/src/lib/auth.ts` (guard hooks, SSO/SCIM plugin options,
@@ -216,7 +238,12 @@ permission), `apps/dokploy/server/api/root.ts`, `packages/server/src/index.ts`,
 `register.tsx` (sign-in buttons), `apps/dokploy/lib/auth-client.ts`,
 `components/dashboard/application/domains/handle-domain.tsx` (Protect with
 SSO), `components/layouts/{side,user-nav}.tsx`, `esbuild.config.ts`,
-`apps/dokploy/server/server.ts` (starts the job engine).
+`apps/dokploy/server/server.ts` (starts the job engine and the vault),
+`packages/server/src/utils/vault/index.ts` (resolves `${{secret.*}}` first),
+and the schema files whose credential columns now use `credentialText`
+(`ssh-key`, `destination`, `registry`, `github`, `gitlab`, `gitea`,
+`bitbucket`, `ai`, `cloudflare-tunnel`, `certificate`, `web-server-settings`,
+`security`, the database types, `notification`, `vault-provider`).
 
 ### Migrations
 Fork migrations run automatically on startup and are idempotent, so a
@@ -224,4 +251,4 @@ database that already applied one under an earlier number re-applies it as a
 no-op: `0197`-`0199` (auth methods, log drains, Cloudflare tunnels),
 `0200`-`0201` (teams, role bindings, suspension, cleanup triggers), `0202`
 (SSO provider settings and group mappings), `0203` (forward-auth gates),
-`0204` (job history).
+`0204` (job history), `0205` (vault secrets, versions and usage).

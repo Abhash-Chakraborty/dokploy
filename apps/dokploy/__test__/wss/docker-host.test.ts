@@ -1,8 +1,8 @@
+import { describe, expect, it } from "vitest";
 import {
 	getDockerHostCandidates,
 	getFirstAddressInSubnet,
 } from "@/server/utils/docker";
-import { describe, expect, it } from "vitest";
 
 describe("local terminal Docker host discovery", () => {
 	it("derives the gateway address for a directly attached bridge", () => {

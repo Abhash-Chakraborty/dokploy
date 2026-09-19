@@ -10,6 +10,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { credentialText } from "./abhash-credential";
 import { organization } from "./account";
 
 export const notificationType = pgEnum("notificationType", [
@@ -92,7 +93,7 @@ export const slack = pgTable("slack", {
 		.notNull()
 		.primaryKey()
 		.$defaultFn(() => nanoid()),
-	webhookUrl: text("webhookUrl").notNull(),
+	webhookUrl: credentialText("webhookUrl").notNull(),
 	channel: text("channel"),
 });
 
@@ -101,7 +102,7 @@ export const telegram = pgTable("telegram", {
 		.notNull()
 		.primaryKey()
 		.$defaultFn(() => nanoid()),
-	botToken: text("botToken").notNull(),
+	botToken: credentialText("botToken").notNull(),
 	chatId: text("chatId").notNull(),
 	messageThreadId: text("messageThreadId"),
 });
@@ -111,7 +112,7 @@ export const discord = pgTable("discord", {
 		.notNull()
 		.primaryKey()
 		.$defaultFn(() => nanoid()),
-	webhookUrl: text("webhookUrl").notNull(),
+	webhookUrl: credentialText("webhookUrl").notNull(),
 	decoration: boolean("decoration"),
 });
 
@@ -123,7 +124,7 @@ export const email = pgTable("email", {
 	smtpServer: text("smtpServer").notNull(),
 	smtpPort: integer("smtpPort").notNull(),
 	username: text("username").notNull(),
-	password: text("password").notNull(),
+	password: credentialText("password").notNull(),
 	fromAddress: text("fromAddress").notNull(),
 	toAddresses: text("toAddress").array().notNull(),
 });
@@ -133,7 +134,7 @@ export const resend = pgTable("resend", {
 		.notNull()
 		.primaryKey()
 		.$defaultFn(() => nanoid()),
-	apiKey: text("apiKey").notNull(),
+	apiKey: credentialText("apiKey").notNull(),
 	fromAddress: text("fromAddress").notNull(),
 	toAddresses: text("toAddress").array().notNull(),
 });
@@ -144,7 +145,7 @@ export const gotify = pgTable("gotify", {
 		.primaryKey()
 		.$defaultFn(() => nanoid()),
 	serverUrl: text("serverUrl").notNull(),
-	appToken: text("appToken").notNull(),
+	appToken: credentialText("appToken").notNull(),
 	priority: integer("priority").notNull().default(5),
 	decoration: boolean("decoration"),
 });
@@ -156,7 +157,7 @@ export const ntfy = pgTable("ntfy", {
 		.$defaultFn(() => nanoid()),
 	serverUrl: text("serverUrl").notNull(),
 	topic: text("topic").notNull(),
-	accessToken: text("accessToken"),
+	accessToken: credentialText("accessToken"),
 	priority: integer("priority").notNull().default(3),
 });
 
@@ -165,7 +166,7 @@ export const mattermost = pgTable("mattermost", {
 		.notNull()
 		.primaryKey()
 		.$defaultFn(() => nanoid()),
-	webhookUrl: text("webhookUrl").notNull(),
+	webhookUrl: credentialText("webhookUrl").notNull(),
 	channel: text("channel"),
 	username: text("username"),
 });
@@ -184,7 +185,7 @@ export const lark = pgTable("lark", {
 		.notNull()
 		.primaryKey()
 		.$defaultFn(() => nanoid()),
-	webhookUrl: text("webhookUrl").notNull(),
+	webhookUrl: credentialText("webhookUrl").notNull(),
 });
 
 export const pushover = pgTable("pushover", {
@@ -192,7 +193,7 @@ export const pushover = pgTable("pushover", {
 		.notNull()
 		.primaryKey()
 		.$defaultFn(() => nanoid()),
-	userKey: text("userKey").notNull(),
+	userKey: credentialText("userKey").notNull(),
 	apiToken: text("apiToken").notNull(),
 	priority: integer("priority").notNull().default(0),
 	retry: integer("retry"),
@@ -204,7 +205,7 @@ export const teams = pgTable("teams", {
 		.notNull()
 		.primaryKey()
 		.$defaultFn(() => nanoid()),
-	webhookUrl: text("webhookUrl").notNull(),
+	webhookUrl: credentialText("webhookUrl").notNull(),
 });
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({

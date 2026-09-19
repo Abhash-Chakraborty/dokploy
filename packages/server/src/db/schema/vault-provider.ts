@@ -2,6 +2,7 @@ import { jsonb, pgEnum, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { credentialJson } from "./abhash-credential";
 import { organization } from "./account";
 
 export const vaultProviderType = pgEnum("VaultProviderType", [
@@ -119,7 +120,7 @@ export const vaultProvider = pgTable(
 			.$defaultFn(() => nanoid()),
 		name: text("name").notNull(),
 		providerType: vaultProviderType("providerType").notNull(),
-		config: jsonb("config").$type<VaultProviderConfig>().notNull(),
+		config: credentialJson<VaultProviderConfig>()("config").notNull(),
 		assignments: jsonb("assignments")
 			.$type<VaultProviderAssignment[]>()
 			.notNull()

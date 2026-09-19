@@ -14,6 +14,7 @@ import {
 	setupDirectories,
 } from "@dokploy/server";
 import { initAbhashJobs } from "@dokploy/server/services/abhash/jobs";
+import { initAbhashVault } from "@dokploy/server/services/abhash/vault";
 import { config } from "dotenv";
 import next from "next";
 import packageInfo from "../package.json";
@@ -71,6 +72,9 @@ void app.prepare().then(async () => {
 		await initEnterpriseBackupCronJobs();
 
 		if (!IS_CLOUD) {
+			await initAbhashVault().catch((e) =>
+				console.error("[abhash-vault] startup failed", e),
+			);
 			await initAbhashJobs().catch((e) =>
 				console.error("[abhash-jobs] startup failed", e),
 			);
