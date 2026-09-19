@@ -21,6 +21,7 @@ import {
 	Cloud,
 	CreditCard,
 	Database,
+	DatabaseBackup,
 	FileLock,
 	Folder,
 	Forward,
@@ -481,7 +482,13 @@ const MENU: Menu = {
 			icon: Waypoints,
 			items: [
 				{
-					title: "Backups",
+					title: "Backups and drills",
+					url: "/dashboard/settings/backup-health",
+					icon: DatabaseBackup,
+					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
+				},
+				{
+					title: "Backups (legacy)",
 					url: "/dashboard/settings/backups",
 					icon: Database,
 					isEnabled: ({ permissions }) => !!permissions?.backup?.read,

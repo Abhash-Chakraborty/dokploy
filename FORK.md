@@ -348,6 +348,31 @@ switch off, plus any rules you write.
 Tested on a real server in the sandbox: applying, staying reachable,
 confirming, detecting drift, and the rollback firing when nobody confirms.
 
+### Backups and restore drills
+Integrations -> Backups and drills. Snapshots are **restic** repositories:
+encrypted, deduplicated, checksummed, on any backend restic speaks (S3, B2,
+SFTP, WebDAV, local). The repository password and the backend credentials
+are vault references, never stored here.
+
+- A database is dumped straight into restic through a pipe, so no temporary
+  copy is written; the dump's exit status is checked and a snapshot from a
+  failed dump is deleted rather than kept.
+- Retention is daily/weekly/monthly/yearly and pruned after every run;
+  snapshots can be copied to a second repository for the 3-2-1 rule.
+- `restic check --read-data-subset` verifies a repository itself.
+- What the database held is recorded **with** the snapshot, so a drill can
+  tell a real restore from an empty one.
+
+A **restore drill** takes the latest snapshot, starts the same image on an
+internal network with no published ports, restores into it, checks the table
+count against the backup-time numbers plus any SQL assertions you add,
+measures the recovery time against a budget, and always tears the copy down.
+Drills run on a schedule and a failed drill fails loudly.
+
+Covered end to end in the sandbox against a real Postgres: backup, integrity
+check, drill passing, nothing left behind, and a drill correctly failing when
+the data does not match.
+
 ### Upstream files the fork hooks into
 Kept to one-line hooks or import swaps; expect these in merge conflicts:
 `packages/server/src/lib/auth.ts` (guard hooks, SSO/SCIM plugin options,
@@ -383,4 +408,5 @@ no-op: `0197`-`0199` (auth methods, log drains, Cloudflare tunnels),
 `0204` (job history), `0205` (vault secrets, versions and usage), `0206`
 (agents, key policies and approvals), `0207` (Ansible projects and runs), `0208` (server groups and
 server metadata), `0209` (mesh providers and server peers), `0210` (firewall policies, rules
-and per-server state).
+and per-server state), `0211` (backup repositories, policies, runs and
+drills).

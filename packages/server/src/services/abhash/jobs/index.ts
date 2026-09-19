@@ -1,4 +1,5 @@
 import "../ansible/service";
+import "../backups/jobs";
 import "../firewall/apply";
 import "../fleet/jobs";
 import "../mesh/jobs";
@@ -19,6 +20,8 @@ export * from "./worker";
 
 const startEngine = async () => {
 	await startJobWorkers();
+	const { initBackupSchedules } = await import("../backups/jobs");
+	await initBackupSchedules().catch(() => {});
 	await upsertSchedule({
 		id: "firewall.check-drift",
 		type: "firewall.check-drift",
