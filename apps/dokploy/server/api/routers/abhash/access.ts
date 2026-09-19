@@ -139,22 +139,38 @@ const assertSubjectInOrg = async (
 	if (!found) throw notFound(subjectType === "user" ? "Member" : "Team");
 };
 
+const displayName = (u: { firstName: string; lastName: string }) =>
+	`${u.firstName} ${u.lastName}`.trim();
+
 const teamsRouter = createTRPCRouter({
-	list: withPermission("member", "read").query(async ({ ctx }) =>
-		db.query.abhashTeam.findMany({
+	list: withPermission("member", "read").query(async ({ ctx }) => {
+		const teams = await db.query.abhashTeam.findMany({
 			where: eq(abhashTeam.organizationId, ctx.session.activeOrganizationId),
 			with: {
 				members: {
 					with: {
 						user: {
-							columns: { id: true, name: true, email: true, image: true },
+							columns: {
+								id: true,
+								firstName: true,
+								lastName: true,
+								email: true,
+								image: true,
+							},
 						},
 					},
 				},
 			},
 			orderBy: (t, { asc }) => [asc(t.name)],
-		}),
-	),
+		});
+		return teams.map((team) => ({
+			...team,
+			members: team.members.map((m) => ({
+				...m,
+				user: { ...m.user, name: displayName(m.user) },
+			})),
+		}));
+	}),
 
 	create: adminProcedure
 		.input(
@@ -413,7 +429,8 @@ const membersRouter = createTRPCRouter({
 					user: {
 						columns: {
 							id: true,
-							name: true,
+							firstName: true,
+							lastName: true,
 							email: true,
 							image: true,
 							banned: true,
@@ -442,7 +459,7 @@ const membersRouter = createTRPCRouter({
 			userId: row.userId,
 			role: row.role,
 			createdAt: row.createdAt,
-			user: row.user,
+			user: { ...row.user, name: displayName(row.user) },
 			teams: [
 				...new Map(
 					teams

@@ -3,32 +3,21 @@ import { createServerSideHelpers } from "@trpc/react-query/server";
 import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
 import superjson from "superjson";
-import { ManageCustomRoles } from "@/components/abhash/roles/manage-custom-roles";
-import { ShowInvitations } from "@/components/dashboard/settings/users/show-invitations";
-import { ShowUsers } from "@/components/dashboard/settings/users/show-users";
+import { OrganizationAccess } from "@/components/abhash/access/organization-access";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { PageContainer } from "@/components/shared/page-header";
 import { appRouter } from "@/server/api/root";
-import { api } from "@/utils/api";
 
-const Page = () => {
-	const { data: auth } = api.user.get.useQuery();
-	const { data: permissions } = api.user.getPermissions.useQuery();
-	const isOwnerOrAdmin = auth?.role === "owner" || auth?.role === "admin";
-	const canCreateMembers = permissions?.member.create ?? false;
-
-	return (
-		<div className="flex flex-col gap-4 w-full">
-			<ShowUsers />
-			{canCreateMembers && <ShowInvitations />}
-			{isOwnerOrAdmin && <ManageCustomRoles />}
-		</div>
-	);
-};
+const Page = () => (
+	<PageContainer>
+		<OrganizationAccess />
+	</PageContainer>
+);
 
 export default Page;
 
 Page.getLayout = (page: ReactElement) => {
-	return <DashboardLayout metaName="Users">{page}</DashboardLayout>;
+	return <DashboardLayout metaName="Members & access">{page}</DashboardLayout>;
 };
 export async function getServerSideProps(
 	ctx: GetServerSidePropsContext<{ serviceId: string }>,

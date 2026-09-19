@@ -148,7 +148,11 @@ export const abhashCustomRoleRouter = createTRPCRouter({
 					eq(member.organizationId, ctx.session.activeOrganizationId),
 					eq(member.role, input.roleName),
 				),
-				with: { user: { columns: { id: true, name: true, email: true } } },
+				with: {
+					user: {
+						columns: { id: true, firstName: true, lastName: true, email: true },
+					},
+				},
 			}),
 		),
 
