@@ -126,7 +126,10 @@ const assertAllowedUnderEnforcement = async (
 			action: "login",
 			resourceType: "security",
 			resourceName: "break-glass",
-			metadata: { path, note: "Password used while SSO is enforced" },
+			metadata: {
+				path,
+				note: "Owner password sign-in attempted while SSO is enforced",
+			},
 		});
 		return;
 	}

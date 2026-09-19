@@ -22,6 +22,7 @@ import {
 } from "@dokploy/server";
 import { db } from "@dokploy/server/db";
 import { isEntitled } from "@dokploy/server/services/abhash/entitlements";
+import { isMetricsUrlAllowed } from "@dokploy/server/services/abhash/metrics-endpoints";
 import { findMemberByUserId } from "@dokploy/server/services/permission";
 import { TRPCError } from "@trpc/server";
 import { observable } from "@trpc/server/observable";
@@ -633,7 +634,18 @@ export const serverRouter = createTRPCRouter({
 				dataPoints: z.string(),
 			}),
 		)
-		.query(async ({ input }) => {
+		.query(async ({ input, ctx }) => {
+			if (
+				!(await isMetricsUrlAllowed(
+					input.url,
+					ctx.session.activeOrganizationId,
+				))
+			) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Unknown monitoring endpoint",
+				});
+			}
 			try {
 				const url = new URL(input.url);
 				url.searchParams.append("limit", input.dataPoints);

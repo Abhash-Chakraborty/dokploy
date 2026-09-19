@@ -29,6 +29,7 @@ import {
 } from "@dokploy/server/db/schema";
 import { assertAppNameAccess } from "@dokploy/server/services/abhash/app-access";
 import { isEntitled } from "@dokploy/server/services/abhash/entitlements";
+import { isMetricsUrlAllowed } from "@dokploy/server/services/abhash/metrics-endpoints";
 import { syncLegacyBindingsForUser } from "@dokploy/server/services/abhash/rbac";
 import {
 	hasPermission,
@@ -564,6 +565,17 @@ export const userRouter = createTRPCRouter({
 			if (input.appName) {
 				await assertAppNameAccess(ctx, input.appName, {
 					monitoring: ["read"],
+				});
+			}
+			if (
+				!(await isMetricsUrlAllowed(
+					input.url,
+					ctx.session.activeOrganizationId,
+				))
+			) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Unknown monitoring endpoint",
 				});
 			}
 			try {

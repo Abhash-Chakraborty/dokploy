@@ -29,6 +29,8 @@ jobs:
       - run: pnpm --filter=@dokploy/server run typecheck
       - run: pnpm --filter=@dokploy/server run build
       - run: pnpm --filter=dokploy run typecheck
+      # Suites that need a Docker daemon skip themselves; the rest run.
+      - run: pnpm --filter=dokploy run test --run
       # Upstream keeps claiming the migration indices this fork uses. Catch a
       # broken snapshot chain or schema/migration drift here rather than at
       # container start.

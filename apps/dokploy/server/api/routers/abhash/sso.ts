@@ -241,12 +241,21 @@ export const abhashSsoRouter = createTRPCRouter({
 					});
 				}
 				// Refuse to lock everyone into a provider nobody has signed in with.
-				const proven = await db.query.abhashSsoProvider.findFirst({
-					where: and(
-						eq(abhashSsoProvider.enabled, true),
-						isNotNull(abhashSsoProvider.lastLoginAt),
-					),
-				});
+				const [proven] = await db
+					.select({ providerId: abhashSsoProvider.providerId })
+					.from(abhashSsoProvider)
+					.innerJoin(
+						ssoProvider,
+						eq(ssoProvider.providerId, abhashSsoProvider.providerId),
+					)
+					.where(
+						and(
+							eq(ssoProvider.organizationId, ctx.session.activeOrganizationId),
+							eq(abhashSsoProvider.enabled, true),
+							isNotNull(abhashSsoProvider.lastLoginAt),
+						),
+					)
+					.limit(1);
 				if (!proven) {
 					throw new TRPCError({
 						code: "BAD_REQUEST",

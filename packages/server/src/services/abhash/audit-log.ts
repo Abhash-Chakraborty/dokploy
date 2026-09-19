@@ -1,9 +1,9 @@
+import { db } from "../../db";
 import type {
 	AuditAction,
 	AuditResourceType,
 	NewAuditLog,
 } from "../../db/schema";
-import { db } from "../../db";
 import { auditLog } from "../../db/schema";
 
 export type AbhashAuditEvent = {
