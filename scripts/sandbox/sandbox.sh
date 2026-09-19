@@ -57,6 +57,7 @@ guard() {
 write_app_env() {
 	cat >"$ENV_FILE" <<EOF
 NODE_ENV=development
+HOST=127.0.0.1
 PORT=$APP_PORT
 DATABASE_URL=postgres://dokploy:sandbox@127.0.0.1:$PG_PORT/dokploy
 REDIS_URL=redis://127.0.0.1:$REDIS_PORT
