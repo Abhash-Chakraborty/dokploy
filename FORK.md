@@ -279,6 +279,22 @@ the pinned host key, health and facts. A `fleet.collect-facts` job runs every
 five minutes, in one SSH round trip per server, and marks a server online,
 degraded (for example a nearly full disk) or offline.
 
+### Command centre
+`/dashboard/command-center` (admins, self-hosted). One table of every server
+with health, facts, tags, environment label and host-key state, and the
+actions that keep them running — all of them jobs you can follow and cancel:
+- **Run command** across servers, in batches, one at a time or all at once,
+  with stop-on-failure and per-server output in the job log. A command that
+  can destroy a machine has to be confirmed by typing the server count.
+- **Apply baseline**: sshd hardening (written as a validated drop-in, then
+  proven by reconnecting), unattended upgrades, fail2ban, kernel tuning and
+  journal limits, from the shipped `Dokploy platform` playbooks.
+- **Reclaim disk** and **Patch** (rolling, reboot only if the server asks
+  for one).
+- **Accept new key** when a server's host key changed.
+A bootstrap job can also run upstream's Docker/Swarm/Traefik setup and then
+validate the result.
+
 ### Upstream files the fork hooks into
 Kept to one-line hooks or import swaps; expect these in merge conflicts:
 `packages/server/src/lib/auth.ts` (guard hooks, SSO/SCIM plugin options,

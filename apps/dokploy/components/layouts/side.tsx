@@ -41,6 +41,7 @@ import {
 	Rocket,
 	ScrollText,
 	Server,
+	ServerCog,
 	Settings,
 	ShieldCheck,
 	SquareTerminal,
@@ -324,6 +325,12 @@ const MENU: Menu = {
 					icon: LockKeyhole,
 					isEnabled: ({ auth, isCloud }) =>
 						!!(auth?.role === "owner" || auth?.role === "admin") && !isCloud,
+				},
+				{
+					title: "Command centre",
+					url: "/dashboard/command-center",
+					icon: ServerCog,
+					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
 				},
 				{
 					title: "Ansible",

@@ -4,6 +4,7 @@ import {
 	abhashServerMeta,
 	server,
 } from "@dokploy/server/db/schema";
+import { enqueueJobForActor } from "@dokploy/server/services/abhash/agents";
 import { enqueueJob } from "@dokploy/server/services/abhash/jobs";
 import {
 	closeConnection,
@@ -131,6 +132,83 @@ export const abhashFleetRouter = createTRPCRouter({
 				},
 			);
 			return { jobId: job.id };
+		}),
+
+	/** Bootstrap, patch, clean up or run a command; all of them are jobs. */
+	run: adminProcedure
+		.input(
+			z.discriminatedUnion("action", [
+				z.object({
+					action: z.literal("bootstrap"),
+					serverId: z.string(),
+					baseline: z.boolean().default(true),
+					hardenSsh: z.boolean().default(true),
+					installDocker: z.boolean().default(true),
+				}),
+				z.object({
+					action: z.literal("exec"),
+					serverIds: z.array(z.string()).min(1),
+					command: z.string().min(1).max(8_000),
+					mode: z.enum(["parallel", "rolling", "serial"]).default("rolling"),
+					batchSize: z.number().int().min(1).max(50).default(5),
+					stopOnFailure: z.boolean().default(true),
+				}),
+				z.object({
+					action: z.literal("patch"),
+					serverIds: z.array(z.string()).min(1),
+					batchSize: z.number().int().min(1).max(20).default(1),
+					reboot: z.boolean().default(true),
+				}),
+				z.object({
+					action: z.literal("cleanup"),
+					serverIds: z.array(z.string()).min(1),
+					olderThanHours: z.number().int().min(1).max(8760).default(168),
+					pruneVolumes: z.boolean().default(false),
+				}),
+			]),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const organizationId = ctx.session.activeOrganizationId;
+			const { action, ...rest } = input;
+			const ids =
+				"serverIds" in rest
+					? rest.serverIds
+					: [(rest as { serverId: string }).serverId];
+			for (const id of ids) await ownServer(organizationId, id);
+			const type = `fleet.${action}` as const;
+			try {
+				const queued = await enqueueJobForActor(
+					type,
+					{ organizationId, ...rest },
+					{
+						actor: ctx.actor ?? {
+							type: "user",
+							id: ctx.user.id,
+							name: ctx.user.email,
+						},
+						organizationId,
+					},
+				);
+				await audit(ctx, {
+					action: "run",
+					resourceType: "server",
+					resourceName: type,
+					metadata: {
+						servers: ids.length,
+						approval: !!queued.approval,
+						...("command" in rest ? { command: rest.command } : {}),
+					},
+				});
+				return {
+					jobId: queued.job?.id ?? null,
+					approvalId: queued.approval?.id ?? null,
+				};
+			} catch (error) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: error instanceof Error ? error.message : String(error),
+				});
+			}
 		}),
 
 	groups: createTRPCRouter({

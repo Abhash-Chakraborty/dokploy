@@ -9,6 +9,7 @@ import {
 import { defineJob } from "../jobs/registry";
 import { resolveSecretRefs } from "../vault/secrets";
 import { resolveTargets } from "./inventory";
+import { PLATFORM_FILES, PLATFORM_PROJECT } from "./playbooks";
 import { runPlaybook } from "./runner";
 
 export const PING_PLAYBOOK = `- name: Check Dokploy can reach and manage these servers
@@ -25,6 +26,20 @@ export const ensureStarterProject = async (
 	organizationId: string,
 	userId: string | null,
 ) => {
+	// The shipped playbooks are kept in step with the code on every read.
+	await db
+		.insert(abhashAnsibleProject)
+		.values({
+			organizationId,
+			name: PLATFORM_PROJECT,
+			description: "Shipped with Dokploy: baseline, cleanup and patching",
+			files: PLATFORM_FILES,
+			createdBy: userId,
+		})
+		.onConflictDoUpdate({
+			target: [abhashAnsibleProject.organizationId, abhashAnsibleProject.name],
+			set: { files: PLATFORM_FILES, updatedAt: new Date() },
+		});
 	const existing = await db.query.abhashAnsibleProject.findFirst({
 		where: and(
 			eq(abhashAnsibleProject.organizationId, organizationId),
