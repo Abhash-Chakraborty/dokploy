@@ -94,12 +94,13 @@ Recurring conflict patterns and how they have been resolved:
 
 ## Licensing Note
 
-Dokploy's root `LICENSE.MD` says content under any `/proprietary` directory is covered by `LICENSE_PROPRIETARY.md`; other content is Apache-2.0. This checkout contains proprietary directories, including audit-log code. Treat those files as source-available under Dokploy's proprietary terms unless you replace them with a clean implementation outside proprietary paths.
-
-For personal use, decide whether you want to:
-
-- keep the existing source-available proprietary code only in your private/personal deployment; or
-- reimplement audit logs in non-proprietary paths with your own Apache-compatible code.
+Dokploy's root `LICENSE.MD` says content under any `/proprietary` directory is
+covered by `LICENSE_PROPRIETARY.md`; other content is Apache-2.0. This fork
+does not use that code: everything it needs (custom roles, whitelabeling,
+entitlements, SSO, SCIM, forward auth) is implemented under `abhash` paths.
+`/proprietary` stays in the tree only to keep upstream merges clean; it is
+excluded from typechecking and from the Docker build context, and CI
+(`scripts/check-no-proprietary-imports.mjs`) fails on any import from it.
 
 ## Personal Installer
 
@@ -173,7 +174,40 @@ upstream Dokploy. Highlights:
 - The tag selector lets you create a tag inline by typing a name that does not
   exist yet ("+ Create …"), available everywhere the selector is used.
 
-### Migrations
-Two new migrations ship with this fork and run automatically on startup:
-`0173_add_passkey` and `0174_add_auth_methods`. No manual step is required.
+### Organizations, access and identity
+All under Settings. Each capability is off until the owner turns it on.
+- **Members & access**: teams, and roles per project, environment or service
+  (Viewer, Developer, Project admin, or a custom role) for people and
+  teams. Existing access carries over exactly when the engine is turned on
+  (`abhash_role_binding`, `services/abhash/rbac`). Suspend and reactivate
+  members; role pinning; an effective-access explainer.
+- **Authentication**: login methods enforced by the server; single sign-on
+  with Authentik or any OpenID Connect provider, with organization role and
+  teams taken from IdP groups on every sign-in; enforce SSO with an owner
+  break-glass (`pnpm run reset-sso` in the container undoes a lockout).
+- **Provisioning (SCIM)**: users and groups pushed by Authentik; groups
+  become teams; deactivation and deletion suspend.
+- **Protect apps**: Traefik forward-auth gates (Authentik outpost or any
+  forward-auth service) chosen per domain.
 
+### Upstream files the fork hooks into
+Kept to one-line hooks or import swaps; expect these in merge conflicts:
+`packages/server/src/lib/auth.ts` (guard hooks, SSO/SCIM plugin options,
+groups plugin, banned checks, trusted SSO origins),
+`packages/server/src/services/permission.ts` (rbac.v2 guards),
+`packages/server/src/services/{server,git-provider}.ts` and
+`apps/dokploy/server/api/routers/{server,git-provider,user,organization,
+application,docker,settings}.ts` (entitlements, access and app-name checks),
+`apps/dokploy/server/api/trpc.ts` (withPermission carries the route's
+permission), `apps/dokploy/server/api/root.ts`, `packages/server/src/index.ts`,
+`packages/server/src/db/schema/index.ts`, `apps/dokploy/pages/index.tsx` and
+`register.tsx` (sign-in buttons), `apps/dokploy/lib/auth-client.ts`,
+`components/dashboard/application/domains/handle-domain.tsx` (Protect with
+SSO), `components/layouts/{side,user-nav}.tsx`, `esbuild.config.ts`.
+
+### Migrations
+Fork migrations run automatically on startup and are idempotent, so a
+database that already applied one under an earlier number re-applies it as a
+no-op: `0197`-`0199` (auth methods, log drains, Cloudflare tunnels),
+`0200`-`0201` (teams, role bindings, suspension, cleanup triggers), `0202`
+(SSO provider settings and group mappings), `0203` (forward-auth gates).
