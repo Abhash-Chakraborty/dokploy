@@ -101,4 +101,6 @@ export type AuditResourceType =
 	| "roleBinding"
 	| "featureFlag"
 	| "job"
-	| "secret";
+	| "secret"
+	| "agent"
+	| "approval";

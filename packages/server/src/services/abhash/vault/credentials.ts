@@ -177,17 +177,15 @@ export const setCredentialEncryptionEnabled = async (
 export const credentialsJob = defineJob({
 	type: "vault.convert-credentials",
 	queue: "abhash-infra",
-	input: z.object({
-		enabled: z.boolean(),
-		userId: z.string(),
-	}),
+	input: z.object({ enabled: z.boolean() }),
 	title: (input) =>
 		input.enabled ? "Encrypt stored credentials" : "Decrypt stored credentials",
+	destructive: true,
 	lock: () => ({ key: "vault:credentials", limit: 1 }),
-	run: async ({ input, log }) => {
+	run: async ({ input, job, log }) => {
 		const changed = await setCredentialEncryptionEnabled(
 			input.enabled,
-			input.userId,
+			job.actor.id ?? "system",
 			log,
 		);
 		await log(`Converted ${changed} value(s)`);

@@ -11,6 +11,12 @@
 import { db } from "@dokploy/server/db";
 import type { statements } from "@dokploy/server/lib/access-control";
 import { validateRequest } from "@dokploy/server/lib/auth";
+import {
+	type Actor,
+	checkKeyPolicy,
+	redactForActor,
+	resolveActor,
+} from "@dokploy/server/services/abhash/agents";
 import { isEntitled } from "@dokploy/server/services/abhash/entitlements";
 import { checkPermission } from "@dokploy/server/services/permission";
 import type { OpenApiMeta } from "@dokploy/trpc-openapi";
@@ -46,6 +52,8 @@ interface CreateContextOptions {
 		| null;
 	req: CreateNextContextOptions["req"];
 	res: CreateNextContextOptions["res"];
+	/** Absent for server-side rendering, which is always a signed-in person. */
+	actor?: Actor;
 }
 
 /**
@@ -59,13 +67,16 @@ interface CreateContextOptions {
  * @see https://create.t3.gg/en/usage/trpc#-serverapitrpcts
  */
 const createInnerTRPCContext = (opts: CreateContextOptions) => {
-	return {
+	const base = {
 		session: opts.session,
 		db,
 		req: opts.req,
 		res: opts.res,
 		user: opts.user,
 	};
+	// Server-side rendering builds a context without an actor; it is always
+	// a signed-in person, so the key policy and redaction do not apply.
+	return { ...base, actor: opts.actor } as typeof base & { actor?: Actor };
 };
 
 /**
@@ -78,11 +89,14 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
 	const { req, res } = opts;
 
 	// Get from the request
-	const { session, user } = await validateRequest(req);
+	const { session, user, ...rest } = (await validateRequest(req)) as Awaited<
+		ReturnType<typeof validateRequest>
+	> & { apiKey?: { id: string; name?: string | null } };
 
 	return createInnerTRPCContext({
 		req,
 		res,
+		actor: await resolveActor({ user, apiKey: rest.apiKey }),
 		// @ts-ignore
 		session: session
 			? {
@@ -194,6 +208,28 @@ export const withRateLimit = (limit: number, windowSeconds: number) =>
 const defaultMutationRateLimit = withRateLimit(60, 60);
 
 /**
+ * API keys and agents: a key's own limits are applied, and credentials are
+ * masked out of whatever the procedure returns. People are unaffected.
+ */
+const abhashActorGuard = t.middleware(async ({ ctx, path, type, next }) => {
+	const forwarded = ctx.req?.headers?.["x-forwarded-for"];
+	if (!ctx.actor) return next();
+	const denial = await checkKeyPolicy(
+		ctx.actor,
+		path,
+		type,
+		(typeof forwarded === "string" ? forwarded.split(",")[0]?.trim() : null) ||
+			ctx.req?.socket?.remoteAddress ||
+			undefined,
+	);
+	if (denial) throw new TRPCError(denial);
+	const result = await next();
+	return result.ok
+		? { ...result, data: redactForActor(result.data, ctx.actor) }
+		: result;
+});
+
+/**
  * Protected (authenticated) procedure
  *
  * If you want a query or mutation to ONLY be accessible to logged in users, use this. It verifies
@@ -203,6 +239,7 @@ const defaultMutationRateLimit = withRateLimit(60, 60);
  */
 export const protectedProcedure = t.procedure
 	.use(defaultMutationRateLimit)
+	.use(abhashActorGuard)
 	.use(({ ctx, next }) => {
 		if (!ctx.session || !ctx.user) {
 			throw new TRPCError({ code: "UNAUTHORIZED" });
@@ -219,6 +256,7 @@ export const protectedProcedure = t.procedure
 
 export const cliProcedure = t.procedure
 	.use(defaultMutationRateLimit)
+	.use(abhashActorGuard)
 	.use(({ ctx, next }) => {
 		if (
 			!ctx.session ||
@@ -239,6 +277,7 @@ export const cliProcedure = t.procedure
 
 export const adminProcedure = t.procedure
 	.use(defaultMutationRateLimit)
+	.use(abhashActorGuard)
 	.use(({ ctx, next }) => {
 		if (
 			!ctx.session ||

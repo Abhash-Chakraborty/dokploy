@@ -224,6 +224,26 @@ uses for env vars (`db/schema/abhash-credential.ts`). It is reversible:
 turning it off converts every value back, which is what keeps a rollback to
 an older image possible.
 
+### Agents and approvals
+Settings -> Organization -> Agents. An agent is a service account (a user row
+with no login method) that gets access the same way a person does, through
+teams and per-project roles. Each API key can be **read-only**, limited to
+named procedures (`project.*`) and to source addresses, and given an
+**approval mode**. Requests from a key are tagged with an actor
+(`services/abhash/agents/actor.ts`), which the audit log records and which
+drives two guards in `trpc.ts`:
+- the key's own limits, checked before the procedure runs;
+- **credential redaction** on everything returned to a key or agent —
+  environment variables keep their names but lose their values,
+  `${{secret.X}}` references stay readable, and credential fields are
+  masked. This closes the MCP `get_application` hole, since MCP calls run
+  through the same context.
+
+Destructive jobs an agent asks for become an **approval** a person decides
+(`abhashJobs.run` -> `enqueueJobForActor`). Approving runs exactly the
+recorded request, attributed to both the agent and the approver; an agent
+can never approve its own request.
+
 ### Upstream files the fork hooks into
 Kept to one-line hooks or import swaps; expect these in merge conflicts:
 `packages/server/src/lib/auth.ts` (guard hooks, SSO/SCIM plugin options,
@@ -239,6 +259,10 @@ permission), `apps/dokploy/server/api/root.ts`, `packages/server/src/index.ts`,
 `components/dashboard/application/domains/handle-domain.tsx` (Protect with
 SSO), `components/layouts/{side,user-nav}.tsx`, `esbuild.config.ts`,
 `apps/dokploy/server/server.ts` (starts the job engine and the vault),
+`apps/dokploy/server/api/trpc.ts` (actor in the context, key policy and
+redaction), `apps/dokploy/server/api/utils/audit.ts` (records the actor),
+`apps/dokploy/pages/api/mcp.ts` (actor for MCP calls),
+`packages/server/src/lib/auth.ts` (exposes which API key authenticated),
 `packages/server/src/utils/vault/index.ts` (resolves `${{secret.*}}` first),
 and the schema files whose credential columns now use `credentialText`
 (`ssh-key`, `destination`, `registry`, `github`, `gitlab`, `gitea`,
@@ -251,4 +275,5 @@ database that already applied one under an earlier number re-applies it as a
 no-op: `0197`-`0199` (auth methods, log drains, Cloudflare tunnels),
 `0200`-`0201` (teams, role bindings, suspension, cleanup triggers), `0202`
 (SSO provider settings and group mappings), `0203` (forward-auth gates),
-`0204` (job history), `0205` (vault secrets, versions and usage).
+`0204` (job history), `0205` (vault secrets, versions and usage), `0206`
+(agents, key policies and approvals).

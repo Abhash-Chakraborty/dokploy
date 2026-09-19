@@ -1,5 +1,6 @@
 import { db } from "@dokploy/server/db";
 import { abhashJob } from "@dokploy/server/db/schema";
+import { enqueueJobForActor } from "@dokploy/server/services/abhash/agents";
 import { isFlagEnabled } from "@dokploy/server/services/abhash/flags";
 import {
 	areJobWorkersRunning,
@@ -215,6 +216,38 @@ export const abhashJobsRouter = createTRPCRouter({
 			throw asTrpcError(error);
 		}
 	}),
+
+	/**
+	 * Runs a registered job type. Destructive types wait for a person when
+	 * the caller is an agent whose key says so.
+	 */
+	run: adminProcedure
+		.input(z.object({ type: z.string(), input: z.unknown().optional() }))
+		.mutation(async ({ ctx, input }) => {
+			try {
+				const queued = await enqueueJobForActor(input.type, input.input ?? {}, {
+					actor: ctx.actor ?? {
+						type: "user",
+						id: ctx.user.id,
+						name: ctx.user.email,
+					},
+					organizationId: ctx.session.activeOrganizationId,
+				});
+				await audit(ctx, {
+					action: "run",
+					resourceType: "job",
+					resourceId: queued.job?.id ?? queued.approval?.id,
+					resourceName: input.type,
+					metadata: { approval: !!queued.approval },
+				});
+				return {
+					jobId: queued.job?.id ?? null,
+					approvalId: queued.approval?.id ?? null,
+				};
+			} catch (error) {
+				throw asTrpcError(error);
+			}
+		}),
 
 	types: adminProcedure.query(() => jobTypes()),
 });

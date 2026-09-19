@@ -5,12 +5,12 @@ import {
 	environments,
 	projects,
 } from "@dokploy/server/db/schema";
+import { enqueueJobForActor } from "@dokploy/server/services/abhash/agents";
 import {
 	getSetting,
 	isFlagEnabled,
 	setSetting,
 } from "@dokploy/server/services/abhash/flags";
-import { enqueueJob } from "@dokploy/server/services/abhash/jobs";
 import {
 	convertCredentials,
 	createKeyring,
@@ -218,15 +218,19 @@ export const abhashVaultRouter = createTRPCRouter({
 				metadata: input,
 			});
 			if (await isFlagEnabled("jobs.enabled")) {
-				const job = await enqueueJob(
+				const queued = await enqueueJobForActor(
 					"vault.convert-credentials",
-					{ enabled: input.enabled, userId: ctx.user.id },
+					{ enabled: input.enabled },
 					{
-						actor: { type: "user", id: ctx.user.id, name: ctx.user.email },
+						actor: ctx.actor ?? {
+							type: "user",
+							id: ctx.user.id,
+							name: ctx.user.email,
+						},
 						organizationId: ctx.session.activeOrganizationId,
 					},
 				).catch(() => null);
-				if (job) return { jobId: job.id, changed: null };
+				if (queued?.job) return { jobId: queued.job.id, changed: null };
 			}
 			const changed = await setCredentialEncryptionEnabled(
 				input.enabled,

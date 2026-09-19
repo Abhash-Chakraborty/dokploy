@@ -7,6 +7,7 @@ import {
 	Bell,
 	BlocksIcon,
 	BookIcon,
+	Bot,
 	BotIcon,
 	Boxes,
 	Building2,
@@ -322,6 +323,12 @@ const MENU: Menu = {
 					icon: LockKeyhole,
 					isEnabled: ({ auth, isCloud }) =>
 						!!(auth?.role === "owner" || auth?.role === "admin") && !isCloud,
+				},
+				{
+					title: "Agents",
+					url: "/dashboard/settings/agents",
+					icon: Bot,
+					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
 				},
 				{
 					title: "Audit log",

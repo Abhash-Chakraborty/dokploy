@@ -1,4 +1,5 @@
 import { validateRequest } from "@dokploy/server";
+import { resolveActor } from "@dokploy/server/services/abhash/agents";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { appRouter } from "@/server/api/root";
 import { TOOLS, TOOLS_BY_NAME } from "@/server/mcp/tools";
@@ -124,7 +125,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 		return;
 	}
 
-	const { session, user } = await validateRequest(req);
+	const { session, user, ...rest } = (await validateRequest(req)) as Awaited<
+		ReturnType<typeof validateRequest>
+	> & { apiKey?: { id: string; name?: string | null } };
 	if (!user || !session) {
 		res
 			.status(401)
@@ -141,6 +144,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 			activeOrganizationId: session.activeOrganizationId || "",
 		} as never,
 		user: user as never,
+		// Agents and API keys never receive credentials; see redactForActor.
+		actor: await resolveActor({ user, apiKey: rest.apiKey }),
 	});
 
 	const body = req.body as JsonRpcRequest | JsonRpcRequest[];

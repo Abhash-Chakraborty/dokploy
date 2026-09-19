@@ -1443,6 +1443,13 @@
       "when": 1789851106029,
       "tag": "0205_abhash_vault",
       "breakpoints": true
+    },
+    {
+      "idx": 206,
+      "version": "7",
+      "when": 1789852250257,
+      "tag": "0206_abhash_agents",
+      "breakpoints": true
     }
   ]
 }

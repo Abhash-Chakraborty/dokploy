@@ -615,6 +615,9 @@ export const validateRequest = async (request: IncomingMessage) => {
 			};
 
 			const mockSession = {
+				// Which key authenticated the call, for the fork's actor,
+				// key policy and response redaction.
+				apiKey: { id: key.id, name: apiKeyRecord.name },
 				session: {
 					userId: apiKeyRecord.user.id,
 					activeOrganizationId: organizationId || "",

@@ -32,6 +32,8 @@ export interface JobDefinition<I = unknown> {
 	 * queues; others wait. Used for "one firewall change per server".
 	 */
 	lock?: (input: I) => { key: string; limit: number } | null;
+	/** Needs a person's approval when an agent asks for it. */
+	destructive?: boolean;
 	/** Infrastructure changes default to a single attempt. */
 	attempts?: number;
 	timeoutMs?: number;
