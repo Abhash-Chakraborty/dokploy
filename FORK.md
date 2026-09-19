@@ -390,6 +390,27 @@ making an agent poll: `job.succeeded`, `job.failed`, `backup.failed`,
 Each delivery is signed with HMAC-SHA256 in `x-dokploy-signature` and
 retried by the job engine; the signing secret can be a vault reference.
 
+### More databases and services
+Settings -> Integrations -> Databases and services. Thirteen engines beyond
+upstream's six — Valkey, KeyDB, Dragonfly, ClickHouse, OpenSearch,
+Meilisearch, Typesense, Qdrant, RabbitMQ, NATS, Kafka, Garage and a MongoDB
+replica set — each defined once (`services/abhash/engines/catalog.ts`) and
+rendered into a normal Compose stack, so deploys, logs, domains, volumes and
+permissions work exactly as they do for anything else. Passwords are
+generated, kept in the stack's env file rather than the compose file, and
+copied into the vault when it is on. Nothing is published to the host unless
+you ask for it.
+
+**Database tools** on the same page manage what Dokploy already runs:
+databases, users (read-only or full, per database, password shown once) and
+Postgres extensions, with identifiers strictly validated before they reach
+SQL. Postgres flavour presets cover pgvector, PostGIS and TimescaleDB.
+
+Also fixed while here: default images that do not exist (`mongo:15`,
+`mariadb:4`), libsql backups named `.sql.gz` when they are a gzipped tar
+(and therefore never pruned), and two concurrent Mongo restores sharing one
+temporary directory.
+
 ### Upstream files the fork hooks into
 Kept to one-line hooks or import swaps; expect these in merge conflicts:
 `packages/server/src/lib/auth.ts` (guard hooks, SSO/SCIM plugin options,
@@ -426,4 +447,4 @@ no-op: `0197`-`0199` (auth methods, log drains, Cloudflare tunnels),
 (agents, key policies and approvals), `0207` (Ansible projects and runs), `0208` (server groups and
 server metadata), `0209` (mesh providers and server peers), `0210` (firewall policies, rules
 and per-server state), `0211` (backup repositories, policies, runs and
-drills), `0212` (event webhooks).
+drills), `0212` (event webhooks), `0213` (managed services).

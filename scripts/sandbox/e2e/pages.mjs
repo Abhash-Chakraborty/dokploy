@@ -14,6 +14,7 @@ const PAGES = [
 	"/dashboard/settings/secure-network",
 	"/dashboard/settings/firewall",
 	"/dashboard/settings/backup-health",
+	"/dashboard/settings/engines",
 	"/dashboard/settings/authentication",
 	"/dashboard/settings/audit-logs",
 	"/dashboard/settings/servers",

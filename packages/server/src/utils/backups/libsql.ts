@@ -31,7 +31,8 @@ export const runLibsqlBackup = async (
 	});
 	const { prefix } = backup;
 	const destination = await findDestinationById(backup.destinationId);
-	const backupFileName = `${getBackupTimestamp()}.sql.gz`;
+	// The libsql backup is a gzipped tar of the data directory.
+	const backupFileName = `${getBackupTimestamp()}.tar.gz`;
 	const bucketDestination = `${appName}/${normalizeS3Path(prefix)}${backupFileName}`;
 	try {
 		const rcloneFlags = getS3Credentials(destination);

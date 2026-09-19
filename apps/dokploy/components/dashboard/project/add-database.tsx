@@ -114,7 +114,7 @@ const mySchema = z
 		z
 			.object({
 				type: z.literal("mariadb"),
-				dockerImage: z.string().default("mariadb:4"),
+				dockerImage: z.string().default("mariadb:11"),
 				databaseRootPassword: z
 					.string()
 					.regex(/^[a-zA-Z0-9@#%^&*()_+\-=[\]{}|;:,.<>?~`]*$/, {

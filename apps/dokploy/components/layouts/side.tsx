@@ -482,6 +482,12 @@ const MENU: Menu = {
 			icon: Waypoints,
 			items: [
 				{
+					title: "Databases and services",
+					url: "/dashboard/settings/engines",
+					icon: Boxes,
+					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
+				},
+				{
 					title: "Backups and drills",
 					url: "/dashboard/settings/backup-health",
 					icon: DatabaseBackup,
