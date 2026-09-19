@@ -36,6 +36,7 @@ import {
 	Loader2,
 	LockKeyhole,
 	type LucideIcon,
+	Network,
 	Package,
 	Palette,
 	Rocket,
@@ -416,6 +417,12 @@ const MENU: Menu = {
 					url: "/dashboard/settings/dns",
 					icon: Globe,
 					isEnabled: ({ permissions }) => !!permissions?.dnsProvider.read,
+				},
+				{
+					title: "Secure network",
+					url: "/dashboard/settings/secure-network",
+					icon: Network,
+					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
 				},
 				{
 					title: "Registries",

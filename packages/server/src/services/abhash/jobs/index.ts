@@ -1,5 +1,6 @@
 import "../ansible/service";
 import "../fleet/jobs";
+import "../mesh/jobs";
 import "../ssh/facts";
 import "../vault/credentials";
 import { isFlagEnabled, setSetting } from "../flags";

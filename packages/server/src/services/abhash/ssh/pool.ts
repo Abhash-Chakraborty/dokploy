@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { Client } from "ssh2";
 import { db } from "../../../db";
-import { abhashServerMeta } from "../../../db/schema";
+import { abhashServerMesh, abhashServerMeta } from "../../../db/schema";
 import { findServerById } from "../../server";
 
 const IDLE_MS = 60_000;
@@ -74,10 +74,14 @@ const connect = async (serverId: string) => {
 	const server = await findServerById(serverId);
 	if (!server.sshKeyId) throw new Error("No SSH key available for this server");
 	const row = await meta(serverId);
-	const address =
-		row?.connectVia === "mesh" && row.facts && "meshIp" in row.facts
-			? (row.facts as { meshIp?: string }).meshIp || server.ipAddress
-			: server.ipAddress;
+	const mesh =
+		row?.connectVia === "mesh"
+			? await db.query.abhashServerMesh.findFirst({
+					where: eq(abhashServerMesh.serverId, serverId),
+					columns: { meshIp: true },
+				})
+			: null;
+	const address = mesh?.meshIp || server.ipAddress;
 
 	return new Promise<Client>((resolve, reject) => {
 		const client = new Client();

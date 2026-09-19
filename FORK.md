@@ -295,6 +295,32 @@ actions that keep them running — all of them jobs you can follow and cancel:
 A bootstrap job can also run upstream's Docker/Swarm/Traefik setup and then
 validate the result.
 
+### Secure network (mesh)
+Infrastructure -> Secure network. **NetBird (self-hosted) is the primary
+provider**; the Tailscale client with **Headscale** is a thin alternative.
+Exactly one provider is active per organization, enforced by a partial
+unique index, and switching is a deliberate action.
+
+- The API token is never stored: the provider holds a `${{secret.NAME}}`
+  reference and the value is read from the vault per call.
+- Dokploy creates only objects whose name starts with the configured prefix
+  (`dokploy-`), so an existing NetBird keeps its own groups, policies and
+  peers. **Preview changes** shows the plan before anything is created.
+- Enrollment uses a single-use key that expires in an hour, with the client
+  installed over SSH; DNS management is off by default so container DNS is
+  untouched, and the server's own SSH server in the mesh is disabled.
+- Joining can switch Dokploy's SSH to the mesh address, but only after
+  proving a connection works over it; otherwise it falls back. Leaving moves
+  back to the public address first, so the job never cuts its own path.
+- Servers already in the mesh are **adopted** by matching peers, which is how
+  the machine Dokploy runs on is picked up without re-enrolling it.
+- Headscale policy is snippet-only: Dokploy shows the grants to paste and
+  never writes your policy file.
+
+Tested against a stand-in provider API end to end (vault token, plan, the
+one-active rule, adoption) and with client-level tests for the request
+shapes and join commands. Enrolling a real host is exercised at rollout.
+
 ### Upstream files the fork hooks into
 Kept to one-line hooks or import swaps; expect these in merge conflicts:
 `packages/server/src/lib/auth.ts` (guard hooks, SSO/SCIM plugin options,
@@ -329,4 +355,4 @@ no-op: `0197`-`0199` (auth methods, log drains, Cloudflare tunnels),
 (SSO provider settings and group mappings), `0203` (forward-auth gates),
 `0204` (job history), `0205` (vault secrets, versions and usage), `0206`
 (agents, key policies and approvals), `0207` (Ansible projects and runs), `0208` (server groups and
-server metadata).
+server metadata), `0209` (mesh providers and server peers).
