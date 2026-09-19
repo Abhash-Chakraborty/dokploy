@@ -14,6 +14,7 @@ import {
 import { execAsync } from "../../../utils/process/execAsync";
 import { execPooled } from "../ssh/pool";
 import { resolveSecretRefs } from "../vault/secrets";
+import { emitEvent } from "../webhooks";
 import {
 	backupCommand,
 	dumpPlan,
@@ -377,6 +378,11 @@ export const runBackup = async (
 				finishedAt: new Date(),
 			})
 			.where(eq(abhashBackupRun.id, runId));
+		await emitEvent(organizationId, "backup.failed", {
+			policyId: policy.id,
+			policy: policy.name,
+			error: message,
+		});
 		throw error;
 	}
 };

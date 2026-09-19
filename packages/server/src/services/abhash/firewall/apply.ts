@@ -8,6 +8,7 @@ import {
 } from "../../../db/schema";
 import { defineJob } from "../jobs/registry";
 import { closeConnection, execPooled } from "../ssh/pool";
+import { emitEvent } from "../webhooks";
 import {
 	type CompileContext,
 	type CompiledRule,
@@ -185,6 +186,9 @@ export const checkDrift = async (serverId: string, organizationId: string) => {
 		.update(abhashServerFirewall)
 		.set({ driftedAt: drift ? new Date() : null, updatedAt: new Date() })
 		.where(eq(abhashServerFirewall.serverId, serverId));
+	if (drift && !settings.driftedAt) {
+		await emitEvent(organizationId, "firewall.drift", { serverId, live });
+	}
 	return { drift, live, expected: plan.rendered.hash };
 };
 

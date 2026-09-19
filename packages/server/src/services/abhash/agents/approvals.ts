@@ -4,6 +4,7 @@ import { abhashApproval } from "../../../db/schema";
 import { createAuditLog } from "../audit-log";
 import { enqueueJob } from "../jobs/queue";
 import { getJobDefinition } from "../jobs/registry";
+import { emitEvent } from "../webhooks";
 import type { Actor } from "./actor";
 import { getKeyPolicy } from "./policy";
 
@@ -64,6 +65,12 @@ export const createApproval = async (input: {
 			actorId: input.actor.id,
 			apiKeyId: input.actor.keyId,
 		},
+	});
+	await emitEvent(input.organizationId, "approval.requested", {
+		approvalId: row.id,
+		operation: input.operation,
+		summary: input.summary,
+		requester: input.actor.name ?? input.actor.type,
 	});
 	return row;
 };

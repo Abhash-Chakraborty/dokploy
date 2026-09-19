@@ -1,3 +1,5 @@
+import { db } from "@dokploy/server/db";
+import { abhashWebhook, WEBHOOK_EVENTS } from "@dokploy/server/db/schema";
 import {
 	createAgent,
 	decideApproval,
@@ -11,7 +13,9 @@ import {
 	setKeyPolicy,
 	updateAgent,
 } from "@dokploy/server/services/abhash/agents";
+import { enqueueJob } from "@dokploy/server/services/abhash/jobs";
 import { TRPCError } from "@trpc/server";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { audit } from "@/server/api/utils/audit";
 import {
@@ -186,6 +190,103 @@ export const abhashAgentsRouter = createTRPCRouter({
 			});
 			return true;
 		}),
+
+	/** Where Dokploy pushes events, so an agent does not have to poll. */
+	webhooks: createTRPCRouter({
+		list: adminProcedure.query(({ ctx }) =>
+			db.query.abhashWebhook.findMany({
+				where: eq(
+					abhashWebhook.organizationId,
+					ctx.session.activeOrganizationId,
+				),
+			}),
+		),
+
+		save: adminProcedure
+			.input(
+				z.object({
+					id: z.string().optional(),
+					name: z.string().trim().min(1).max(60),
+					url: z.string().trim().url(),
+					secretRef: z.string().trim().min(8).max(200),
+					events: z.array(z.enum(WEBHOOK_EVENTS)).min(1),
+					enabled: z.boolean().default(true),
+				}),
+			)
+			.mutation(async ({ ctx, input }) => {
+				const organizationId = ctx.session.activeOrganizationId;
+				const { id, ...values } = input;
+				const [row] = id
+					? await db
+							.update(abhashWebhook)
+							.set(values)
+							.where(
+								and(
+									eq(abhashWebhook.id, id),
+									eq(abhashWebhook.organizationId, organizationId),
+								),
+							)
+							.returning()
+					: await db
+							.insert(abhashWebhook)
+							.values({ ...values, organizationId })
+							.returning();
+				if (!row) throw new TRPCError({ code: "NOT_FOUND" });
+				await audit(ctx, {
+					action: id ? "update" : "create",
+					resourceType: "notification",
+					resourceId: row.id,
+					resourceName: `webhook ${row.name}`,
+					metadata: { events: row.events },
+				});
+				return row;
+			}),
+
+		remove: adminProcedure
+			.input(z.object({ id: z.string() }))
+			.mutation(async ({ ctx, input }) => {
+				await db
+					.delete(abhashWebhook)
+					.where(
+						and(
+							eq(abhashWebhook.id, input.id),
+							eq(
+								abhashWebhook.organizationId,
+								ctx.session.activeOrganizationId,
+							),
+						),
+					);
+				return true;
+			}),
+
+		/** Sends a signed test delivery, so a receiver can be checked. */
+		test: adminProcedure
+			.input(z.object({ id: z.string() }))
+			.mutation(async ({ ctx, input }) => {
+				const organizationId = ctx.session.activeOrganizationId;
+				const webhook = await db.query.abhashWebhook.findFirst({
+					where: and(
+						eq(abhashWebhook.id, input.id),
+						eq(abhashWebhook.organizationId, organizationId),
+					),
+				});
+				if (!webhook) throw new TRPCError({ code: "NOT_FOUND" });
+				const job = await enqueueJob(
+					"webhook.deliver",
+					{
+						webhookId: webhook.id,
+						event: "job.succeeded",
+						payload: { test: true },
+						sentAt: new Date().toISOString(),
+					},
+					{
+						actor: { type: "user", id: ctx.user.id, name: ctx.user.email },
+						organizationId,
+					},
+				);
+				return { jobId: job.id };
+			}),
+	}),
 
 	approvals: createTRPCRouter({
 		list: adminProcedure

@@ -126,7 +126,7 @@ export const abhashFirewallRouter = createTRPCRouter({
 			return true;
 		}),
 
-	apply: adminProcedure
+	applyNow: adminProcedure
 		.input(z.object({ serverIds: z.array(z.string()).min(1) }))
 		.mutation(async ({ ctx, input }) => {
 			const organizationId = ctx.session.activeOrganizationId;

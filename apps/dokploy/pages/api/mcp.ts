@@ -74,10 +74,11 @@ const handleMessage = async (
 
 		case "tools/list":
 			return ok(id, {
-				tools: TOOLS.map(({ name, description, inputSchema }) => ({
+				tools: TOOLS.map(({ name, description, inputSchema, annotations }) => ({
 					name,
 					description,
 					inputSchema,
+					annotations,
 				})),
 			});
 

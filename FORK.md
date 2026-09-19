@@ -373,6 +373,23 @@ Covered end to end in the sandbox against a real Postgres: backup, integrity
 check, drill passing, nothing left behind, and a drill correctly failing when
 the data does not match.
 
+### AI agents: tools and events
+The MCP endpoint (`/api/mcp`, JSON-RPC over one POST) now exposes write
+tools alongside the read-only ones, each with MCP annotations so a client
+can warn before a destructive call: deploy, set environment variables,
+create and list secrets (names only), list and follow jobs, run commands on
+servers, plan and apply the firewall, mesh status, backup health, run a
+backup or a restore drill, and run a playbook. Every tool goes through the
+same tRPC caller as the dashboard, so an agent has exactly its key's
+permissions, never sees a credential, and a destructive call comes back as
+`approval_required` with an id to poll through `wait_for_approval`.
+
+**Webhooks** (Settings -> Organization -> Agents) push events instead of
+making an agent poll: `job.succeeded`, `job.failed`, `backup.failed`,
+`drill.failed`, `approval.requested`, `server.offline`, `firewall.drift`.
+Each delivery is signed with HMAC-SHA256 in `x-dokploy-signature` and
+retried by the job engine; the signing secret can be a vault reference.
+
 ### Upstream files the fork hooks into
 Kept to one-line hooks or import swaps; expect these in merge conflicts:
 `packages/server/src/lib/auth.ts` (guard hooks, SSO/SCIM plugin options,
@@ -409,4 +426,4 @@ no-op: `0197`-`0199` (auth methods, log drains, Cloudflare tunnels),
 (agents, key policies and approvals), `0207` (Ansible projects and runs), `0208` (server groups and
 server metadata), `0209` (mesh providers and server peers), `0210` (firewall policies, rules
 and per-server state), `0211` (backup repositories, policies, runs and
-drills).
+drills), `0212` (event webhooks).

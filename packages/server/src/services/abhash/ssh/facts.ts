@@ -8,6 +8,7 @@ import {
 	server,
 } from "../../../db/schema";
 import { defineJob } from "../jobs/registry";
+import { emitEvent } from "../webhooks";
 import { execPooled, HostKeyMismatchError } from "./pool";
 
 /** One round trip per server: everything the fleet table shows. */
@@ -106,10 +107,18 @@ export const collectFacts = async (
 				: error instanceof Error
 					? error.message
 					: String(error);
+		const previous = await db.query.abhashServerMeta.findFirst({
+			where: eq(abhashServerMeta.serverId, serverId),
+			columns: { health: true },
+		});
 		await db
 			.update(abhashServerMeta)
 			.set({ health: "offline", healthMessage: message, updatedAt: new Date() })
 			.where(eq(abhashServerMeta.serverId, serverId));
+		// Only on the way down, so a server that stays offline is not noisy.
+		if (previous?.health !== "offline") {
+			await emitEvent(organizationId, "server.offline", { serverId, message });
+		}
 		return { health: "offline" as const, error: message };
 	}
 };

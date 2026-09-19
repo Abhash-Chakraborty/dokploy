@@ -282,7 +282,7 @@ export const FirewallSettings = () => {
 	const utils = api.useUtils();
 	const { data } = api.firewall.list.useQuery();
 	const setMode = api.firewall.setMode.useMutation();
-	const apply = api.firewall.apply.useMutation();
+	const apply = api.firewall.applyNow.useMutation();
 	const drift = api.firewall.drift.useMutation();
 	const removeRule = api.firewall.removeRule.useMutation();
 

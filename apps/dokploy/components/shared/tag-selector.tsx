@@ -178,12 +178,12 @@ export function TagSelector({
 										No tags created yet.
 									</span>
 									<HandleTag
-											onCreated={(tagId) => {
-												if (!selectedTags.includes(tagId)) {
-													onTagsChange([...selectedTags, tagId]);
-												}
-											}}
-										/>
+										onCreated={(tagId) => {
+											if (!selectedTags.includes(tagId)) {
+												onTagsChange([...selectedTags, tagId]);
+											}
+										}}
+									/>
 								</div>
 							)}
 							{canQuickCreate && (

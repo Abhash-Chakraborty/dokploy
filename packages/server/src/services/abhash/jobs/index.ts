@@ -1,5 +1,6 @@
 import "../ansible/service";
 import "../backups/jobs";
+import "../webhooks";
 import "../firewall/apply";
 import "../fleet/jobs";
 import "../mesh/jobs";

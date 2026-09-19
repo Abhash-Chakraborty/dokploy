@@ -2,6 +2,7 @@ import { DelayedError, type Job, Worker } from "bullmq";
 import { eq, sql } from "drizzle-orm";
 import { db } from "../../../db";
 import { abhashJob } from "../../../db/schema";
+import { emitEvent } from "../webhooks";
 import { connectionOptions, queuePrefix } from "./connection";
 import { tryAcquire } from "./locks";
 import { createJobLogger } from "./logs";
@@ -133,6 +134,12 @@ const runJob = async (
 				finishedAt: new Date(),
 			})
 			.where(eq(abhashJob.id, row.id));
+		await emitEvent(row.organizationId, "job.succeeded", {
+			jobId: row.id,
+			type: row.type,
+			title: row.title,
+			result: result ?? null,
+		});
 	} catch (error) {
 		const cancelled =
 			controller.signal.aborted &&
@@ -148,6 +155,14 @@ const runJob = async (
 				finishedAt: willRetry ? null : new Date(),
 			})
 			.where(eq(abhashJob.id, row.id));
+		if (!willRetry && !cancelled) {
+			await emitEvent(row.organizationId, "job.failed", {
+				jobId: row.id,
+				type: row.type,
+				title: row.title,
+				error: errorMessage(error),
+			});
+		}
 		if (willRetry) throw error;
 	} finally {
 		clearTimeout(timeout);

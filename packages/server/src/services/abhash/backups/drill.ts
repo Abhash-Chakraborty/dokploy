@@ -8,6 +8,7 @@ import {
 	type BackupTargetKind,
 	type DrillCheck,
 } from "../../../db/schema";
+import { emitEvent } from "../webhooks";
 import { dumpPlan, envPrefix, type ResticEnv, resticCommand } from "./restic";
 import {
 	findPolicy,
@@ -267,6 +268,13 @@ export const runDrill = async (
 		});
 
 		const status = checks.every((check) => check.ok) ? "passed" : "failed";
+		if (status === "failed") {
+			await emitEvent(organizationId, "drill.failed", {
+				drillPolicyId: drill.id,
+				policy: policy.name,
+				checks: checks.filter((check) => !check.ok),
+			});
+		}
 		await db
 			.update(abhashDrillRun)
 			.set({ status, rtoSeconds, checks, finishedAt: new Date() })
