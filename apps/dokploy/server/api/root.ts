@@ -1,6 +1,7 @@
 import { createTRPCRouter } from "../api/trpc";
 import { abhashAccessRouter } from "./routers/abhash/access";
 import { abhashAuditLogRouter } from "./routers/abhash/audit-log";
+import { abhashScimRouter } from "./routers/abhash/scim";
 import { abhashSsoRouter } from "./routers/abhash/sso";
 import { abhashCustomRoleRouter } from "./routers/abhash/custom-role";
 import { abhashLicenseKeyRouter } from "./routers/abhash/license-key";
@@ -119,6 +120,7 @@ export const appRouter = createTRPCRouter({
 	customRole: abhashCustomRoleRouter,
 	access: abhashAccessRouter,
 	abhashSso: abhashSsoRouter,
+	abhashScim: abhashScimRouter,
 	auditLog: abhashAuditLogRouter,
 	schedule: scheduleRouter,
 	rollback: rollbackRouter,

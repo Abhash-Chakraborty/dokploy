@@ -6,6 +6,7 @@ import { account, member, passkey, user } from "../../db/schema";
 import { getWebServerSettings } from "../web-server-settings";
 import { createAuditLog } from "./audit-log";
 import { getSetting, isFlagEnabled } from "./flags";
+import { scimUsersAfter, scimUsersBefore } from "./scim/users-hooks";
 
 export type LoginMethod = "emailPassword" | "github" | "google" | "passkey";
 export type AuthMethodsConfig = Record<LoginMethod, boolean>;
@@ -171,6 +172,11 @@ export const abhashAuthBefore = createAuthMiddleware(async (ctx) => {
 		throw new APIError("NOT_FOUND");
 	}
 
+	if (ctx.request && path.startsWith("/scim/v2/")) {
+		const response = await scimUsersBefore(ctx);
+		if (response) return response;
+	}
+
 	const method = loginMethodForPath(path, ctx.body);
 	if (!method) return;
 	const methods = await getEffectiveAuthMethods();
@@ -221,3 +227,8 @@ export const usableMethodsFor = async (
 	if (config.passkey && passkeys.length > 0) usable.push("passkey");
 	return usable;
 };
+
+export const abhashAuthAfter = createAuthMiddleware(async (ctx) => {
+	if (ctx.request && ctx.path?.startsWith("/scim/v2/"))
+		await scimUsersAfter(ctx);
+});

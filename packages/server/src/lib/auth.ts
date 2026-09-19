@@ -13,8 +13,12 @@ import { IS_CLOUD } from "../constants";
 import { db } from "../db";
 import * as schema from "../db/schema";
 import { createAuditLog } from "../services/abhash/audit-log";
-import { abhashAuthBefore } from "../services/abhash/auth-guard";
+import {
+	abhashAuthAfter,
+	abhashAuthBefore,
+} from "../services/abhash/auth-guard";
 import { resolveOrganizationDefaultRole } from "../services/abhash/entitlements";
+import { abhashScimGroups } from "../services/abhash/scim/groups-plugin";
 import { ssoTrustedOrigins } from "../services/abhash/sso/providers";
 import {
 	assertSsoSignUpAllowed,
@@ -96,6 +100,7 @@ const { handler, api } = betterAuth({
 	},
 	hooks: {
 		before: abhashAuthBefore,
+		after: abhashAuthAfter,
 	},
 	// Better Auth enables rate limiting in production but only with its global
 	// 100-per-10s budget, which is no obstacle to credential stuffing. These
@@ -500,18 +505,10 @@ const { handler, api } = betterAuth({
 			organizationProvisioning: { disabled: true },
 		}),
 		scim({
-			beforeSCIMTokenGenerated: async ({ user }) => {
-				const dbUser = await db.query.user.findFirst({
-					where: eq(schema.user.id, user.id),
-					columns: { enableEnterpriseFeatures: true },
-				});
-				if (!dbUser?.enableEnterpriseFeatures) {
-					throw new APIError("FORBIDDEN", {
-						message: "SCIM provisioning requires an enterprise license",
-					});
-				}
-			},
+			// Tokens are issued by the fork's SCIM router, never over HTTP.
+			storeSCIMToken: "hashed",
 		}),
+		abhashScimGroups(),
 		twoFactor(),
 		passkey({
 			rpName: "Dokploy",

@@ -4,6 +4,7 @@ import { LockKeyhole } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
 import superjson from "superjson";
+import { ScimSettings } from "@/components/abhash/auth/scim-settings";
 import { SsoSettings } from "@/components/abhash/auth/sso-settings";
 import { LoginMethods } from "@/components/dashboard/settings/web-server/login-methods";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
@@ -19,6 +20,7 @@ const Page = () => (
 		/>
 		<LoginMethods />
 		<SsoSettings />
+		<ScimSettings />
 	</PageContainer>
 );
 
