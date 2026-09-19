@@ -99,4 +99,5 @@ export type AuditResourceType =
 	| "dnsProvider"
 	| "team"
 	| "roleBinding"
-	| "featureFlag";
+	| "featureFlag"
+	| "job";

@@ -1,6 +1,7 @@
 export * from "./abhash-rbac";
 export * from "./abhash-forward-auth";
 export * from "./abhash-sso";
+export * from "./abhash-jobs";
 export * from "./account";
 export * from "./ai";
 export * from "./application";

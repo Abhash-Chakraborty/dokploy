@@ -2,7 +2,11 @@ import { eq } from "drizzle-orm";
 import { db } from "../../db";
 import { abhashSettings } from "../../db/schema";
 
-export type AbhashFlag = "rbac.v2" | "sso.enabled" | "scim.enabled";
+export type AbhashFlag =
+	| "rbac.v2"
+	| "sso.enabled"
+	| "scim.enabled"
+	| "jobs.enabled";
 
 const TTL_MS = 5_000;
 

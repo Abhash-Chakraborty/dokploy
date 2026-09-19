@@ -190,6 +190,18 @@ All under Settings. Each capability is off until the owner turns it on.
 - **Protect apps**: Traefik forward-auth gates (Authentik outpost or any
   forward-auth service) chosen per domain.
 
+### Background jobs
+Off until the owner turns it on from **Activity** in the sidebar. A durable
+job engine (`services/abhash/jobs`) on BullMQ, using the existing
+`dokploy-redis` (no new setting: `REDIS_URL` falls back to it). Every job is a
+row in `abhash_job` with its actor, status, result and a log under
+`logs/abhash-jobs`; Redis only carries the work in flight, so a flushed Redis
+loses nothing but pending jobs. Jobs are never re-run after a crash: rows left
+running become "interrupted". Per-key semaphores (`locks.ts`) keep, for
+example, one firewall change per server. New job types register with
+`defineJob` in `registry.ts`. If Redis is unreachable only jobs pause;
+deploys and upstream schedules do not depend on it.
+
 ### Upstream files the fork hooks into
 Kept to one-line hooks or import swaps; expect these in merge conflicts:
 `packages/server/src/lib/auth.ts` (guard hooks, SSO/SCIM plugin options,
@@ -203,11 +215,13 @@ permission), `apps/dokploy/server/api/root.ts`, `packages/server/src/index.ts`,
 `packages/server/src/db/schema/index.ts`, `apps/dokploy/pages/index.tsx` and
 `register.tsx` (sign-in buttons), `apps/dokploy/lib/auth-client.ts`,
 `components/dashboard/application/domains/handle-domain.tsx` (Protect with
-SSO), `components/layouts/{side,user-nav}.tsx`, `esbuild.config.ts`.
+SSO), `components/layouts/{side,user-nav}.tsx`, `esbuild.config.ts`,
+`apps/dokploy/server/server.ts` (starts the job engine).
 
 ### Migrations
 Fork migrations run automatically on startup and are idempotent, so a
 database that already applied one under an earlier number re-applies it as a
 no-op: `0197`-`0199` (auth methods, log drains, Cloudflare tunnels),
 `0200`-`0201` (teams, role bindings, suspension, cleanup triggers), `0202`
-(SSO provider settings and group mappings), `0203` (forward-auth gates).
+(SSO provider settings and group mappings), `0203` (forward-auth gates),
+`0204` (job history).

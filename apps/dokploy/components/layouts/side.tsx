@@ -111,6 +111,7 @@ import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import type { AppRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
+import { ActivityButton } from "../abhash/jobs/activity";
 import { TrialBanner } from "../dashboard/billing/trial-banner";
 import { AddOrganization } from "../dashboard/organization/handle-organization";
 import { DialogAction } from "../shared/dialog-action";
@@ -1231,6 +1232,11 @@ export default function Page({ children }: Props) {
 						{!isCloud && permissions?.organization.update && (
 							<SidebarMenuItem>
 								<UpdateServerButton />
+							</SidebarMenuItem>
+						)}
+						{!isCloud && (
+							<SidebarMenuItem>
+								<ActivityButton />
 							</SidebarMenuItem>
 						)}
 						<SidebarMenuItem>
