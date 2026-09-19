@@ -1,0 +1,44 @@
+{
+  "interactiveLogin": false,
+  "tokenCallbacks": [
+    {
+      "issuerId": "dokploy",
+      "tokenExpiry": 3600,
+      "requestMappings": [
+        {
+          "requestParam": "login_hint",
+          "match": "admin@sandbox.test",
+          "claims": {
+            "sub": "sbx-admin",
+            "email": "admin@sandbox.test",
+            "email_verified": true,
+            "name": "Sandbox Admin",
+            "groups": ["dokploy-admins"]
+          }
+        },
+        {
+          "requestParam": "login_hint",
+          "match": "dev@sandbox.test",
+          "claims": {
+            "sub": "sbx-dev",
+            "email": "dev@sandbox.test",
+            "email_verified": true,
+            "name": "Sandbox Developer",
+            "groups": ["dokploy-dev-team-a"]
+          }
+        },
+        {
+          "requestParam": "login_hint",
+          "match": "*",
+          "claims": {
+            "sub": "sbx-viewer",
+            "email": "viewer@sandbox.test",
+            "email_verified": true,
+            "name": "Sandbox Viewer",
+            "groups": ["dokploy-viewers"]
+          }
+        }
+      ]
+    }
+  ]
+}

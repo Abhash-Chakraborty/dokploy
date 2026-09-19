@@ -29,15 +29,25 @@ version again.
 
 ## Local Setup
 
+The development checkout lives on the production server, so everything runs
+against a disposable sandbox rather than the host Docker. See the isolation
+rules in `CLAUDE.md`. Never run `pnpm run dokploy:setup` here: it initialises
+Swarm, networks, Traefik and Postgres on the host.
+
 ```bash
 pnpm install
-cp apps/dokploy/.env.example apps/dokploy/.env
-pnpm run dokploy:setup
-pnpm run server:script
-pnpm run dokploy:dev
+scripts/sandbox/sandbox.sh up          # Postgres, Redis, Docker-in-Docker (+ --oidc, --traefik)
+scripts/sandbox/sandbox.sh migrate
+scripts/sandbox/sandbox.sh dev         # app on the printed 127.0.0.1 port
+scripts/sandbox/sandbox.sh test        # full suite, real-Docker tests included
+scripts/sandbox/sandbox.sh down        # removes only com.abhash.sandbox resources
 ```
 
-On Windows, `dokploy:setup` has been made cross-platform by replacing the shell-only `sleep` command with a short Node wait.
+A plain `pnpm test` is also safe: outside the sandbox it points Docker at a
+closed port, so suites that need a daemon skip.
+
+To rehearse migrations on real data, restore a production dump into the
+sandbox with `scripts/sandbox/restore-prod-copy.sh <dump>`.
 
 ## Upstream Sync
 
