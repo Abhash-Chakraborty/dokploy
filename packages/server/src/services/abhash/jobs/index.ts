@@ -1,3 +1,5 @@
+import "../ansible/service";
+import "../vault/credentials";
 import { isFlagEnabled, setSetting } from "../flags";
 import { JOB_RETENTION_DAYS } from "./builtin";
 import { isRedisReachable } from "./queue";

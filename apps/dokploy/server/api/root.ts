@@ -1,6 +1,7 @@
 import { createTRPCRouter } from "../api/trpc";
 import { abhashAccessRouter } from "./routers/abhash/access";
 import { abhashAgentsRouter } from "./routers/abhash/agents";
+import { abhashAnsibleRouter } from "./routers/abhash/ansible";
 import { abhashAuditLogRouter } from "./routers/abhash/audit-log";
 import { abhashCustomRoleRouter } from "./routers/abhash/custom-role";
 import { abhashForwardAuthRouter } from "./routers/abhash/forward-auth";
@@ -130,6 +131,7 @@ export const appRouter = createTRPCRouter({
 	abhashJobs: abhashJobsRouter,
 	vault: abhashVaultRouter,
 	agents: abhashAgentsRouter,
+	ansible: abhashAnsibleRouter,
 	schedule: scheduleRouter,
 	rollback: rollbackRouter,
 	volumeBackups: volumeBackupsRouter,

@@ -185,7 +185,11 @@ export const enqueueJobForActor = async (
 	const definition = getJobDefinition(type);
 	if (!definition) throw new Error(`Unknown job type: ${type}`);
 	const parsed = definition.input.parse(input);
-	if (await needsApproval(options.actor, definition.destructive ?? false)) {
+	const destructive =
+		typeof definition.destructive === "function"
+			? definition.destructive(parsed)
+			: (definition.destructive ?? false);
+	if (await needsApproval(options.actor, destructive)) {
 		const approval = await createApproval({
 			organizationId: options.organizationId,
 			actor: options.actor,

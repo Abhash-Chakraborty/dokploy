@@ -39,6 +39,7 @@ import {
 	Package,
 	Palette,
 	Rocket,
+	ScrollText,
 	Server,
 	Settings,
 	ShieldCheck,
@@ -323,6 +324,12 @@ const MENU: Menu = {
 					icon: LockKeyhole,
 					isEnabled: ({ auth, isCloud }) =>
 						!!(auth?.role === "owner" || auth?.role === "admin") && !isCloud,
+				},
+				{
+					title: "Ansible",
+					url: "/dashboard/settings/ansible",
+					icon: ScrollText,
+					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
 				},
 				{
 					title: "Agents",

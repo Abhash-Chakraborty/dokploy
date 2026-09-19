@@ -1,0 +1,37 @@
+# The image every Ansible run and restic job executes in. Dokploy pulls it
+# on demand; it is never part of the Dokploy image.
+name: ansible-runner image
+
+on:
+  push:
+    branches: [main]
+    paths: ["docker/abhash-ansible-runner/**", ".github/workflows/ansible-runner-image.yml"]
+  workflow_dispatch:
+  schedule:
+    # Monthly rebuild, so the base image and its packages pick up fixes.
+    - cron: "0 5 1 * *"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: docker/abhash-ansible-runner
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/dokploy-ansible-runner:2.19.3
+            ghcr.io/${{ github.repository_owner }}/dokploy-ansible-runner:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

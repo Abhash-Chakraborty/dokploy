@@ -88,6 +88,24 @@ services:
     labels: *labels
     command: ["-listen=:5678", "-status-code=200", "-text=ok"]
 
+  # Stand-ins for managed servers: reachable over SSH, with their own
+  # network namespace so firewall rules never touch the host.
+  fleet-1: &fleet
+    profiles: [fleet]
+    build:
+      context: ./fleet
+      args: { SANDBOX_ID: "${SANDBOX_ID}" }
+    labels: *labels
+    cap_add: [NET_ADMIN]
+    volumes:
+      - "${FLEET_KEY_PUB:?}:/root/.ssh/authorized_keys:ro"
+
+  fleet-2:
+    <<: *fleet
+
+  fleet-3:
+    <<: *fleet
+
 volumes:
   dind-data:
     labels: *labels

@@ -244,6 +244,24 @@ Destructive jobs an agent asks for become an **approval** a person decides
 recorded request, attributed to both the agent and the approver; an agent
 can never approve its own request.
 
+### Ansible
+Settings -> Organization -> Ansible, off until the job engine is on. Playbooks
+live in projects (a small in-database file tree) and a "run" ties a playbook
+to servers, variables and an optional schedule. Each run:
+- happens in a **throwaway container** from the pinned runner image
+  (`docker/abhash-ansible-runner`, published by CI) — Dokploy itself never
+  carries Ansible, restic or rclone;
+- gets a generated inventory and per-host keys copied into a scratch volume,
+  so it works the same against a local, remote or sandbox Docker daemon;
+- **pins host keys** read over a real SSH handshake before it starts, so
+  host-key checking stays on;
+- defaults to **check mode**: only an apply is treated as destructive, and
+  only an apply needs approval when an agent asks for it.
+
+`sandbox.sh up --fleet` starts three throwaway Ubuntu servers with sshd, so
+these runs, and later the bootstrap, mesh and firewall work, are tested for
+real and for idempotency without touching anything outside the sandbox.
+
 ### Upstream files the fork hooks into
 Kept to one-line hooks or import swaps; expect these in merge conflicts:
 `packages/server/src/lib/auth.ts` (guard hooks, SSO/SCIM plugin options,
@@ -276,4 +294,4 @@ no-op: `0197`-`0199` (auth methods, log drains, Cloudflare tunnels),
 `0200`-`0201` (teams, role bindings, suspension, cleanup triggers), `0202`
 (SSO provider settings and group mappings), `0203` (forward-auth gates),
 `0204` (job history), `0205` (vault secrets, versions and usage), `0206`
-(agents, key policies and approvals).
+(agents, key policies and approvals), `0207` (Ansible projects and runs).

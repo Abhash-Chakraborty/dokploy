@@ -3,7 +3,8 @@
 # Docker host. Starts labelled throwaway Postgres, Redis and Docker-in-Docker
 # on 127.0.0.1, and runs the app, migrations and tests against them only.
 #
-#   sandbox.sh up [--oidc] [--traefik]   start dependencies
+#   sandbox.sh up [--oidc|--traefik|--fleet]
+#                                        start dependencies
 #   sandbox.sh env                       print the sandbox environment
 #   sandbox.sh migrate                   run migrations against the sandbox DB
 #   sandbox.sh dev                       run the dev server against the sandbox
@@ -71,6 +72,8 @@ SANDBOX_DATABASE_URL=postgres://dokploy:sandbox@127.0.0.1:$PG_PORT/dokploy
 ${OIDC_PORT:+SANDBOX_OIDC_ISSUER=http://127.0.0.1:$OIDC_PORT/dokploy}
 ${HTTP_PORT:+SANDBOX_TRAEFIK_URL=http://127.0.0.1:$HTTP_PORT}
 ${TRAEFIK_API_PORT:+SANDBOX_TRAEFIK_API=http://127.0.0.1:$TRAEFIK_API_PORT}
+${FLEET_KEY:+SANDBOX_FLEET_KEY=$FLEET_KEY}
+$(fleet_env)
 EOF
 }
 
@@ -96,10 +99,14 @@ cmd_up() {
 		case "$arg" in
 		--oidc) profiles+=(oidc) ;;
 		--traefik) profiles+=(traefik) ;;
+		--fleet) profiles+=(fleet) ;;
 		*) die "unknown option $arg" ;;
 		esac
 	done
 	mkdir -p "$STATE" "$ROOT/apps/dokploy/.docker/traefik/dynamic"
+	# One throwaway key for the sandbox fleet; never leaves this directory.
+	[ -f "$STATE/fleet_key" ] ||
+		ssh-keygen -q -t ed25519 -N "" -C sandbox-fleet -f "$STATE/fleet_key"
 	if [ ! -f "$PORTS_FILE" ]; then
 		cat >"$PORTS_FILE" <<EOF
 SANDBOX_ID=$SANDBOX_ID
@@ -111,6 +118,8 @@ HTTP_PORT=$(free_port)
 TRAEFIK_API_PORT=$(free_port)
 APP_PORT=$(free_port)
 TRAEFIK_DYNAMIC_DIR=$ROOT/apps/dokploy/.docker/traefik/dynamic
+FLEET_KEY=$STATE/fleet_key
+FLEET_KEY_PUB=$STATE/fleet_key.pub
 EOF
 	fi
 	load_ports
@@ -127,8 +136,29 @@ EOF
 	# Mirrors initializeNetwork(), which only runs in production.
 	docker -H "tcp://127.0.0.1:$DIND_PORT" network inspect dokploy-network >/dev/null 2>&1 ||
 		docker -H "tcp://127.0.0.1:$DIND_PORT" network create --driver overlay --attachable dokploy-network >/dev/null
+	# The runner image lives inside the sandbox daemon, never on the host.
+	if printf %s "${profiles[*]:-}" | grep -q fleet; then
+		docker -H "tcp://127.0.0.1:$DIND_PORT" build -q \
+			-t dokploy-ansible-runner:sandbox "$ROOT/docker/abhash-ansible-runner" >/dev/null
+	fi
 	write_app_env
 	cmd_status
+}
+
+# The fleet containers are reachable from inside the sandbox daemon by IP,
+# which is how the Ansible runner (a container there) talks to them.
+fleet_env() {
+	local ids names=""
+	ids=$(docker ps -q --filter "label=$LABEL" --filter "name=fleet-" 2>/dev/null || true)
+	[ -n "$ids" ] || return 0
+	for id in $ids; do
+		local name ip
+		name=$(docker inspect -f '{{.Name}}' "$id" | sed 's|^/||')
+		ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}' "$id" | awk '{print $1}')
+		names="$names${names:+,}$name=$ip"
+	done
+	echo "SANDBOX_FLEET_HOSTS=$names"
+	echo "ABHASH_ANSIBLE_RUNNER_IMAGE=dokploy-ansible-runner:sandbox"
 }
 
 cmd_status() {
@@ -144,7 +174,7 @@ cmd_status() {
 cmd_down() {
 	if [ -f "$PORTS_FILE" ]; then
 		load_ports
-		compose --profile oidc --profile traefik down -v --remove-orphans
+		compose --profile oidc --profile traefik --profile fleet down -v --remove-orphans
 	fi
 	local left
 	left=$(

@@ -32,8 +32,12 @@ export interface JobDefinition<I = unknown> {
 	 * queues; others wait. Used for "one firewall change per server".
 	 */
 	lock?: (input: I) => { key: string; limit: number } | null;
-	/** Needs a person's approval when an agent asks for it. */
-	destructive?: boolean;
+	/**
+	 * Needs a person's approval when an agent asks for it. A function lets a
+	 * type be harmless in one shape and destructive in another, e.g. an
+	 * Ansible run in check mode versus an apply.
+	 */
+	destructive?: boolean | ((input: I) => boolean);
 	/** Infrastructure changes default to a single attempt. */
 	attempts?: number;
 	timeoutMs?: number;
