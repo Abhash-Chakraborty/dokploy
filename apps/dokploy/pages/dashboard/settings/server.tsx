@@ -7,7 +7,6 @@ import { ShowBackups } from "@/components/dashboard/database/backups/show-backup
 import { ServerPreflight } from "@/components/dashboard/settings/servers/server-preflight";
 import { WebDomain } from "@/components/dashboard/settings/web-domain";
 import { WebServer } from "@/components/dashboard/settings/web-server";
-import { LoginMethods } from "@/components/dashboard/settings/web-server/login-methods";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { appRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
@@ -20,7 +19,6 @@ const Page = () => {
 				<ServerPreflight />
 				<WebDomain />
 				<WebServer />
-				<LoginMethods />
 				<ShowBackups
 					id={user?.userId ?? ""}
 					databaseType="web-server"

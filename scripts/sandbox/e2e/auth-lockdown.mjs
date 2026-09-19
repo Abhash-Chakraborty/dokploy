@@ -12,6 +12,10 @@ const setMethods = async (config) => {
 
 const { check, finish } = runChecks();
 const session = await signInOwner();
+// With SSO switched off, even its sign-in endpoints must be unreachable.
+await sql`insert into abhash_settings (key, value) values ('sso.enabled', 'false')
+	on conflict (key) do update set value = 'false'`;
+await new Promise((r) => setTimeout(r, 5_500));
 
 await check("sign-up is closed once an owner exists", async () => {
 	const r = await call("/sign-up/email", {
@@ -54,8 +58,10 @@ for (const [path, body] of [
 }
 
 await check("no SSO provider or SCIM connection was created", async () => {
-	const [{ sso }] = await sql`select count(*)::int sso from sso_provider`;
-	const [{ scim }] = await sql`select count(*)::int scim from scim_provider`;
+	const [{ sso }] =
+		await sql`select count(*)::int sso from sso_provider where provider_id = 'evil'`;
+	const [{ scim }] =
+		await sql`select count(*)::int scim from scim_provider where provider_id = 'evil'`;
 	assert.equal(sso + scim, 0);
 });
 

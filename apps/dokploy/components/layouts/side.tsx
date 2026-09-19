@@ -31,6 +31,7 @@ import {
 	KeyRound,
 	LayoutGrid,
 	Loader2,
+	LockKeyhole,
 	type LucideIcon,
 	Package,
 	Palette,
@@ -457,6 +458,13 @@ const MENU: Menu = {
 					url: "/dashboard/settings/license",
 					icon: Key,
 					isEnabled: ({ auth }) => !!(auth?.role === "owner"),
+				},
+				{
+					title: "Authentication",
+					url: "/dashboard/settings/authentication",
+					icon: LockKeyhole,
+					isEnabled: ({ auth, isCloud }) =>
+						!!(auth?.role === "owner" || auth?.role === "admin") && !isCloud,
 				},
 				{
 					title: "Whitelabeling",

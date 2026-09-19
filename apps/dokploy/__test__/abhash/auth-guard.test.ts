@@ -1,5 +1,6 @@
 import {
 	isHttpBlockedPath,
+	isSsoSignInPath,
 	loginMethodForPath,
 } from "@dokploy/server/services/abhash/auth-guard";
 import { describe, expect, it } from "vitest";
@@ -10,9 +11,7 @@ describe("isHttpBlockedPath", () => {
 		"/sso/update-provider",
 		"/sso/delete-provider",
 		"/sso/providers",
-		"/sso/callback/authentik",
 		"/sso/saml2/sp/acs/authentik",
-		"/sign-in/sso",
 		"/scim/generate-token",
 		"/scim/list-provider-connections",
 		"/scim/delete-provider-connection",
@@ -36,6 +35,20 @@ describe("isHttpBlockedPath", () => {
 		"/passkey/generate-register-options",
 	])("allows %s", (path) => {
 		expect(isHttpBlockedPath(path)).toBe(false);
+	});
+});
+
+describe("isSsoSignInPath", () => {
+	it("recognises OIDC sign-in and its callback, which the SSO flag gates", () => {
+		expect(isSsoSignInPath("/sign-in/sso")).toBe(true);
+		expect(isSsoSignInPath("/sso/callback/authentik")).toBe(true);
+		expect(isHttpBlockedPath("/sign-in/sso")).toBe(false);
+		expect(isHttpBlockedPath("/sso/callback/authentik")).toBe(false);
+	});
+
+	it("does not open SAML or provider management", () => {
+		expect(isSsoSignInPath("/sso/saml2/sp/acs/authentik")).toBe(false);
+		expect(isSsoSignInPath("/sso/register")).toBe(false);
 	});
 });
 

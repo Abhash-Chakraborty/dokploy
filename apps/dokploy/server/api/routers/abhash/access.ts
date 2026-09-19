@@ -4,7 +4,6 @@ import {
 	abhashRoleBinding,
 	abhashTeam,
 	abhashTeamMember,
-	abhashUserSuspension,
 	gitProvider,
 	member,
 	organizationRole,

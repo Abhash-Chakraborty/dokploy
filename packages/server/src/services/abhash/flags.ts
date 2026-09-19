@@ -5,7 +5,15 @@ import { abhashSettings } from "../../db/schema";
 export type AbhashFlag = "rbac.v2" | "sso.enabled" | "scim.enabled";
 
 const TTL_MS = 5_000;
-const cache = new Map<string, { value: unknown; expiresAt: number }>();
+
+// Next.js bundles every API route separately, so a module-level cache would
+// exist once per route and a change made through tRPC would not invalidate
+// the auth route's copy. One cache per process, shared through globalThis.
+const shared = globalThis as unknown as {
+	__abhashSettings?: Map<string, { value: unknown; expiresAt: number }>;
+};
+shared.__abhashSettings ??= new Map();
+const cache = shared.__abhashSettings;
 
 export const getSetting = async <T>(key: string, fallback: T): Promise<T> => {
 	const hit = cache.get(key);

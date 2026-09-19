@@ -14,12 +14,18 @@ import { db } from "../db";
 import * as schema from "../db/schema";
 import { createAuditLog } from "../services/abhash/audit-log";
 import { abhashAuthBefore } from "../services/abhash/auth-guard";
+import { resolveOrganizationDefaultRole } from "../services/abhash/entitlements";
+import { ssoTrustedOrigins } from "../services/abhash/sso/providers";
+import {
+	assertSsoSignUpAllowed,
+	ensureSsoMembership,
+	syncSsoUser,
+} from "../services/abhash/sso/provisioning";
 import {
 	getTrustedOrigins,
 	getTrustedProviders,
 	getUserByToken,
 } from "../services/admin";
-import { resolveOrganizationDefaultRole } from "../services/abhash/entitlements";
 import {
 	getWebServerSettings,
 	updateWebServerSettings,
@@ -109,6 +115,8 @@ const { handler, api } = betterAuth({
 			"/two-factor/verify-backup-code": { window: 300, max: 5 },
 			"/two-factor/verify-otp": { window: 60, max: 5 },
 			"/sign-in/passkey": { window: 60, max: 10 },
+			// Only starts a redirect to the IdP, which does its own throttling.
+			"/sign-in/sso": { window: 60, max: 30 },
 			"/change-password": { window: 300, max: 5 },
 			"/change-email": { window: 300, max: 5 },
 		},
@@ -166,6 +174,7 @@ const { handler, api } = betterAuth({
 				...(settings?.host ? [`https://${settings?.host}`] : []),
 				...devOrigins,
 				...trustedOrigins,
+				...(await ssoTrustedOrigins()),
 			];
 		} catch (error) {
 			console.error("Failed to resolve trusted origins:", error);
@@ -247,11 +256,10 @@ const { handler, api } = betterAuth({
 								});
 							}
 						} else if (isSSORequest) {
-							// Replaced by the fork's JIT provisioning check once SSO ships;
-							// until then an SSO callback must never mint an account.
-							throw new APIError("FORBIDDEN", {
-								message: "SSO sign-up is not enabled",
-							});
+							await assertSsoSignUpAllowed(
+								context?.params?.providerId,
+								_user.email,
+							);
 						} else {
 							const isAdminPresent = await db.query.member.findFirst({
 								where: eq(schema.member.role, "owner"),
@@ -347,29 +355,7 @@ const { handler, api } = betterAuth({
 								message: "Provider ID is required",
 							});
 						}
-						const provider = await db.query.ssoProvider.findFirst({
-							where: eq(schema.ssoProvider.providerId, providerId),
-						});
-						if (!provider) {
-							throw new APIError("BAD_REQUEST", {
-								message: "Provider not found",
-							});
-						}
-						if (!provider.organizationId) {
-							throw new APIError("FORBIDDEN", {
-								message: "SSO provider is not linked to an organization",
-							});
-						}
-						const defaultRole = await resolveOrganizationDefaultRole(
-							provider.organizationId,
-						);
-						await db.insert(schema.member).values({
-							userId: user.id,
-							organizationId: provider.organizationId,
-							role: defaultRole,
-							createdAt: new Date(),
-							isDefault: true,
-						});
+						await ensureSsoMembership(user, providerId);
 					}
 				},
 			},
@@ -506,7 +492,13 @@ const { handler, api } = betterAuth({
 			enableMetadata: true,
 			references: "user",
 		}),
-		sso({ trustEmailVerified: true }),
+		sso({
+			// Account linking is trusted per provider (sso_provider.domain_verified,
+			// set explicitly by an admin), never from the IdP's email_verified claim.
+			provisionUser: syncSsoUser,
+			provisionUserOnEveryLogin: true,
+			organizationProvisioning: { disabled: true },
+		}),
 		scim({
 			beforeSCIMTokenGenerated: async ({ user }) => {
 				const dbUser = await db.query.user.findFirst({
