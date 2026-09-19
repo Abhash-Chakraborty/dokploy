@@ -70,6 +70,7 @@ SANDBOX_DOCKER_HOST=tcp://127.0.0.1:$DIND_PORT
 SANDBOX_DATABASE_URL=postgres://dokploy:sandbox@127.0.0.1:$PG_PORT/dokploy
 ${OIDC_PORT:+SANDBOX_OIDC_ISSUER=http://127.0.0.1:$OIDC_PORT/dokploy}
 ${HTTP_PORT:+SANDBOX_TRAEFIK_URL=http://127.0.0.1:$HTTP_PORT}
+${TRAEFIK_API_PORT:+SANDBOX_TRAEFIK_API=http://127.0.0.1:$TRAEFIK_API_PORT}
 EOF
 }
 
@@ -107,6 +108,7 @@ REDIS_PORT=$(free_port)
 DIND_PORT=$(free_port)
 OIDC_PORT=$(free_port)
 HTTP_PORT=$(free_port)
+TRAEFIK_API_PORT=$(free_port)
 APP_PORT=$(free_port)
 TRAEFIK_DYNAMIC_DIR=$ROOT/apps/dokploy/.docker/traefik/dynamic
 EOF

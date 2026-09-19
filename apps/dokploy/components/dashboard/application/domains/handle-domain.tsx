@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
+import { ProtectWithSso } from "@/components/abhash/forward-auth/protect-with-sso";
 import { AlertBlock } from "@/components/shared/alert-block";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -847,6 +848,10 @@ export const AddDomain = ({ id, type, domainId = "", children }: Props) => {
 										)}
 									</>
 								)}
+								<ProtectWithSso
+									value={form.watch("middlewares") ?? []}
+									onChange={(next) => form.setValue("middlewares", next)}
+								/>
 								<FormField
 									control={form.control}
 									name="middlewares"

@@ -6,6 +6,7 @@ import type { ReactElement } from "react";
 import superjson from "superjson";
 import { ScimSettings } from "@/components/abhash/auth/scim-settings";
 import { SsoSettings } from "@/components/abhash/auth/sso-settings";
+import { ForwardAuthSettings } from "@/components/abhash/forward-auth/forward-auth-settings";
 import { LoginMethods } from "@/components/dashboard/settings/web-server/login-methods";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
@@ -21,6 +22,7 @@ const Page = () => (
 		<LoginMethods />
 		<SsoSettings />
 		<ScimSettings />
+		<ForwardAuthSettings />
 	</PageContainer>
 );
 
