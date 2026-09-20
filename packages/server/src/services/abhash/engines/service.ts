@@ -7,6 +7,7 @@ import {
 	environments,
 } from "../../../db/schema";
 import { isFlagEnabled } from "../flags";
+import { assertServerInOrganization } from "../ownership";
 import { createSecret } from "../vault/secrets";
 import { engineById } from "./catalog";
 import type { EngineConfig } from "./types";
@@ -52,6 +53,8 @@ export const createManagedService = async (input: {
 	if (environment?.project.organizationId !== input.organizationId) {
 		throw new Error("Environment not found");
 	}
+	// The stack is deployed wherever this says, so it must be ours too.
+	await assertServerInOrganization(input.organizationId, input.serverId);
 
 	const version = input.version ?? (engine.versions[0] as string);
 	if (!engine.versions.includes(version)) {

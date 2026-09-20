@@ -26,11 +26,37 @@ const repository = await trpc(
 );
 assert.ok(repository.ok, repository.error);
 
+// A policy may only point at a database of this organization, so there has
+// to be a real one.
+const project = await trpc(
+	"project.create",
+	{ name: `wal-${suffix}`, description: "e2e" },
+	owner,
+);
+assert.ok(project.ok, project.error);
+const created = await trpc(
+	"postgres.create",
+	{
+		name: `wal-${suffix}`,
+		appName: `wal-${suffix}`,
+		databaseName: "app",
+		databaseUser: "app",
+		databasePassword: "e2e-password-1",
+		dockerImage: "postgres:16-alpine",
+		environmentId: project.data.environment.environmentId,
+		serverId: null,
+	},
+	owner,
+);
+assert.ok(created.ok, created.error);
+const [{ postgresId }] =
+	await sql`select "postgresId" from postgres where name = ${`wal-${suffix}`}`;
+
 const policyInput = (overrides) => ({
 	name: `wal-${suffix}`,
 	serverId: null,
 	targetKind: "postgres",
-	target: `pg-wal-${suffix}`,
+	target: postgresId,
 	repositoryId: repository.data.id,
 	...overrides,
 });
@@ -53,6 +79,32 @@ await check("a policy takes the WAL settings, within limits", async () => {
 	assert.equal(saved.data.walEnabled, false, "saving never turns it on");
 	assert.equal(saved.data.walShipMinutes, 2);
 });
+
+await check(
+	"a policy cannot name a database or a server it does not own",
+	async () => {
+		const stranger = await trpc(
+			"abhashBackups.savePolicy",
+			policyInput({ name: `x-${suffix}`, target: "someone-elses-database" }),
+			owner,
+		);
+		assert.equal(stranger.ok, false);
+		assert.match(stranger.error, /Service not found/);
+		const elsewhere = await trpc(
+			"abhashBackups.savePolicy",
+			policyInput({ name: `y-${suffix}`, serverId: "someone-elses-server" }),
+			owner,
+		);
+		assert.equal(elsewhere.ok, false);
+		assert.match(elsewhere.error, /Server not found/);
+		const probe = await trpc(
+			"abhashBackups.checkRepository",
+			{ repositoryId: repository.data.id, serverId: "someone-elses-server" },
+			owner,
+		);
+		assert.equal(probe.ok, false);
+	},
+);
 
 await check("archiving is refused for anything but Postgres", async () => {
 	const volume = await trpc(
@@ -97,7 +149,7 @@ await check(
 		await sql`update abhash_backup_policy set wal_enabled = true where id = ${policyId}`;
 		const moved = await trpc(
 			"abhashBackups.savePolicy",
-			policyInput({ id: policyId, target: "another-database" }),
+			policyInput({ id: policyId, targetKind: "volume", target: "a-volume" }),
 			owner,
 		);
 		assert.equal(moved.ok, false);
@@ -180,5 +232,10 @@ await check("deleting a policy takes its schedules with it", async () => {
 	assert.ok(!overview.data.policies.some((policy) => policy.id === policyId));
 });
 
+await trpc(
+	"project.remove",
+	{ projectId: project.data.project.projectId },
+	owner,
+);
 await sql`delete from abhash_backup_repository where organization_id = ${organizationId} and name = ${`wal-${suffix}`}`;
 await finish();

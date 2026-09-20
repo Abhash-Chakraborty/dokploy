@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { assertSource } from "./cidr";
 import type { CompiledRule } from "./compile";
 
 export const MANAGED_CHAIN = "DOKPLOY-FW";
@@ -8,14 +9,28 @@ const END = "# END DOKPLOY FIREWALL";
 const ufwAction = (action: CompiledRule["action"]) =>
 	action === "reject" ? "reject" : action;
 
+// Everything below is written into a script that runs as root. The router
+// validates these too; this is the last place a bad value could be stopped.
+const assertPort = (port: string) => {
+	if (!/^\d{1,5}(:\d{1,5})?$/.test(port)) {
+		throw new Error(`Refusing to render a firewall rule for port "${port}"`);
+	}
+	return port;
+};
+const assertOrigin = (origin: string) => {
+	if (!/^[A-Za-z0-9:._-]+$/.test(origin)) {
+		throw new Error(`Refusing to render a firewall rule tagged "${origin}"`);
+	}
+	return origin;
+};
+
 /** One ufw command per input rule, tagged so Dokploy's rules are its own. */
 export const renderUfwRules = (rules: CompiledRule[]) =>
 	rules
 		.filter((rule) => rule.chain === "input")
 		.map((rule) => {
-			const from = rule.from === "any" ? "any" : rule.from;
 			// --force is only valid for enable/reset/delete, not for a rule.
-			return `ufw ${ufwAction(rule.action)} from ${from} to any port ${rule.port} proto ${rule.protocol} comment 'dokploy:${rule.origin}'`;
+			return `ufw ${ufwAction(rule.action)} from ${assertSource(rule.from)} to any port ${assertPort(rule.port)} proto ${rule.protocol} comment 'dokploy:${assertOrigin(rule.origin)}'`;
 		});
 
 /**
@@ -26,6 +41,10 @@ export const renderUfwRules = (rules: CompiledRule[]) =>
  */
 export const renderDockerChain = (rules: CompiledRule[]) => {
 	const lines = ["*filter", `:${MANAGED_CHAIN} - [0:0]`, `-F ${MANAGED_CHAIN}`];
+	// A port that anything is allowed to reach is closed to everyone else,
+	// but only after every rule for it has had its say: closing it straight
+	// after the first allow would stop a second allowed source ever matching.
+	const closed = new Map<string, string>();
 	for (const rule of rules.filter(
 		(candidate) => candidate.chain === "docker",
 	)) {
@@ -35,20 +54,20 @@ export const renderDockerChain = (rules: CompiledRule[]) => {
 				: rule.action === "reject"
 					? "REJECT"
 					: "RETURN";
-		const from = rule.from === "any" ? "" : ` -s ${rule.from}`;
-		const [start, end] = rule.port.split(":");
-		const port = end ? `${start}:${end}` : start;
-		// Allowed sources return to DOCKER-USER; everything else to this port
-		// is dropped by the catch-all below.
+		const source = assertSource(rule.from);
+		const from = source === "any" ? "" : ` -s ${source}`;
+		const port = assertPort(rule.port);
 		lines.push(
-			`-A ${MANAGED_CHAIN}${from} -p ${rule.protocol} -m conntrack --ctorigdstport ${port} -j ${target} -m comment --comment "dokploy:${rule.origin}"`,
+			`-A ${MANAGED_CHAIN}${from} -p ${rule.protocol} -m conntrack --ctorigdstport ${port} -j ${target} -m comment --comment "dokploy:${assertOrigin(rule.origin)}"`,
 		);
-		if (target === "RETURN") {
-			lines.push(
-				`-A ${MANAGED_CHAIN} -p ${rule.protocol} -m conntrack --ctorigdstport ${port} -j DROP -m comment --comment "dokploy:${rule.origin}:default-deny"`,
+		if (target === "RETURN" && !closed.has(`${rule.protocol}:${port}`)) {
+			closed.set(
+				`${rule.protocol}:${port}`,
+				`-A ${MANAGED_CHAIN} -p ${rule.protocol} -m conntrack --ctorigdstport ${port} -j DROP -m comment --comment "dokploy:${assertOrigin(rule.origin)}:default-deny"`,
 			);
 		}
 	}
+	lines.push(...closed.values());
 	lines.push(`-A ${MANAGED_CHAIN} -j RETURN`);
 	lines.push(`-I DOCKER-USER -j ${MANAGED_CHAIN}`);
 	lines.push("COMMIT");
@@ -121,8 +140,11 @@ else
 	echo nohup > "$DIR/rollback.mode"
 fi
 
-# 3. Apply. ufw owns the host's own ports.
-ufw --force reset >/dev/null
+# 3. Apply. ufw owns the host's own ports. Only the rules Dokploy tagged as
+#    its own are replaced: whatever else is configured on this server was put
+#    there on purpose and is none of this script's business.
+ufw show added 2>/dev/null | grep "comment 'dokploy:" | sed 's/^ufw /ufw --force delete /' > "$DIR/owned.delete" || true
+if [ -s "$DIR/owned.delete" ]; then sh "$DIR/owned.delete" >/dev/null; fi
 ufw default ${options.defaultIncoming} incoming >/dev/null
 ufw default allow outgoing >/dev/null
 ${rendered.ufw.join("\n")}

@@ -3,6 +3,7 @@ import { Client } from "ssh2";
 import { db } from "../../../db";
 import type { AnsibleTargets } from "../../../db/schema";
 import { server } from "../../../db/schema";
+import { HostKeyMismatchError, verifyHostKey } from "../ssh/pool";
 
 export type InventoryHost = {
 	serverId: string;
@@ -74,15 +75,20 @@ const algorithmOf = (key: Buffer) => {
 
 /**
  * Reads a server's host key over a plain SSH handshake, so the run can pin
- * it in known_hosts instead of turning host-key checking off.
+ * it in known_hosts instead of turning host-key checking off. The key is
+ * held to the same pinned fingerprint as every other connection: trusting
+ * whatever answers here would hand a run, and its secrets, to anyone able
+ * to sit in between.
  */
 export const scanHostKey = (host: InventoryHost, timeoutMs = 10_000) =>
 	new Promise<string>((resolve, reject) => {
 		const conn = new Client();
 		let line: string | null = null;
+		let mismatch = false;
 		const done = (error?: Error) => {
 			conn.end();
-			if (error) reject(error);
+			if (mismatch) reject(new HostKeyMismatchError(host.serverId));
+			else if (error) reject(error);
 			else if (line) resolve(line);
 			else reject(new Error(`Could not read the host key of ${host.address}`));
 		};
@@ -95,16 +101,23 @@ export const scanHostKey = (host: InventoryHost, timeoutMs = 10_000) =>
 				username: host.user,
 				privateKey: host.privateKey,
 				readyTimeout: timeoutMs,
-				hostVerifier: (key: Buffer, callback?: (ok: boolean) => void) => {
-					// OpenSSH writes a bare host for port 22 and [host]:port
-					// otherwise; both are listed so either lookup matches.
-					const entry = `${algorithmOf(key)} ${key.toString("base64")}`;
-					line =
-						host.port === 22
-							? `${host.address} ${entry}`
-							: `[${host.address}]:${host.port} ${entry}`;
-					callback?.(true);
-					return true;
+				hostVerifier: (key: Buffer, callback: (ok: boolean) => void) => {
+					verifyHostKey(host.serverId, key)
+						.then((trusted) => {
+							if (trusted) {
+								// OpenSSH writes a bare host for port 22 and [host]:port
+								// otherwise.
+								const entry = `${algorithmOf(key)} ${key.toString("base64")}`;
+								line =
+									host.port === 22
+										? `${host.address} ${entry}`
+										: `[${host.address}]:${host.port} ${entry}`;
+							} else {
+								mismatch = true;
+							}
+							callback(trusted);
+						})
+						.catch(() => callback(false));
 				},
 			});
 	});

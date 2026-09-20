@@ -194,7 +194,7 @@ export const pushover = pgTable("pushover", {
 		.primaryKey()
 		.$defaultFn(() => nanoid()),
 	userKey: credentialText("userKey").notNull(),
-	apiToken: text("apiToken").notNull(),
+	apiToken: credentialText("apiToken").notNull(),
 	priority: integer("priority").notNull().default(0),
 	retry: integer("retry"),
 	expire: integer("expire"),

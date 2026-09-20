@@ -1,4 +1,4 @@
-import { and, eq, isNotNull } from "drizzle-orm";
+import { and, eq, inArray, isNotNull } from "drizzle-orm";
 import { db } from "../../../db";
 import {
 	abhashFirewallRule,
@@ -17,6 +17,7 @@ import {
 	server,
 } from "../../../db/schema";
 import { activeProvider } from "../mesh/service";
+import { cidrContains, isCidr } from "./cidr";
 
 export type CompiledRule = {
 	chain: RuleChain;
@@ -43,19 +44,61 @@ export type CompileContext = {
 // Both providers hand out addresses from the CGNAT range.
 const MESH_DEFAULT_SUBNET = "100.64.0.0/10";
 
-const resolveSource = (source: RuleSource, context: CompileContext): string => {
+/**
+ * The addresses a source stands for. An empty list means the rule matches
+ * nothing and is left out: a source that cannot be resolved must never
+ * widen into "anywhere".
+ */
+const resolveSource = async (
+	source: RuleSource,
+	context: CompileContext,
+): Promise<string[]> => {
 	switch (source.kind) {
 		case "any":
-			return "any";
+			return ["any"];
 		case "cidr":
-			return source.value;
+			return isCidr(source.value) ? [source.value] : [];
 		case "mesh":
-			return context.meshSubnet ?? "any";
+			return context.meshSubnet ? [context.meshSubnet] : [];
 		case "control":
-			return context.controlAddress ?? context.meshSubnet ?? "any";
+			return context.controlAddress
+				? [context.controlAddress]
+				: context.meshSubnet
+					? [context.meshSubnet]
+					: [];
+		case "group":
+			return groupAddresses(context.organizationId, source.groupId);
 		default:
-			return "any";
+			return [];
 	}
+};
+
+/** Every address the servers of a group can be reached or seen at. */
+const groupAddresses = async (organizationId: string, groupId: string) => {
+	const members = await db.query.abhashServerMeta.findMany({
+		where: and(
+			eq(abhashServerMeta.organizationId, organizationId),
+			eq(abhashServerMeta.groupId, groupId),
+		),
+		columns: { serverId: true },
+	});
+	const ids = members.map((member) => member.serverId);
+	if (ids.length === 0) return [];
+	const [servers, peers] = await Promise.all([
+		db.query.server.findMany({
+			where: inArray(server.serverId, ids),
+			columns: { ipAddress: true },
+		}),
+		db.query.abhashServerMesh.findMany({
+			where: inArray(abhashServerMesh.serverId, ids),
+			columns: { meshIp: true },
+		}),
+	]);
+	const addresses = [
+		...servers.map((row) => row.ipAddress),
+		...peers.map((row) => row.meshIp),
+	].filter((address): address is string => !!address && isCidr(address));
+	return [...new Set(addresses)];
 };
 
 /** Databases only accept traffic from where their own setting says. */
@@ -204,25 +247,32 @@ export const compileRules = async (
 			eq(abhashFirewallRule.organizationId, context.organizationId),
 			eq(abhashFirewallRule.enabled, true),
 		),
+		orderBy: [abhashFirewallRule.priority, abhashFirewallRule.createdAt],
 	});
 	const policyIds = settings?.policyIds ?? [];
+	const written: CompiledRule[] = [];
 	for (const rule of userRules) {
 		const applies =
 			rule.serverId === context.serverId ||
 			(rule.policyId && policyIds.includes(rule.policyId));
 		if (!applies) continue;
-		rules.push({
-			chain: rule.chain,
-			action: rule.action,
-			protocol: rule.protocol,
-			port: rule.port,
-			from: resolveSource(rule.source, context),
-			comment: rule.comment || "Custom rule",
-			origin: `user:${rule.id}`,
-		});
+		for (const from of await resolveSource(rule.source, context)) {
+			written.push({
+				chain: rule.chain,
+				action: rule.action,
+				protocol: rule.protocol,
+				port: rule.port,
+				from,
+				comment: rule.comment || "Custom rule",
+				origin: `user:${rule.id}`,
+			});
+		}
 	}
 
-	return rules;
+	// Both ufw and the managed chain stop at the first rule that matches, so
+	// the rules you wrote go first, lowest priority number first. That is what
+	// lets a deny of yours override an allow that was derived.
+	return [...written, ...rules];
 };
 
 /**
@@ -245,25 +295,30 @@ export const wouldLockOut = (
 	rules: CompiledRule[],
 	context: CompileContext,
 ) => {
-	const ssh = rules.filter(
-		(rule) =>
+	const address = context.controlAddress;
+	// Without a known address, the mesh range stands in for where Dokploy is.
+	const origin = address ?? context.meshSubnet;
+	const covers = (rule: CompiledRule) =>
+		rule.from === "any" || (!!origin && cidrContains(rule.from, origin));
+	const [low, high] = [String(context.sshPort), String(context.sshPort)];
+	const onSsh = (rule: CompiledRule) => {
+		const [start, end] = rule.port.split(":");
+		return (
 			rule.chain === "input" &&
 			rule.protocol === "tcp" &&
-			(rule.port === String(context.sshPort) ||
-				rule.port.includes(`${context.sshPort}`)) &&
-			rule.action !== "deny" &&
-			rule.action !== "reject",
-	);
-	if (ssh.length === 0)
-		return "No rule allows SSH; that would lock Dokploy out";
-	const address = context.controlAddress;
-	const reachable = ssh.some(
-		(rule) =>
-			rule.from === "any" ||
-			(context.meshSubnet && rule.from === context.meshSubnet) ||
-			(address && rule.from === address),
-	);
-	return reachable
-		? null
-		: "No SSH rule covers the address Dokploy connects from";
+			Number(start) <= Number(low) &&
+			Number(end ?? start) >= Number(high)
+		);
+	};
+	// First match wins on the server, so it has to win here too: an allow
+	// further down does not help once a deny above it has caught Dokploy.
+	const first = rules.find((rule) => onSsh(rule) && covers(rule));
+	if (!first) {
+		return rules.some(onSsh)
+			? "No SSH rule covers the address Dokploy connects from"
+			: "No rule allows SSH; that would lock Dokploy out";
+	}
+	return first.action === "deny" || first.action === "reject"
+		? "A rule blocks SSH from the address Dokploy connects from before any rule allows it"
+		: null;
 };

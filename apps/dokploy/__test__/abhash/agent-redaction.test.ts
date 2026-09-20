@@ -63,3 +63,30 @@ describe("key policy patterns", () => {
 		expect(matchesPattern("project.all", "project.allDeep")).toBe(false);
 	});
 });
+
+describe("fields that hold a reference, or the secret itself", () => {
+	it("shows a reference and masks a literal", () => {
+		const out = redactForActor(
+			{
+				webhooks: [
+					{ name: "a", secretRef: "${{secret.HOOK_KEY}}" },
+					{ name: "b", secretRef: "hunter2-hunter2" },
+				],
+				repository: { passwordRef: "plain-password", tokenRef: "" },
+			},
+			agent,
+		);
+		expect(out.webhooks[0]?.secretRef).toBe("${{secret.HOOK_KEY}}");
+		expect(out.webhooks[1]?.secretRef).toBe(MASK);
+		expect(out.repository.passwordRef).toBe(MASK);
+		expect(out.repository.tokenRef).toBe("");
+	});
+
+	it("does not take a reference with something stuck to it for one", () => {
+		const out = redactForActor(
+			{ secretRef: "${{secret.A}}-and-a-literal-tail" },
+			agent,
+		);
+		expect(out.secretRef).toBe(MASK);
+	});
+});

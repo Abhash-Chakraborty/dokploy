@@ -12,6 +12,10 @@ import {
 	redis,
 } from "../../../db/schema";
 import { execAsync } from "../../../utils/process/execAsync";
+import {
+	assertServiceInOrganization,
+	type OwnedServiceKind,
+} from "../ownership";
 import { execPooled } from "../ssh/pool";
 import { resolveSecretRefs } from "../vault/secrets";
 import { emitEvent } from "../webhooks";
@@ -189,6 +193,15 @@ export const resolveTarget = async (policy: PolicyRow) => {
 		},
 	};
 	const resolver = lookup[policy.targetKind];
+	if (resolver) {
+		// The router checks this when a policy is saved; checking again here
+		// covers rows that were written before it did.
+		await assertServiceInOrganization(
+			policy.organizationId,
+			policy.targetKind as OwnedServiceKind,
+			policy.target,
+		);
+	}
 	if (!resolver) {
 		// Volumes, paths and Dokploy itself carry their target inline.
 		return { appName: policy.target, path: policy.target };

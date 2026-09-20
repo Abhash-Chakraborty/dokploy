@@ -21,8 +21,10 @@ export const transferRouter = createTRPCRouter({
 		})
 		.input(apiTransferService)
 		.subscription(async function* ({ input, ctx, signal }) {
+			// A move always removes the source service, so it takes the right to
+			// delete one, not only the right to create and deploy.
 			await checkServicePermissionAndAccess(ctx, input.serviceId, {
-				service: ["create"],
+				service: ["create", "delete"],
 				deployment: ["create"],
 			});
 			if (input.targetServerId) {

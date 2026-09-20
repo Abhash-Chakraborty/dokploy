@@ -99,15 +99,20 @@ export const findTemplate = async (organizationId: string, id: string) => {
 const resolveVars = async (
 	organizationId: string,
 	vars: Record<string, string>,
+	redact: (value: string) => void,
 ) => {
 	const out: Record<string, string> = {};
 	for (const [name, value] of Object.entries(vars)) {
 		// Secrets are resolved into the run's vars file and never stored.
-		out[name] =
+		const resolved =
 			(await resolveSecretRefs(value, {
 				organizationId,
 				projectId: organizationId,
 			})) ?? value;
+		// Ansible prints variables in task output and in errors, so whatever
+		// came out of the vault is kept out of the log.
+		if (resolved !== value) redact(resolved);
+		out[name] = resolved;
 	}
 	return out;
 };
@@ -127,7 +132,7 @@ export const ansibleRunJob = defineJob({
 	destructive: (input) => input.checkMode === false,
 	timeoutMs: 45 * 60_000,
 	lock: (input) => ({ key: `ansible:${input.templateId}`, limit: 1 }),
-	run: async ({ input, log, signal }) => {
+	run: async ({ input, log, signal, redact }) => {
 		const { template, project } = await findTemplate(
 			input.organizationId,
 			input.templateId,
@@ -144,7 +149,11 @@ export const ansibleRunJob = defineJob({
 			files: project.files,
 			playbook: template.playbook,
 			hosts,
-			extraVars: await resolveVars(input.organizationId, template.extraVars),
+			extraVars: await resolveVars(
+				input.organizationId,
+				template.extraVars,
+				redact,
+			),
 			checkMode,
 			become: template.become,
 			forks: template.forks,

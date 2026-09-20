@@ -13,6 +13,10 @@ import {
 	setKeyPolicy,
 	updateAgent,
 } from "@dokploy/server/services/abhash/agents";
+import {
+	MASK,
+	maskUnlessReference,
+} from "@dokploy/server/services/abhash/agents/redact";
 import { enqueueJob } from "@dokploy/server/services/abhash/jobs";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
@@ -158,7 +162,9 @@ export const abhashAgentsRouter = createTRPCRouter({
 				ctx.session.activeOrganizationId,
 				input.keyId,
 				input.policy,
-			);
+			).catch((error) => {
+				throw asTrpc(error);
+			});
 			await audit(ctx, {
 				action: "update",
 				resourceType: "agent",
@@ -193,14 +199,20 @@ export const abhashAgentsRouter = createTRPCRouter({
 
 	/** Where Dokploy pushes events, so an agent does not have to poll. */
 	webhooks: createTRPCRouter({
-		list: adminProcedure.query(({ ctx }) =>
-			db.query.abhashWebhook.findMany({
+		// The signing secret is write-only: a reference is shown, a literal is
+		// masked for everyone, since nothing needs to read it back.
+		list: adminProcedure.query(async ({ ctx }) => {
+			const rows = await db.query.abhashWebhook.findMany({
 				where: eq(
 					abhashWebhook.organizationId,
 					ctx.session.activeOrganizationId,
 				),
-			}),
-		),
+			});
+			return rows.map((row) => ({
+				...row,
+				secretRef: maskUnlessReference(row.secretRef),
+			}));
+		}),
 
 		save: adminProcedure
 			.input(
@@ -216,10 +228,21 @@ export const abhashAgentsRouter = createTRPCRouter({
 			.mutation(async ({ ctx, input }) => {
 				const organizationId = ctx.session.activeOrganizationId;
 				const { id, ...values } = input;
+				// An edit that sends the mask back means "leave the secret alone".
+				const changes =
+					id && values.secretRef === MASK
+						? { ...values, secretRef: undefined }
+						: values;
+				if (!id && values.secretRef === MASK) {
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message: "A signing secret is required",
+					});
+				}
 				const [row] = id
 					? await db
 							.update(abhashWebhook)
-							.set(values)
+							.set(changes)
 							.where(
 								and(
 									eq(abhashWebhook.id, id),
@@ -232,6 +255,7 @@ export const abhashAgentsRouter = createTRPCRouter({
 							.values({ ...values, organizationId })
 							.returning();
 				if (!row) throw new TRPCError({ code: "NOT_FOUND" });
+				row.secretRef = maskUnlessReference(row.secretRef);
 				await audit(ctx, {
 					action: id ? "update" : "create",
 					resourceType: "notification",

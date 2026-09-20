@@ -156,6 +156,31 @@ export const setKeyPolicy = async (
 	keyId: string,
 	policy: KeyPolicyInput,
 ) => {
+	// A key id is only a claim: the key has to belong to an agent or a member
+	// of this organization before its restrictions can be rewritten.
+	const key = await db.query.apikey.findFirst({
+		where: eq(apikey.id, keyId),
+		columns: { referenceId: true },
+	});
+	const [agent, membership] = key
+		? await Promise.all([
+				db.query.abhashAgent.findFirst({
+					where: and(
+						eq(abhashAgent.organizationId, organizationId),
+						eq(abhashAgent.userId, key.referenceId),
+					),
+					columns: { id: true },
+				}),
+				db.query.member.findFirst({
+					where: and(
+						eq(member.organizationId, organizationId),
+						eq(member.userId, key.referenceId),
+					),
+					columns: { id: true },
+				}),
+			])
+		: [null, null];
+	if (!agent && !membership) throw new Error("Key not found");
 	await db
 		.insert(abhashApiKeyPolicy)
 		.values({ keyId, organizationId, ...policy })

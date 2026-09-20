@@ -6,6 +6,7 @@ import {
 	abhashServerMeta,
 	server,
 } from "../../../db/schema";
+import { tryAcquire } from "../jobs/locks";
 import { defineJob } from "../jobs/registry";
 import { closeConnection, execPooled } from "../ssh/pool";
 import { emitEvent } from "../webhooks";
@@ -192,6 +193,34 @@ export const checkDrift = async (serverId: string, organizationId: string) => {
 	return { drift, live, expected: plan.rendered.hash };
 };
 
+const LOCK_WAIT_MS = 15 * 60_000;
+
+/** Two applies racing on one server would each disarm the other's rollback. */
+const withServerLock = async <T>(
+	serverId: string,
+	signal: AbortSignal,
+	run: () => Promise<T>,
+): Promise<T> => {
+	const deadline = Date.now() + LOCK_WAIT_MS;
+	for (;;) {
+		const lease = await tryAcquire(`firewall:${serverId}`, 1);
+		if (lease) {
+			try {
+				return await run();
+			} finally {
+				await lease.release();
+			}
+		}
+		if (signal.aborted) throw new Error("Cancelled");
+		if (Date.now() > deadline) {
+			throw new Error(
+				"Another firewall change is still running on this server",
+			);
+		}
+		await new Promise((resolve) => setTimeout(resolve, 3_000));
+	}
+};
+
 export const firewallApplyJob = defineJob({
 	type: "firewall.apply",
 	queue: "abhash-infra",
@@ -202,13 +231,16 @@ export const firewallApplyJob = defineJob({
 	title: (input) => `Apply the firewall to ${input.serverIds.length} server(s)`,
 	destructive: true,
 	timeoutMs: 30 * 60_000,
-	lock: (input) => ({ key: `firewall:${input.serverIds[0]}`, limit: 1 }),
-	run: async ({ input, log, progress }) => {
+	// One lock per server, taken as each is reached: a job-level lock can
+	// only name one key, which left every server but the first unguarded.
+	run: async ({ input, log, progress, signal }) => {
 		const results: Record<string, string> = {};
 		let done = 0;
 		for (const serverId of input.serverIds) {
 			try {
-				const result = await applyFirewall(serverId, input.organizationId, log);
+				const result = await withServerLock(serverId, signal, () =>
+					applyFirewall(serverId, input.organizationId, log),
+				);
 				results[serverId] = `applied ${result.hash}`;
 			} catch (error) {
 				const message = error instanceof Error ? error.message : String(error);

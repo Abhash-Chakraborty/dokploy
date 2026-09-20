@@ -489,6 +489,23 @@ and the schema files whose credential columns now use `credentialText`
 `bitbucket`, `ai`, `cloudflare-tunnel`, `certificate`, `web-server-settings`,
 `security`, the database types, `notification`, `vault-provider`).
 
+### What an upgrade switches on
+Nothing runs by itself after an upgrade, but not everything is behind a
+switch, so to be exact:
+
+- **Behind a flag, off by default** (`abhash_settings`): RBAC v2, SSO, SCIM,
+  the job engine, the vault, pooled SSH, credential encryption.
+- **Gated by the job engine.** Fleet commands, Ansible, firewall applies,
+  backups, drills and recovery all run as jobs, so with the engine off they
+  can be configured but never execute.
+- **Admin-only and inert until used.** The mesh, firewall rules, backup
+  policies and managed services have no switch of their own. They do nothing
+  until an admin creates one. They are self-hosted features and are not
+  meant for Dokploy Cloud.
+
+Every id a client sends (server, database, repository, API key) is checked
+against the caller's organization on the server, not in the menu.
+
 ### Migrations
 Fork migrations run automatically on startup and are idempotent, so a
 database that already applied one under an earlier number re-applies it as a
@@ -500,4 +517,5 @@ no-op: `0197`-`0199` (auth methods, log drains, Cloudflare tunnels),
 server metadata), `0209` (mesh providers and server peers), `0210` (firewall policies, rules
 and per-server state), `0211` (backup repositories, policies, runs and
 drills), `0212` (event webhooks), `0213` (managed services), `0214` (WAL
-archiving on backup policies).
+archiving on backup policies), `0215` (switches off firewall rules whose
+source was stored unreadably).

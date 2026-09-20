@@ -29,6 +29,16 @@ const SECRET_KEYS = new Set([
 	"webhookUrl",
 ]);
 
+/**
+ * Fields meant to hold a `${{secret.NAME}}` reference, which is safe to show.
+ * They also accept a literal, and a literal is the secret itself.
+ */
+const REFERENCE_KEYS = new Set(["passwordRef", "secretRef", "tokenRef"]);
+const PURE_REFERENCE = /^\$\{\{secret\.[A-Za-z0-9_]+\}\}$/;
+
+export const maskUnlessReference = (value: string) =>
+	!value || PURE_REFERENCE.test(value.trim()) ? value : MASK;
+
 /** Keys holding `KEY=value` text, where the names stay but values go. */
 const ENV_KEYS = new Set([
 	"env",
@@ -62,6 +72,9 @@ export const maskEnvText = (text: string) =>
 const redactValue = (value: unknown, key: string, depth: number): unknown => {
 	if (value === null || value === undefined) return value;
 	if (ENV_KEYS.has(key) && typeof value === "string") return maskEnvText(value);
+	if (REFERENCE_KEYS.has(key) && typeof value === "string") {
+		return maskUnlessReference(value);
+	}
 	if (SECRET_KEYS.has(key)) {
 		if (typeof value === "string") return value ? MASK : value;
 		if (value && typeof value === "object") return MASK;

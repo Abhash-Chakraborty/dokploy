@@ -25,13 +25,16 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      # Image names must be lowercase, and the owner's login is not.
+      - id: image
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/dokploy-ansible-runner" >> "$GITHUB_OUTPUT"
       - uses: docker/build-push-action@v6
         with:
           context: docker/abhash-ansible-runner
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/dokploy-ansible-runner:2.19.3
-            ghcr.io/${{ github.repository_owner }}/dokploy-ansible-runner:latest
+            ${{ steps.image.outputs.name }}:2.19.3
+            ${{ steps.image.outputs.name }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max

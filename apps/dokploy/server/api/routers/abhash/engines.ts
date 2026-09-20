@@ -15,8 +15,9 @@ import {
 	POSTGRES_FLAVOURS,
 	updateManagedService,
 } from "@dokploy/server/services/abhash/engines";
+import { assertServiceInOrganization } from "@dokploy/server/services/abhash/ownership";
 import { TRPCError } from "@trpc/server";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { audit } from "@/server/api/utils/audit";
 import { adminProcedure, createTRPCRouter } from "../../trpc";
@@ -28,6 +29,25 @@ const asTrpc = (error: unknown) =>
 	});
 
 const sqlEngine = z.enum(["postgres", "mysql", "mariadb"]);
+
+/**
+ * Every database tool names a service by id. The id is checked against the
+ * caller's organization before any of them runs, so none can forget to.
+ */
+const sqlToolProcedure = adminProcedure
+	.input(
+		z.object({ serviceId: z.string(), engine: sqlEngine.default("postgres") }),
+	)
+	.use(async ({ ctx, input, next }) => {
+		await assertServiceInOrganization(
+			ctx.session.activeOrganizationId,
+			input.engine,
+			input.serviceId,
+		).catch((error) => {
+			throw asTrpc(error);
+		});
+		return next();
+	});
 const configInput = z.record(
 	z.string(),
 	z.union([z.string(), z.number(), z.boolean()]),
@@ -137,13 +157,21 @@ export const abhashEnginesRouter = createTRPCRouter({
 			// project page, like any other compose service.
 			await db
 				.delete(abhashManagedService)
-				.where(eq(abhashManagedService.id, input.id));
+				.where(
+					and(
+						eq(abhashManagedService.id, input.id),
+						eq(
+							abhashManagedService.organizationId,
+							ctx.session.activeOrganizationId,
+						),
+					),
+				);
 			return true;
 		}),
 
 	/** Users, databases and extensions on a database Dokploy already runs. */
 	tools: createTRPCRouter({
-		overview: adminProcedure
+		overview: sqlToolProcedure
 			.input(z.object({ engine: sqlEngine, serviceId: z.string() }))
 			.query(async ({ input }) => {
 				try {
@@ -161,7 +189,7 @@ export const abhashEnginesRouter = createTRPCRouter({
 				}
 			}),
 
-		createDatabase: adminProcedure
+		createDatabase: sqlToolProcedure
 			.input(
 				z.object({
 					engine: sqlEngine,
@@ -184,7 +212,7 @@ export const abhashEnginesRouter = createTRPCRouter({
 				return true;
 			}),
 
-		createUser: adminProcedure
+		createUser: sqlToolProcedure
 			.input(
 				z.object({
 					engine: sqlEngine,
@@ -219,7 +247,7 @@ export const abhashEnginesRouter = createTRPCRouter({
 				return { username: input.username, password };
 			}),
 
-		dropUser: adminProcedure
+		dropUser: sqlToolProcedure
 			.input(
 				z.object({
 					engine: sqlEngine,
@@ -242,7 +270,7 @@ export const abhashEnginesRouter = createTRPCRouter({
 				return true;
 			}),
 
-		enableExtension: adminProcedure
+		enableExtension: sqlToolProcedure
 			.input(
 				z.object({
 					serviceId: z.string(),
