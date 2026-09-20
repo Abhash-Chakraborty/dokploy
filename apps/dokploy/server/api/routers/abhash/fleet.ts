@@ -134,69 +134,105 @@ export const abhashFleetRouter = createTRPCRouter({
 			return { jobId: job.id };
 		}),
 
-	/** Bootstrap, patch, clean up or run a command; all of them are jobs. */
+	/**
+	 * Bootstrap, patch, clean up or run a command; all of them are jobs.
+	 * One flat input, because the OpenAPI generator only understands a
+	 * plain object; the fields each action needs are checked here.
+	 */
 	run: adminProcedure
 		.input(
-			z.discriminatedUnion("action", [
-				z.object({
-					action: z.literal("bootstrap"),
-					serverId: z.string(),
-					baseline: z.boolean().default(true),
-					hardenSsh: z.boolean().default(true),
-					installDocker: z.boolean().default(true),
-				}),
-				z.object({
-					action: z.literal("exec"),
-					serverIds: z.array(z.string()).min(1),
-					command: z.string().min(1).max(8_000),
-					mode: z.enum(["parallel", "rolling", "serial"]).default("rolling"),
-					batchSize: z.number().int().min(1).max(50).default(5),
-					stopOnFailure: z.boolean().default(true),
-				}),
-				z.object({
-					action: z.literal("patch"),
-					serverIds: z.array(z.string()).min(1),
-					batchSize: z.number().int().min(1).max(20).default(1),
-					reboot: z.boolean().default(true),
-				}),
-				z.object({
-					action: z.literal("cleanup"),
-					serverIds: z.array(z.string()).min(1),
-					olderThanHours: z.number().int().min(1).max(8760).default(168),
-					pruneVolumes: z.boolean().default(false),
-				}),
-			]),
+			z.object({
+				action: z.enum(["bootstrap", "exec", "patch", "cleanup"]),
+				serverId: z.string().optional(),
+				serverIds: z.array(z.string()).optional(),
+				command: z.string().max(8_000).optional(),
+				mode: z
+					.enum(["parallel", "rolling", "serial"])
+					.default("rolling")
+					.optional(),
+				batchSize: z.number().int().min(1).max(50).optional(),
+				stopOnFailure: z.boolean().optional(),
+				baseline: z.boolean().optional(),
+				hardenSsh: z.boolean().optional(),
+				installDocker: z.boolean().optional(),
+				reboot: z.boolean().optional(),
+				olderThanHours: z.number().int().min(1).max(8760).optional(),
+				pruneVolumes: z.boolean().optional(),
+			}),
 		)
 		.mutation(async ({ ctx, input }) => {
 			const organizationId = ctx.session.activeOrganizationId;
 			const { action, ...rest } = input;
 			const ids =
-				"serverIds" in rest
-					? rest.serverIds
-					: [(rest as { serverId: string }).serverId];
+				action === "bootstrap"
+					? input.serverId
+						? [input.serverId]
+						: []
+					: (input.serverIds ?? []);
+			if (ids.length === 0) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message:
+						action === "bootstrap"
+							? "serverId is required"
+							: "serverIds is required",
+				});
+			}
+			if (action === "exec" && !input.command) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "command is required",
+				});
+			}
 			for (const id of ids) await ownServer(organizationId, id);
-			const type = `fleet.${action}` as const;
+			const payload =
+				action === "bootstrap"
+					? {
+							organizationId,
+							serverId: ids[0],
+							baseline: rest.baseline ?? true,
+							hardenSsh: rest.hardenSsh ?? true,
+							installDocker: rest.installDocker ?? true,
+						}
+					: action === "exec"
+						? {
+								organizationId,
+								serverIds: ids,
+								command: rest.command,
+								mode: rest.mode ?? "rolling",
+								batchSize: rest.batchSize ?? 5,
+								stopOnFailure: rest.stopOnFailure ?? true,
+							}
+						: action === "patch"
+							? {
+									organizationId,
+									serverIds: ids,
+									batchSize: rest.batchSize ?? 1,
+									reboot: rest.reboot ?? true,
+								}
+							: {
+									organizationId,
+									serverIds: ids,
+									olderThanHours: rest.olderThanHours ?? 168,
+									pruneVolumes: rest.pruneVolumes ?? false,
+								};
 			try {
-				const queued = await enqueueJobForActor(
-					type,
-					{ organizationId, ...rest },
-					{
-						actor: ctx.actor ?? {
-							type: "user",
-							id: ctx.user.id,
-							name: ctx.user.email,
-						},
-						organizationId,
+				const queued = await enqueueJobForActor(`fleet.${action}`, payload, {
+					actor: ctx.actor ?? {
+						type: "user",
+						id: ctx.user.id,
+						name: ctx.user.email,
 					},
-				);
+					organizationId,
+				});
 				await audit(ctx, {
 					action: "run",
 					resourceType: "server",
-					resourceName: type,
+					resourceName: `fleet.${action}`,
 					metadata: {
 						servers: ids.length,
 						approval: !!queued.approval,
-						...("command" in rest ? { command: rest.command } : {}),
+						...(input.command ? { command: input.command } : {}),
 					},
 				});
 				return {
