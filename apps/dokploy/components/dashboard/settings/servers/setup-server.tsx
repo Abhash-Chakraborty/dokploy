@@ -36,9 +36,15 @@ import { ValidateServer } from "./validate-server";
 interface Props {
 	serverId: string;
 	asButton?: boolean;
+	/** Docker and Swarm are already up, so this is a re-run, not a to-do. */
+	alreadyProvisioned?: boolean;
 }
 
-export const SetupServer = ({ serverId, asButton = false }: Props) => {
+export const SetupServer = ({
+	serverId,
+	asButton = false,
+	alreadyProvisioned = false,
+}: Props) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const { data: server } = api.server.one.useQuery(
 		{
@@ -95,7 +101,8 @@ export const SetupServer = ({ serverId, asButton = false }: Props) => {
 						setIsOpen(true);
 					}}
 				>
-					Setup Server <Settings className="size-4" />
+					{alreadyProvisioned ? "Re-run setup" : "Setup Server"}{" "}
+					<Settings className="size-4" />
 				</Button>
 			)}
 			<DialogContent className="sm:max-w-4xl  ">

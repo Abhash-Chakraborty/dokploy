@@ -43,6 +43,15 @@ export const ShowServers = () => {
 	const { data: canCreateMoreServers } =
 		api.stripe.canCreateMoreServers.useQuery();
 	const { data: permissions } = api.user.getPermissions.useQuery();
+	// Stored facts, refreshed on a schedule, so this costs no SSH round trip.
+	// Members cannot read them, hence retry: false and the optional handling.
+	const { data: fleet } = api.fleet.list.useQuery(undefined, { retry: false });
+	const provisioned = new Map<string, boolean>(
+		(fleet?.servers ?? []).map((row) => [
+			row.serverId,
+			!!row.meta?.facts?.dockerVersion && row.meta?.facts?.swarm === "active",
+		]),
+	);
 
 	return (
 		<PageContainer>
@@ -227,6 +236,10 @@ export const ShowServers = () => {
 																			<TooltipTrigger asChild>
 																				<SetupServer
 																					serverId={server.serverId}
+																					alreadyProvisioned={
+																						provisioned.get(server.serverId) ??
+																						false
+																					}
 																				/>
 																			</TooltipTrigger>
 																			<TooltipContent
@@ -235,12 +248,14 @@ export const ShowServers = () => {
 																			>
 																				<div className="space-y-1">
 																					<p className="font-semibold">
-																						Setup Server
+																						{provisioned.get(server.serverId)
+																							? "Re-run setup"
+																							: "Setup Server"}
 																					</p>
 																					<p className="text-xs text-muted-foreground">
-																						Configure and initialize your server
-																						with Docker, Traefik, and other
-																						essential services
+																						{provisioned.get(server.serverId)
+																							? "Docker and Swarm are already up on this server. Re-running is safe but nothing here is outstanding."
+																							: "Configure and initialize your server with Docker, Traefik, and other essential services"}
 																					</p>
 																				</div>
 																			</TooltipContent>

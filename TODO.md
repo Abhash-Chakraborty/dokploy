@@ -26,8 +26,21 @@ repo or in the production database; the rest still need investigation.
 - Secure network can scan the servers and report the mesh they are already on
   (5.1, detection half).
 
-Still open below: the two merges, firewall adoption, Setup Server, the fleet
-warning links and capacity figures, SCIM, and running baseline for real.
+### Second batch
+
+- Secrets and Backups are each one page with two tabs now (2.1, 2.4). The old
+  URLs redirect to the matching tab, and each tab carries the permission gate
+  its old nav entry had.
+- Adding a repository can start from an S3 destination (2.2).
+- Setup Server reads as "Re-run setup" once Docker and Swarm are up (2.6).
+- **Capacity figures are correct** (part of 2.7). `getconf _NPROCESSORS_ONLN`
+  matches `nproc` and `lscpu`, and the memory percentage matches `free`. The
+  stored facts read 2 vCPU and 954 MB, which is what an Oracle free-tier micro
+  instance actually is: one OCPU is two vCPUs, and 954 MB is a gigabyte less
+  what the kernel reserves. Nothing to fix here.
+
+Still open: firewall adoption, the fleet warning links into Command centre,
+SCIM, members and roles, and running baseline for real.
 
 ## 1. Bugs that block something today
 
