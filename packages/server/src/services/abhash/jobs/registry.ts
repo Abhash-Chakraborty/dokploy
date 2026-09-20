@@ -43,9 +43,11 @@ export interface JobDefinition<I = unknown> {
 	timeoutMs?: number;
 	/**
 	 * For jobs that run every few minutes: a scheduled run that succeeds
-	 * leaves no history behind. Failures are always kept.
+	 * leaves no history behind. Failures are always kept. A predicate lets a
+	 * run that did find something, such as firewall drift, keep its history
+	 * while the quiet runs are discarded.
 	 */
-	ephemeral?: boolean;
+	ephemeral?: boolean | ((result: unknown, input: I) => boolean);
 	run: (ctx: JobContext<I>) => Promise<unknown>;
 }
 

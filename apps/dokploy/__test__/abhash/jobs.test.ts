@@ -60,3 +60,45 @@ describe("job registry", () => {
 		expect(getJobDefinition("test.missing")).toBeUndefined();
 	});
 });
+
+describe("ephemeral scheduled runs", () => {
+	// Mirrors the branch in worker.ts that decides whether a finished run keeps
+	// its row and log file.
+	const discardable = <I>(
+		definition: {
+			ephemeral?: boolean | ((result: unknown, input: I) => boolean);
+		},
+		result: unknown,
+		input: I,
+	) =>
+		typeof definition.ephemeral === "function"
+			? definition.ephemeral(result, input)
+			: definition.ephemeral === true;
+
+	it("keeps history for a job that does not opt in", () => {
+		expect(discardable({}, { ok: true }, {})).toBe(false);
+	});
+
+	it("discards a quiet run when the flag is set outright", () => {
+		expect(discardable({ ephemeral: true }, { ok: true }, {})).toBe(true);
+	});
+
+	it("keeps a drift check that actually found drift", () => {
+		const definition = {
+			ephemeral: (result: unknown) =>
+				((result as { drifted?: string[] } | null)?.drifted?.length ?? 0) === 0,
+		};
+		expect(discardable(definition, { checked: 3, drifted: [] }, {})).toBe(true);
+		expect(discardable(definition, { checked: 3, drifted: ["a"] }, {})).toBe(
+			false,
+		);
+	});
+
+	it("treats a missing result as nothing worth keeping", () => {
+		const definition = {
+			ephemeral: (result: unknown) =>
+				((result as { drifted?: string[] } | null)?.drifted?.length ?? 0) === 0,
+		};
+		expect(discardable(definition, null, {})).toBe(true);
+	});
+});

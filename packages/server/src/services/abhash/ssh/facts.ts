@@ -129,6 +129,9 @@ export const collectFactsJob = defineJob({
 	input: z.object({ organizationId: z.string().optional() }),
 	title: () => "Collect server facts",
 	timeoutMs: 5 * 60_000,
+	// Runs on a schedule all day. Keeping a row and a log file per run buries
+	// real work in the activity list and grows without bound; failures persist.
+	ephemeral: true,
 	run: async ({ input, log }) => {
 		const servers = await db.query.server.findMany({
 			where: input.organizationId
