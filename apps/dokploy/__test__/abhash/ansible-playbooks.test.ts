@@ -34,7 +34,7 @@ describe("baseline", () => {
 
 	it("repairs a half-configured package state before installing anything", () => {
 		const repair = names.findIndex((n) => n?.includes("half-configured"));
-		const install = names.findIndex((n) => n === "Install the basics");
+		const install = names.indexOf("Install the basics");
 		expect(repair).toBeGreaterThanOrEqual(0);
 		expect(install).toBeGreaterThanOrEqual(0);
 		expect(repair).toBeLessThan(install);
