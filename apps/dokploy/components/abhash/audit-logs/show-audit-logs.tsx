@@ -60,12 +60,18 @@ const RESOURCE_OPTIONS = [
 	"compose",
 ] as const;
 
+// Every action the audit log actually records maps to one of the translucent
+// variants; the grey fallback is for a type added later that nobody has
+// classified yet.
 const actionVariant = (action: string) => {
 	if (["delete", "cancel", "stop"].includes(action)) return "red";
-	if (["deploy", "redeploy", "start", "run", "restore"].includes(action)) {
+	if (
+		["create", "deploy", "redeploy", "start", "run", "restore"].includes(action)
+	) {
 		return "green";
 	}
 	if (["update", "move", "reload", "rebuild"].includes(action)) return "blue";
+	if (["login", "logout"].includes(action)) return "orange";
 	return "blank";
 };
 
@@ -308,7 +314,10 @@ export const ShowAbhashAuditLogs = () => {
 												</div>
 											</TableCell>
 											<TableCell>
-												<Badge variant={actionVariant(row.action)}>
+												<Badge
+													variant={actionVariant(row.action)}
+													className="h-auto px-1.5 py-0.5 capitalize"
+												>
 													{row.action}
 												</Badge>
 											</TableCell>
