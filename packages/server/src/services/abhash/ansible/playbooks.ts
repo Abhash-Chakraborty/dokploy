@@ -15,9 +15,33 @@ const BASELINE = `- name: Dokploy server baseline
     dokploy_ssh_port: 22
     dokploy_tune_kernel: true
   tasks:
+    # One half-configured package fails every later apt transaction, including
+    # ones that have nothing to do with it, and the error names whatever was
+    # being installed at the time rather than the package actually at fault.
+    # On a healthy host this does nothing.
+    - name: Repair a half-configured package state
+      ansible.builtin.command: dpkg --configure -a
+      register: dokploy_dpkg_repair
+      changed_when: dokploy_dpkg_repair.stdout | trim | length > 0
+      failed_when: false
+      when:
+        - dokploy_install_packages | bool
+        - ansible_os_family == "Debian"
+
+    - name: Report what the repair fixed
+      ansible.builtin.debug:
+        msg: "{{ dokploy_dpkg_repair.stdout_lines | default([]) }}"
+      when:
+        - dokploy_install_packages | bool
+        - ansible_os_family == "Debian"
+        - dokploy_dpkg_repair.stdout | default("") | trim | length > 0
+
     - name: Install the basics
       ansible.builtin.package:
         name:
+          # apt-utils first, or debconf defers every package's configuration
+          # and says so on each run.
+          - apt-utils
           - curl
           - ca-certificates
           - unattended-upgrades
