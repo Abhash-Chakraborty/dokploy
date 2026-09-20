@@ -490,20 +490,12 @@ const MENU: Menu = {
 					isEnabled: ({ permissions }) => !!permissions?.sshKeys.read,
 				},
 				{
-					title: "Vault",
+					title: "Secrets",
 					url: "/dashboard/settings/vault",
 					description:
-						"Dokploy's own encrypted store, used as ${{secret.NAME}}.",
+						"Dokploy's own encrypted store, plus any external secret manager you connect.",
 					icon: Lock,
 					isEnabled: ({ isCloud }) => !isCloud,
-				},
-				{
-					title: "Secret providers",
-					url: "/dashboard/settings/secrets",
-					description:
-						"Resolve the same ${{secret.NAME}} references from an external manager.",
-					icon: Cloud,
-					isEnabled: ({ permissions }) => !!permissions?.vaultProvider.read,
 				},
 				{
 					title: "S3 destinations",
@@ -528,20 +520,12 @@ const MENU: Menu = {
 					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
 				},
 				{
-					title: "Backups and drills",
+					title: "Backups",
 					url: "/dashboard/settings/backup-health",
 					description:
-						"Encrypted restic snapshots, and drills that prove a restore works.",
+						"Restic repositories with restore drills, and the older per-service jobs.",
 					icon: DatabaseBackup,
 					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
-				},
-				{
-					title: "Backups (legacy)",
-					url: "/dashboard/settings/backups",
-					description:
-						"The older per-service backup jobs that write straight to S3.",
-					icon: Database,
-					isEnabled: ({ permissions }) => !!permissions?.backup?.read,
 				},
 				{
 					title: "Notifications",

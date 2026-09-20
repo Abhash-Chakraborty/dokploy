@@ -574,7 +574,7 @@ const CredentialEncryption = () => {
 	);
 };
 
-export const VaultSettings = () => {
+export const VaultSettings = ({ embedded = false }: { embedded?: boolean }) => {
 	const utils = api.useUtils();
 	const { data: me } = api.user.get.useQuery();
 	const { data: status } = api.vault.status.useQuery();
@@ -590,8 +590,9 @@ export const VaultSettings = () => {
 	return (
 		<section className="flex flex-col gap-4">
 			<PageHeader
-				icon={<KeyRound className="size-5" />}
-				title="Vault"
+				icon={embedded ? undefined : <KeyRound className="size-5" />}
+				// Inside the Secrets tabs the tab label is the heading already.
+				title={embedded ? "" : "Vault"}
 				description={
 					<>
 						Secrets used by name — <code>{"${{secret.NAME}}"}</code> — and read

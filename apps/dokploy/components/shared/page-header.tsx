@@ -49,9 +49,11 @@ export const PageHeader = ({
 			<div className="flex items-center gap-3 min-w-0">
 				{icon && <span className="shrink-0 text-muted-foreground">{icon}</span>}
 				<div className="min-w-0">
-					<h1 className="text-xl font-semibold tracking-tight truncate">
-						{title}
-					</h1>
+					{title ? (
+						<h1 className="text-xl font-semibold tracking-tight truncate">
+							{title}
+						</h1>
+					) : null}
 					{description && (
 						<p className="text-sm text-muted-foreground">{description}</p>
 					)}
