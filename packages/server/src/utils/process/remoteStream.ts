@@ -106,10 +106,19 @@ export const pipeBetweenServers = async ({
 		bytes += chunk.length;
 		onProgress?.(bytes);
 	});
+	// A target that exits early leaves a broken pipe behind. Unpipe and drain
+	// the source: otherwise its stdout stays paused mid-buffer, never reaches
+	// EOF, and the process close event that `exit` waits on never fires.
+	const releaseSource = () => {
+		from.stdout.unpipe(to.stdin);
+		from.stdout.resume();
+		from.close();
+	};
+	to.stdin.on("error", releaseSource);
 	from.stdout.pipe(to.stdin);
 
 	const targetExit = to.exit.then((code) => {
-		if (code !== 0) from.close();
+		if (code !== 0) releaseSource();
 		return code;
 	});
 

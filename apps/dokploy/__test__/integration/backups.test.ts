@@ -46,11 +46,15 @@ beforeAll(async () => {
 	docker(
 		`run -d --name ${appName} --label com.docker.swarm.service.name=${appName} -e POSTGRES_PASSWORD=source -e POSTGRES_USER=app -e POSTGRES_DB=appdb postgres:16-alpine`,
 	);
-	for (let attempt = 0; attempt < 60; attempt++) {
+	// The image initialises behind a temporary server that pg_isready happily
+	// answers for, so it reports ready and then shuts down under us. Wait for a
+	// query to actually succeed instead.
+	for (let attempt = 0; ; attempt++) {
 		try {
-			docker(`exec ${appName} pg_isready -U app -d appdb`);
+			docker(`exec ${appName} psql -U app -d appdb -c "select 1"`);
 			break;
-		} catch {
+		} catch (error) {
+			if (attempt === 59) throw error;
 			await new Promise((resolve) => setTimeout(resolve, 2000));
 		}
 	}

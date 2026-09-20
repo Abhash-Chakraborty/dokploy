@@ -49,6 +49,20 @@ describe("pipeBetweenServers", () => {
 		).rejects.toThrow("target exited with code 3: boom");
 	});
 
+	// The target exiting before the source has flushed used to strand the
+	// source's stdout paused behind a broken pipe, so the call never settled.
+	// It reproduced in roughly one run in a hundred, hence the loop.
+	it("settles every time the target dies first", async () => {
+		for (let i = 0; i < 200; i++) {
+			await expect(
+				pipeBetweenServers({
+					source: { serverId: null, command: "printf x" },
+					target: { serverId: null, command: "echo boom >&2; exit 3" },
+				}),
+			).rejects.toThrow("target exited with code 3");
+		}
+	}, 120_000);
+
 	it("reports a source failure", async () => {
 		await expect(
 			pipeBetweenServers({

@@ -17,9 +17,15 @@ import { z } from "zod";
 
 process.env.ABHASH_JOBS_PREFIX = `abhash-test-${process.pid}`;
 
-if (!process.env.REDIS_URL?.startsWith("redis://127.0.0.1:")) {
+// Pointing these at anything but a throwaway Redis would flush someone's real
+// queues, so a non-loopback URL is refused outright. With no URL at all there
+// is nothing to talk to and the suite skips, as the other integration suites do
+// when their dependencies are absent.
+const redisUrl = process.env.REDIS_URL;
+if (redisUrl && !redisUrl.startsWith("redis://127.0.0.1:")) {
 	throw new Error("REDIS_URL must point at the loopback sandbox Redis");
 }
+const live = redisUrl ? describe : describe.skip;
 
 const actor = { type: "system" as const, name: "integration-test" };
 
@@ -75,7 +81,7 @@ defineJob({
 	},
 });
 
-describe("job engine", () => {
+live("job engine", () => {
 	beforeAll(async () => {
 		await startJobWorkers();
 	});
