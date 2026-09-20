@@ -3,6 +3,32 @@
 Raised 2026-09-20. Items marked **verified** have a confirmed root cause in this
 repo or in the production database; the rest still need investigation.
 
+## Done on `fix/sso-linking-and-ansible-key`
+
+- SSO account linking (1.1) and the Ansible key format (1.2). The two failed
+  Command centre jobs, `fleet.bootstrap` and `fleet.patch`, were both the key
+  bug; their logs carry the same libcrypto error.
+- The credential form flashing on reload (1.3).
+- Routine jobs no longer keep a row and a log file per run, and fact collection
+  moved from every five minutes to every fifteen.
+- Activity sheet spacing, with self-test on the title row.
+- Terminal no longer clips its bottom rows.
+- "My account" is no longer shouted.
+- Invitations explain the missing email provider instead of showing an empty
+  select, and preselect the only one when there is exactly one.
+- Every settings page carries a hover description, so 2.3 and 2.4 are legible
+  without opening both pages. The merges themselves are still open.
+- Every audit action has a translucent badge; `create`, `login` and `logout`
+  were falling through to grey.
+- Command centre keeps the settings nav open (2.5).
+- The card-in-a-card box is gone from all twenty-three pages that had it.
+- The builds page swapped its permanent yellow block for a hover note.
+- Secure network can scan the servers and report the mesh they are already on
+  (5.1, detection half).
+
+Still open below: the two merges, firewall adoption, Setup Server, the fleet
+warning links and capacity figures, SCIM, and running baseline for real.
+
 ## 1. Bugs that block something today
 
 ### 1.1 SSO account linking never works — **verified**
