@@ -5,15 +5,9 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { DialogAction } from "@/components/shared/dialog-action";
+import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
 import {
 	Dialog,
 	DialogContent,
@@ -205,149 +199,138 @@ export const ShowCloudflareTunnels = () => {
 	};
 
 	return (
-		<Card className="h-full bg-sidebar p-2.5 rounded-xl w-full">
-			<div className="rounded-xl bg-background shadow-md">
-				<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
-					<div className="flex flex-col gap-1.5">
-						<CardTitle className="text-xl flex flex-row gap-2">
-							<Cloud className="size-6 text-muted-foreground self-center" />
-							Cloudflare Tunnels
-						</CardTitle>
-						<CardDescription>
-							Serve a host that has no public IP and no open inbound ports. The
-							connector dials out to Cloudflare's edge.
-						</CardDescription>
+		<PageContainer>
+			<PageHeader
+				title="Cloudflare tunnels"
+				description="Serve a host that has no public IP and no open inbound ports. The connector dials out to Cloudflare's edge."
+				icon={<Cloud className="size-5" />}
+				actions={<AddTunnel onDone={() => refetch()} />}
+			/>
+			<div>
+				{isPending ? (
+					<div className="flex min-h-[20vh] flex-row items-center justify-center gap-2 text-sm text-muted-foreground">
+						<span>Loading…</span>
+						<Loader2 className="size-4 animate-spin" />
 					</div>
-					<AddTunnel onDone={() => refetch()} />
-				</CardHeader>
-				<CardContent className="py-6 border-t">
-					{isPending ? (
-						<div className="flex min-h-[20vh] flex-row items-center justify-center gap-2 text-sm text-muted-foreground">
-							<span>Loading…</span>
-							<Loader2 className="size-4 animate-spin" />
-						</div>
-					) : !tunnels || tunnels.length === 0 ? (
-						<div className="flex min-h-[20vh] flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-8 text-center">
-							<Cloud className="size-8 text-muted-foreground" />
-							<span className="text-base font-medium">No tunnels yet</span>
-							<span className="max-w-md text-sm text-muted-foreground">
-								Useful for homelab and behind-NAT hosts, where opening ports
-								isn't an option.
-							</span>
-						</div>
-					) : (
-						<ul className="flex flex-col gap-3">
-							{tunnels.map((tunnel) => (
-								<li
-									key={tunnel.cloudflareTunnelId}
-									className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
-								>
-									<div className="flex min-w-0 flex-col gap-1">
-										<div className="flex flex-wrap items-center gap-2">
-											<span className="font-medium">{tunnel.name}</span>
-											<StatusBadge status={tunnel.status} />
-										</div>
-										{tunnel.statusMessage && (
-											<span className="text-xs text-red-500">
-												{tunnel.statusMessage}
-											</span>
-										)}
+				) : !tunnels || tunnels.length === 0 ? (
+					<div className="flex min-h-[20vh] flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-8 text-center">
+						<Cloud className="size-8 text-muted-foreground" />
+						<span className="text-base font-medium">No tunnels yet</span>
+						<span className="max-w-md text-sm text-muted-foreground">
+							Useful for homelab and behind-NAT hosts, where opening ports isn't
+							an option.
+						</span>
+					</div>
+				) : (
+					<ul className="flex flex-col gap-3">
+						{tunnels.map((tunnel) => (
+							<li
+								key={tunnel.cloudflareTunnelId}
+								className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
+							>
+								<div className="flex min-w-0 flex-col gap-1">
+									<div className="flex flex-wrap items-center gap-2">
+										<span className="font-medium">{tunnel.name}</span>
+										<StatusBadge status={tunnel.status} />
 									</div>
-									<div className="flex shrink-0 flex-wrap gap-2">
+									{tunnel.statusMessage && (
+										<span className="text-xs text-red-500">
+											{tunnel.statusMessage}
+										</span>
+									)}
+								</div>
+								<div className="flex shrink-0 flex-wrap gap-2">
+									<Button
+										variant="outline"
+										size="sm"
+										isLoading={status.isPending}
+										onClick={async () => {
+											const result = await status
+												.mutateAsync({
+													cloudflareTunnelId: tunnel.cloudflareTunnelId,
+												})
+												.catch(() => null);
+											if (result?.connections) {
+												toast.success(result.detail);
+											} else {
+												toast.error(
+													result?.detail ?? "Could not read the status",
+												);
+											}
+											await refetch();
+										}}
+									>
+										{status.isPending ? null : <Activity className="size-4" />}
+										Check
+									</Button>
+									{tunnel.status === "running" ? (
 										<Button
 											variant="outline"
 											size="sm"
-											isLoading={status.isPending}
-											onClick={async () => {
-												const result = await status
-													.mutateAsync({
-														cloudflareTunnelId: tunnel.cloudflareTunnelId,
-													})
-													.catch(() => null);
-												if (result?.connections) {
-													toast.success(result.detail);
-												} else {
-													toast.error(
-														result?.detail ?? "Could not read the status",
-													);
-												}
-												await refetch();
-											}}
-										>
-											{status.isPending ? null : (
-												<Activity className="size-4" />
-											)}
-											Check
-										</Button>
-										{tunnel.status === "running" ? (
-											<Button
-												variant="outline"
-												size="sm"
-												isLoading={stop.isPending}
-												onClick={() =>
-													act(
-														() =>
-															stop.mutateAsync({
-																cloudflareTunnelId: tunnel.cloudflareTunnelId,
-															}),
-														"Connector stopped",
-														"Could not stop the connector",
-													)
-												}
-											>
-												<Square className="size-4" />
-												Stop
-											</Button>
-										) : (
-											<Button
-												variant="outline"
-												size="sm"
-												isLoading={deploy.isPending}
-												onClick={() =>
-													act(
-														() =>
-															deploy.mutateAsync({
-																cloudflareTunnelId: tunnel.cloudflareTunnelId,
-															}),
-														"Connector started",
-														"Could not start the connector",
-													)
-												}
-											>
-												<Play className="size-4" />
-												Start
-											</Button>
-										)}
-										<DialogAction
-											title="Delete tunnel"
-											description="This stops the connector on that host and removes the tunnel."
-											type="destructive"
+											isLoading={stop.isPending}
 											onClick={() =>
 												act(
 													() =>
-														remove.mutateAsync({
+														stop.mutateAsync({
 															cloudflareTunnelId: tunnel.cloudflareTunnelId,
 														}),
-													"Tunnel deleted",
-													"Could not delete the tunnel",
+													"Connector stopped",
+													"Could not stop the connector",
 												)
 											}
 										>
-											<Button
-												variant="ghost"
-												size="icon"
-												className="group hover:bg-red-500/10"
-											>
-												<Trash2 className="size-4 text-primary group-hover:text-red-500" />
-											</Button>
-										</DialogAction>
-									</div>
-								</li>
-							))}
-						</ul>
-					)}
-				</CardContent>
+											<Square className="size-4" />
+											Stop
+										</Button>
+									) : (
+										<Button
+											variant="outline"
+											size="sm"
+											isLoading={deploy.isPending}
+											onClick={() =>
+												act(
+													() =>
+														deploy.mutateAsync({
+															cloudflareTunnelId: tunnel.cloudflareTunnelId,
+														}),
+													"Connector started",
+													"Could not start the connector",
+												)
+											}
+										>
+											<Play className="size-4" />
+											Start
+										</Button>
+									)}
+									<DialogAction
+										title="Delete tunnel"
+										description="This stops the connector on that host and removes the tunnel."
+										type="destructive"
+										onClick={() =>
+											act(
+												() =>
+													remove.mutateAsync({
+														cloudflareTunnelId: tunnel.cloudflareTunnelId,
+													}),
+												"Tunnel deleted",
+												"Could not delete the tunnel",
+											)
+										}
+									>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="group hover:bg-red-500/10"
+										>
+											<Trash2 className="size-4 text-primary group-hover:text-red-500" />
+										</Button>
+									</DialogAction>
+								</div>
+							</li>
+						))}
+					</ul>
+				)}
 			</div>
-		</Card>
+		</PageContainer>
 	);
 };

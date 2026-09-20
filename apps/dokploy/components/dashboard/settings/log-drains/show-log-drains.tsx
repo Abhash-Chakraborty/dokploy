@@ -13,15 +13,9 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { DialogAction } from "@/components/shared/dialog-action";
+import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
 import {
 	Dialog,
 	DialogContent,
@@ -396,152 +390,142 @@ export const ShowLogDrains = () => {
 	};
 
 	return (
-		<Card className="h-full bg-sidebar p-2.5 rounded-xl w-full">
-			<div className="rounded-xl bg-background shadow-md">
-				<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
-					<div className="flex flex-col gap-1.5">
-						<CardTitle className="text-xl flex flex-row gap-2">
-							<Waypoints className="size-6 text-muted-foreground self-center" />
-							Log drains
-						</CardTitle>
-						<CardDescription>
-							Ship container logs off the host to Loki, Datadog or any HTTP
-							endpoint. Without one, logs live and die with the container.
-						</CardDescription>
+		<PageContainer>
+			<PageHeader
+				title="Log drains"
+				description="Ship container logs off the host to Loki, Datadog or any HTTP endpoint. Without one, logs live and die with the container."
+				icon={<Waypoints className="size-5" />}
+				actions={<AddLogDrain onDone={() => refetch()} />}
+			/>
+			<div>
+				{isPending ? (
+					<div className="flex min-h-[20vh] flex-row items-center justify-center gap-2 text-sm text-muted-foreground">
+						<span>Loading…</span>
+						<Loader2 className="size-4 animate-spin" />
 					</div>
-					<AddLogDrain onDone={() => refetch()} />
-				</CardHeader>
-				<CardContent className="py-6 border-t">
-					{isPending ? (
-						<div className="flex min-h-[20vh] flex-row items-center justify-center gap-2 text-sm text-muted-foreground">
-							<span>Loading…</span>
-							<Loader2 className="size-4 animate-spin" />
-						</div>
-					) : !drains || drains.length === 0 ? (
-						<div className="flex min-h-[20vh] flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-8 text-center">
-							<Waypoints className="size-8 text-muted-foreground" />
-							<span className="text-base font-medium">No log drains yet</span>
-							<span className="max-w-md text-sm text-muted-foreground">
-								Add one to forward every container's output to your logging
-								stack.
-							</span>
-						</div>
-					) : (
-						<ul className="flex flex-col gap-3">
-							{drains.map((drain) => (
-								<li
-									key={drain.logDrainId}
-									className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
-								>
-									<div className="flex min-w-0 flex-col gap-1">
-										<div className="flex flex-wrap items-center gap-2">
-											<span className="font-medium">{drain.name}</span>
-											<Badge variant="secondary" className="text-[10px]">
-												{DRAIN_LABELS[drain.drainType] ?? drain.drainType}
-											</Badge>
-											<StatusBadge status={drain.status} />
-										</div>
-										<span className="truncate font-mono text-xs text-muted-foreground">
-											{drain.config.endpoint}
-										</span>
-										{drain.statusMessage && (
-											<span className="text-xs text-red-500">
-												{drain.statusMessage}
-											</span>
-										)}
+				) : !drains || drains.length === 0 ? (
+					<div className="flex min-h-[20vh] flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-8 text-center">
+						<Waypoints className="size-8 text-muted-foreground" />
+						<span className="text-base font-medium">No log drains yet</span>
+						<span className="max-w-md text-sm text-muted-foreground">
+							Add one to forward every container's output to your logging stack.
+						</span>
+					</div>
+				) : (
+					<ul className="flex flex-col gap-3">
+						{drains.map((drain) => (
+							<li
+								key={drain.logDrainId}
+								className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
+							>
+								<div className="flex min-w-0 flex-col gap-1">
+									<div className="flex flex-wrap items-center gap-2">
+										<span className="font-medium">{drain.name}</span>
+										<Badge variant="secondary" className="text-[10px]">
+											{DRAIN_LABELS[drain.drainType] ?? drain.drainType}
+										</Badge>
+										<StatusBadge status={drain.status} />
 									</div>
-									<div className="flex shrink-0 flex-wrap gap-2">
+									<span className="truncate font-mono text-xs text-muted-foreground">
+										{drain.config.endpoint}
+									</span>
+									{drain.statusMessage && (
+										<span className="text-xs text-red-500">
+											{drain.statusMessage}
+										</span>
+									)}
+								</div>
+								<div className="flex shrink-0 flex-wrap gap-2">
+									<Button
+										variant="outline"
+										size="sm"
+										isLoading={validate.isPending}
+										onClick={async () => {
+											const result = await validate
+												.mutateAsync({ logDrainId: drain.logDrainId })
+												.catch(() => null);
+											if (result?.valid) {
+												toast.success("Configuration is valid");
+											} else {
+												toast.error(
+													result?.output || "Could not validate the config",
+												);
+											}
+										}}
+									>
+										{validate.isPending ? null : (
+											<CircleCheck className="size-4" />
+										)}
+										Check
+									</Button>
+									{drain.status === "running" ? (
 										<Button
 											variant="outline"
 											size="sm"
-											isLoading={validate.isPending}
-											onClick={async () => {
-												const result = await validate
-													.mutateAsync({ logDrainId: drain.logDrainId })
-													.catch(() => null);
-												if (result?.valid) {
-													toast.success("Configuration is valid");
-												} else {
-													toast.error(
-														result?.output || "Could not validate the config",
-													);
-												}
-											}}
-										>
-											{validate.isPending ? null : (
-												<CircleCheck className="size-4" />
-											)}
-											Check
-										</Button>
-										{drain.status === "running" ? (
-											<Button
-												variant="outline"
-												size="sm"
-												isLoading={stop.isPending}
-												onClick={() =>
-													act(
-														() =>
-															stop.mutateAsync({
-																logDrainId: drain.logDrainId,
-															}),
-														"Stopped shipping",
-														"Could not stop the shipper",
-													)
-												}
-											>
-												<Square className="size-4" />
-												Stop
-											</Button>
-										) : (
-											<Button
-												variant="outline"
-												size="sm"
-												isLoading={deploy.isPending}
-												onClick={() =>
-													act(
-														() =>
-															deploy.mutateAsync({
-																logDrainId: drain.logDrainId,
-															}),
-														"Shipping started",
-														"Could not start the shipper",
-													)
-												}
-											>
-												<Play className="size-4" />
-												Start
-											</Button>
-										)}
-										<DialogAction
-											title="Delete log drain"
-											description="This stops the shipper on that host and removes the drain."
-											type="destructive"
+											isLoading={stop.isPending}
 											onClick={() =>
 												act(
 													() =>
-														remove.mutateAsync({
+														stop.mutateAsync({
 															logDrainId: drain.logDrainId,
 														}),
-													"Log drain deleted",
-													"Could not delete the drain",
+													"Stopped shipping",
+													"Could not stop the shipper",
 												)
 											}
 										>
-											<Button
-												variant="ghost"
-												size="icon"
-												className="group hover:bg-red-500/10"
-											>
-												<Trash2 className="size-4 text-primary group-hover:text-red-500" />
-											</Button>
-										</DialogAction>
-									</div>
-								</li>
-							))}
-						</ul>
-					)}
-				</CardContent>
+											<Square className="size-4" />
+											Stop
+										</Button>
+									) : (
+										<Button
+											variant="outline"
+											size="sm"
+											isLoading={deploy.isPending}
+											onClick={() =>
+												act(
+													() =>
+														deploy.mutateAsync({
+															logDrainId: drain.logDrainId,
+														}),
+													"Shipping started",
+													"Could not start the shipper",
+												)
+											}
+										>
+											<Play className="size-4" />
+											Start
+										</Button>
+									)}
+									<DialogAction
+										title="Delete log drain"
+										description="This stops the shipper on that host and removes the drain."
+										type="destructive"
+										onClick={() =>
+											act(
+												() =>
+													remove.mutateAsync({
+														logDrainId: drain.logDrainId,
+													}),
+												"Log drain deleted",
+												"Could not delete the drain",
+											)
+										}
+									>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="group hover:bg-red-500/10"
+										>
+											<Trash2 className="size-4 text-primary group-hover:text-red-500" />
+										</Button>
+									</DialogAction>
+								</div>
+							</li>
+						))}
+					</ul>
+				)}
 			</div>
-		</Card>
+		</PageContainer>
 	);
 };
