@@ -236,17 +236,14 @@ export const ActivityButton = () => {
 				<SheetContent className="flex w-full flex-col gap-4 sm:max-w-xl">
 					<SheetHeader>
 						<SheetTitle>Activity</SheetTitle>
-						<SheetDescription>
-							Background jobs: fleet commands, backups, drills and more.
-						</SheetDescription>
+						<SheetDescription>Background jobs.</SheetDescription>
 					</SheetHeader>
 					<div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4">
 						<EnginePanel isOwner={me?.role === "owner"} />
 						{enabled && engine.redisReachable === false && (
 							<div className="flex items-center gap-2 rounded-md border border-destructive/40 p-3 text-sm text-destructive">
 								<TriangleAlert className="size-4 shrink-0" />
-								Redis cannot be reached, so jobs are paused. Deploys are not
-								affected.
+								Redis is unreachable; jobs are paused.
 							</div>
 						)}
 						{enabled && selected && (

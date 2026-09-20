@@ -2,6 +2,7 @@ import { AlertTriangle, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DialogAction } from "@/components/shared/dialog-action";
+import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,8 +54,7 @@ const Plan = ({ server }: { server: ServerRow }) => {
 				<DialogHeader>
 					<DialogTitle>{server.name}</DialogTitle>
 					<DialogDescription>
-						What would be applied, and why each rule is there. Automatic rules
-						come from what is deployed here; you can switch any of them off.
+						What would be applied, and why. Automatic rules can be switched off.
 					</DialogDescription>
 				</DialogHeader>
 				{data?.lockout && (
@@ -125,8 +125,7 @@ const AddRule = ({ servers }: { servers: ServerRow[] }) => {
 				<DialogHeader>
 					<DialogTitle>Add a rule</DialogTitle>
 					<DialogDescription>
-						Your rules sit alongside the automatic ones and win where they
-						overlap.
+						Your rules win where they overlap with the automatic ones.
 					</DialogDescription>
 				</DialogHeader>
 				<div className="grid gap-3 sm:grid-cols-2">
@@ -288,21 +287,16 @@ export const FirewallSettings = () => {
 
 	return (
 		<section className="flex flex-col gap-4">
-			<div className="flex flex-wrap items-start justify-between gap-3">
-				<div>
-					<h2 className="flex items-center gap-2 text-lg font-medium">
-						<ShieldCheck className="size-5 text-muted-foreground" />
-						Firewall
-					</h2>
-					<p className="max-w-2xl text-sm text-muted-foreground">
-						Rules are worked out from what each server runs, and you can
-						override any of them. Published container ports are filtered too,
-						which plain ufw cannot do. Every apply arms a rollback that fires
-						unless Dokploy can still reach the server.
-					</p>
-				</div>
-				{data && data.servers.length > 0 && <AddRule servers={data.servers} />}
-			</div>
+			<PageHeader
+				icon={<ShieldCheck className="size-5" />}
+				title="Firewall"
+				description="Rules derived per server, applied with an automatic rollback."
+				actions={
+					data && data.servers.length > 0 ? (
+						<AddRule servers={data.servers} />
+					) : undefined
+				}
+			/>
 
 			<ul className="divide-y rounded-md border">
 				{data?.servers.length === 0 && (

@@ -13,6 +13,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { DialogAction } from "@/components/shared/dialog-action";
+import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -296,8 +297,7 @@ const Reveal = ({ secret }: { secret: Secret }) => {
 				<DialogHeader>
 					<DialogTitle>Reveal {secret.name}</DialogTitle>
 					<DialogDescription>
-						Confirm with your password. Revealing a value is written to the
-						audit log.
+						Confirm with your password. This is audited.
 					</DialogDescription>
 				</DialogHeader>
 				{value === null ? (
@@ -369,7 +369,7 @@ const Versions = ({ secret }: { secret: Secret }) => {
 				<DialogHeader>
 					<DialogTitle>{secret.name}</DialogTitle>
 					<DialogDescription>
-						Versions and where the value was last used at deploy time.
+						Versions, and where it was last used.
 					</DialogDescription>
 				</DialogHeader>
 				<ul className="divide-y rounded-md border text-sm">
@@ -435,9 +435,8 @@ const RecoveryKit = () => {
 				<DialogHeader>
 					<DialogTitle>Download the recovery kit</DialogTitle>
 					<DialogDescription>
-						The master key, sealed with a passphrase. Without it, a lost
-						<code> /etc/dokploy/abhash </code> means every secret is
-						unrecoverable. Keep it somewhere other than this server.
+						The master key, sealed with a passphrase. Without it, lost secrets
+						stay lost — keep it off this server.
 					</DialogDescription>
 				</DialogHeader>
 				<Input
@@ -495,8 +494,7 @@ const RestoreKit = () => {
 				<DialogHeader>
 					<DialogTitle>Restore the master key</DialogTitle>
 					<DialogDescription>
-						Paste a recovery kit to put its keys back on this server. Existing
-						keys are kept.
+						Paste a recovery kit. Existing keys are kept.
 					</DialogDescription>
 				</DialogHeader>
 				<Textarea
@@ -549,11 +547,8 @@ const CredentialEncryption = () => {
 					Encrypt stored credentials {on ? "" : "(off)"}
 				</p>
 				<p className="text-muted-foreground">
-					SSH keys, S3 and registry credentials, git tokens, notification tokens
-					and database passwords are stored in plain text by upstream Dokploy.
-					Turning this on encrypts them with this instance's encryption key.
-					Turning it off converts them back, so an older Dokploy image can still
-					read them.
+					SSH keys, S3 and registry credentials, git and notification tokens and
+					database passwords. Reversible.
 				</p>
 			</div>
 			<Button
@@ -594,53 +589,50 @@ export const VaultSettings = () => {
 
 	return (
 		<section className="flex flex-col gap-4">
-			<div className="flex flex-wrap items-start justify-between gap-3">
-				<div>
-					<h2 className="flex items-center gap-2 text-lg font-medium">
-						<KeyRound className="size-5 text-muted-foreground" />
-						Vault
-					</h2>
-					<p className="max-w-2xl text-sm text-muted-foreground">
-						Store API keys and other secrets in Dokploy. People and AI agents
-						see only the name and description, and use{" "}
-						<code>{"${{secret.NAME}}"}</code> in environment variables, build
-						arguments and shared project or environment variables.
-					</p>
-				</div>
-				{status?.enabled && (
-					<div className="flex flex-wrap gap-2">
-						{isOwner && <RecoveryKit />}
-						{isOwner && <RestoreKit />}
-						{isOwner && (
-							<Button
-								variant="ghost"
-								isLoading={rotate.isPending}
-								onClick={async () => {
-									await rotate
-										.mutateAsync()
-										.then((r) =>
-											toast.success(
-												`New master key; rewrapped ${r.rewrapped} value(s)`,
-											),
-										)
-										.catch(fail);
-								}}
-							>
-								Rotate key
-							</Button>
-						)}
-						<CreateSecret canUseOrganization={!!isAdmin} />
-					</div>
-				)}
-			</div>
+			<PageHeader
+				icon={<KeyRound className="size-5" />}
+				title="Vault"
+				description={
+					<>
+						Secrets used by name — <code>{"${{secret.NAME}}"}</code> — and read
+						by no one.
+					</>
+				}
+				actions={
+					status?.enabled ? (
+						<div className="flex flex-wrap gap-2">
+							{isOwner && <RecoveryKit />}
+							{isOwner && <RestoreKit />}
+							{isOwner && (
+								<Button
+									variant="ghost"
+									isLoading={rotate.isPending}
+									onClick={async () => {
+										await rotate
+											.mutateAsync()
+											.then((r) =>
+												toast.success(
+													`Rotated; ${r.rewrapped} value(s) rewrapped`,
+												),
+											)
+											.catch(fail);
+									}}
+								>
+									Rotate key
+								</Button>
+							)}
+							<CreateSecret canUseOrganization={!!isAdmin} />
+						</div>
+					) : undefined
+				}
+			/>
 
 			{!status?.enabled && (
 				<div className="space-y-3 rounded-md border p-4 text-sm">
 					<p className="font-medium">The vault is off</p>
 					<p className="text-muted-foreground">
-						Turning it on creates a master key on this server, under
-						<code> /etc/dokploy/abhash</code>. Download the recovery kit right
-						after, and keep it off this machine.
+						Creates a master key on this server. Download the recovery kit
+						afterwards and keep it elsewhere.
 					</p>
 					{isOwner ? (
 						<Button

@@ -2,6 +2,7 @@ import { Boxes, Copy, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DialogAction } from "@/components/shared/dialog-action";
+import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -209,8 +210,7 @@ const DatabaseTools = () => {
 			<div>
 				<h3 className="text-sm font-medium">Users, databases and extensions</h3>
 				<p className="text-xs text-muted-foreground">
-					Manage the databases Dokploy already runs: add a database, add a user
-					with just the access it needs, or switch on a Postgres extension.
+					Databases, users and Postgres extensions on services you already run.
 				</p>
 			</div>
 			<div className="grid gap-3 sm:grid-cols-2">
@@ -389,17 +389,11 @@ export const EnginesPage = () => {
 
 	return (
 		<section className="flex flex-col gap-4">
-			<div>
-				<h2 className="flex items-center gap-2 text-lg font-medium">
-					<Boxes className="size-5 text-muted-foreground" />
-					Databases and services
-				</h2>
-				<p className="max-w-2xl text-sm text-muted-foreground">
-					More engines than the built-in six, each deployed as a normal stack so
-					logs, domains, volumes and permissions work as usual. Passwords are
-					generated and, when the vault is on, stored there as well.
-				</p>
-			</div>
+			<PageHeader
+				icon={<Boxes className="size-5" />}
+				title="Databases and services"
+				description="More engines, deployed as ordinary stacks."
+			/>
 
 			<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 				{catalog?.engines.map((engine) => (

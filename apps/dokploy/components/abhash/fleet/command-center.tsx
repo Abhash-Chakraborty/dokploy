@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -85,7 +86,9 @@ const RunCommand = ({
 				<DialogContent className="sm:max-w-2xl">
 					<DialogHeader>
 						<DialogTitle>Run on {selected.length} server(s)</DialogTitle>
-						<DialogDescription>{names.join(", ")}</DialogDescription>
+						<DialogDescription className="truncate">
+							{names.join(", ")}
+						</DialogDescription>
 					</DialogHeader>
 					<Textarea
 						rows={5}
@@ -136,8 +139,7 @@ const RunCommand = ({
 						<div className="flex flex-col gap-2 rounded-md border border-destructive/40 p-3 text-sm text-destructive">
 							<span className="flex items-center gap-2">
 								<AlertTriangle className="size-4" />
-								This command can destroy data. Type the number of servers to
-								confirm.
+								This can destroy data. Type {selected.length} to confirm.
 							</span>
 							<Input
 								value={confirm}
@@ -226,59 +228,61 @@ export const CommandCenter = () => {
 
 	return (
 		<section className="flex flex-col gap-4">
-			<div className="flex flex-wrap items-start justify-between gap-3">
-				<div>
-					<h2 className="flex items-center gap-2 text-lg font-medium">
-						<ServerCog className="size-5 text-muted-foreground" />
-						Command centre
-					</h2>
-					<p className="max-w-2xl text-sm text-muted-foreground">
-						Every server in one place: health, tags and the actions that keep
-						them running. Anything you start here is a job you can follow and
-						cancel in Activity.
-					</p>
+			<PageHeader
+				icon={<ServerCog className="size-5" />}
+				title="Command centre"
+				description="Health, tags and actions for every server."
+				actions={
+					<div className="flex items-center gap-2">
+						<Input
+							value={filter}
+							placeholder="Filter servers"
+							className="w-40"
+							onChange={(event) => setFilter(event.target.value)}
+						/>
+						<Button
+							variant="ghost"
+							size="icon"
+							aria-label="Refresh"
+							isLoading={refresh.isPending}
+							onClick={async () => {
+								await refresh
+									.mutateAsync({})
+									.then(async () => {
+										await utils.fleet.list.invalidate();
+									})
+									.catch(fail);
+							}}
+						>
+							<RefreshCw className="size-4" />
+						</Button>
+						<RunCommand servers={servers} selected={selected} />
+					</div>
+				}
+			/>
+
+			{/* Bulk actions appear only once something is selected. */}
+			{selected.length > 0 && (
+				<div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm">
+					<span>{selected.length} selected</span>
+					<Button variant="ghost" size="sm" onClick={() => setSelected([])}>
+						Clear
+					</Button>
+					<div className="ml-auto flex gap-2">
+						<Button variant="outline" size="sm" onClick={() => act("cleanup")}>
+							<Brush className="size-4" />
+							Reclaim disk
+						</Button>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => act("patch", { batchSize: 1, reboot: true })}
+						>
+							Patch
+						</Button>
+					</div>
 				</div>
-				<div className="flex flex-wrap items-center gap-2">
-					<Input
-						value={filter}
-						placeholder="Filter by name, address or tag"
-						className="w-56"
-						onChange={(event) => setFilter(event.target.value)}
-					/>
-					<Button
-						variant="ghost"
-						isLoading={refresh.isPending}
-						onClick={async () => {
-							await refresh
-								.mutateAsync({})
-								.then(async () => {
-									toast.success("Refreshing");
-									await utils.fleet.list.invalidate();
-								})
-								.catch(fail);
-						}}
-					>
-						<RefreshCw className="size-4" />
-						Refresh
-					</Button>
-					<RunCommand servers={servers} selected={selected} />
-					<Button
-						variant="outline"
-						disabled={selected.length === 0}
-						onClick={() => act("cleanup")}
-					>
-						<Brush className="size-4" />
-						Reclaim disk
-					</Button>
-					<Button
-						variant="outline"
-						disabled={selected.length === 0}
-						onClick={() => act("patch", { batchSize: 1, reboot: true })}
-					>
-						Patch
-					</Button>
-				</div>
-			</div>
+			)}
 
 			<ul className="divide-y rounded-md border">
 				{servers.length === 0 && (

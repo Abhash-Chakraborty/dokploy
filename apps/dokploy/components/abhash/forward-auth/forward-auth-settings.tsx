@@ -175,9 +175,8 @@ export const ForwardAuthSettings = () => {
 						Protect apps (forward auth)
 					</h2>
 					<p className="max-w-2xl text-sm text-muted-foreground">
-						Put any deployed app behind your identity provider: visitors sign in
-						before Traefik lets them through. Choose a gate per domain under
-						“Protect with SSO”.
+						Visitors sign in before Traefik lets them through. Choose a gate per
+						domain under “Protect with SSO”.
 					</p>
 				</div>
 				<div className="flex gap-2">

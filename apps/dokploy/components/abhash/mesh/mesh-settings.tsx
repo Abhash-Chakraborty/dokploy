@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { MeshIcon } from "@/components/icons/abhash/mesh-icons";
 import { DialogAction } from "@/components/shared/dialog-action";
+import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -80,8 +81,7 @@ const EditProvider = ({ provider }: { provider?: Provider }) => {
 						{provider ? `Edit ${provider.name}` : "Add a mesh provider"}
 					</DialogTitle>
 					<DialogDescription>
-						Dokploy manages only the objects it creates, named with the prefix
-						below. Everything else in your network stays untouched.
+						Only objects named with the prefix below are managed.
 					</DialogDescription>
 				</DialogHeader>
 				<div className="flex flex-col gap-3">
@@ -129,8 +129,7 @@ const EditProvider = ({ provider }: { provider?: Provider }) => {
 							onChange={(event) => setTokenRef(event.target.value)}
 						/>
 						<p className="text-xs text-muted-foreground">
-							Create the secret in the vault first; only its name is stored
-							here.
+							Only the name is stored here.
 						</p>
 					</div>
 					<div className="grid gap-3 sm:grid-cols-2">
@@ -154,7 +153,7 @@ const EditProvider = ({ provider }: { provider?: Provider }) => {
 						<div>
 							<p className="text-sm font-medium">Let the mesh manage DNS</p>
 							<p className="text-xs text-muted-foreground">
-								Off by default, so container DNS on your servers is untouched.
+								Off keeps your servers' container DNS untouched.
 							</p>
 						</div>
 						<Switch checked={manageDns} onCheckedChange={setManageDns} />
@@ -163,7 +162,7 @@ const EditProvider = ({ provider }: { provider?: Provider }) => {
 						<div>
 							<p className="text-sm font-medium">Swarm over the mesh</p>
 							<p className="text-xs text-muted-foreground">
-								Opens the Swarm ports between servers inside the mesh.
+								Opens the Swarm ports between servers.
 							</p>
 						</div>
 						<Switch
@@ -222,42 +221,34 @@ export const MeshSettings = () => {
 
 	return (
 		<section className="flex flex-col gap-4">
-			<div className="flex flex-wrap items-start justify-between gap-3">
-				<div>
-					<h2 className="flex items-center gap-2 text-lg font-medium">
-						<Network className="size-5 text-muted-foreground" />
-						Secure network
-					</h2>
-					<p className="max-w-2xl text-sm text-muted-foreground">
-						Put your servers on one private network and reach them over it. One
-						provider is active at a time; servers already in the network are
-						adopted rather than enrolled again.
-					</p>
-				</div>
-				<div className="flex gap-2">
-					{active && (
-						<Button
-							variant="ghost"
-							isLoading={sync.isPending}
-							onClick={async () => {
-								await sync
-									.mutateAsync()
-									.then(async (result) => {
-										toast.success(
-											`${result.matched} of ${result.peers} peers matched a server`,
-										);
-										await utils.mesh.list.invalidate();
-									})
-									.catch(fail);
-							}}
-						>
-							<RefreshCw className="size-4" />
-							Sync
-						</Button>
-					)}
-					<EditProvider />
-				</div>
-			</div>
+			<PageHeader
+				icon={<Network className="size-5" />}
+				title="Secure network"
+				description="One private network for your servers. One provider at a time."
+				actions={
+					<div className="flex gap-2">
+						{active && (
+							<Button
+								variant="ghost"
+								isLoading={sync.isPending}
+								onClick={async () => {
+									await sync
+										.mutateAsync()
+										.then(async (result) => {
+											toast.success(`${result.matched} peers matched`);
+											await utils.mesh.list.invalidate();
+										})
+										.catch(fail);
+								}}
+							>
+								<RefreshCw className="size-4" />
+								Sync
+							</Button>
+						)}
+						<EditProvider />
+					</div>
+				}
+			/>
 
 			<div className="grid gap-3 sm:grid-cols-2">
 				{data?.providers.map((provider) => (

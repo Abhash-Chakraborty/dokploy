@@ -134,10 +134,8 @@ export const ScimSettings = () => {
 						Provisioning (SCIM)
 					</h2>
 					<p className="max-w-2xl text-sm text-muted-foreground">
-						Let Authentik create people, keep their groups in sync as teams, and
-						suspend them when they are deactivated or removed, even if they
-						never sign in again. Pair it with single sign-on and turn on “Link
-						existing accounts by email” on that provider.
+						Authentik creates people, syncs groups as teams and suspends anyone
+						it deactivates. Pair it with single sign-on.
 					</p>
 				</div>
 				<div className="flex items-center gap-3">

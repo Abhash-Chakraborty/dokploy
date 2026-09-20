@@ -35,6 +35,7 @@ import {
 	KeyRound,
 	LayoutGrid,
 	Loader2,
+	Lock,
 	LockKeyhole,
 	type LucideIcon,
 	Network,
@@ -52,7 +53,6 @@ import {
 	Trash2,
 	User,
 	Users,
-	Vault,
 	Waypoints,
 } from "lucide-react";
 import Link from "next/link";
@@ -459,13 +459,13 @@ const MENU: Menu = {
 				{
 					title: "Vault",
 					url: "/dashboard/settings/vault",
-					icon: Vault,
+					icon: Lock,
 					isEnabled: ({ isCloud }) => !isCloud,
 				},
 				{
 					title: "Secret providers",
 					url: "/dashboard/settings/secrets",
-					icon: Vault,
+					icon: Cloud,
 					isEnabled: ({ permissions }) => !!permissions?.vaultProvider.read,
 				},
 				{

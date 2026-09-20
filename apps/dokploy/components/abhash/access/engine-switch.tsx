@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import { Users } from "lucide-react";
 import { toast } from "sonner";
 import { DialogAction } from "@/components/shared/dialog-action";
 import { Button } from "@/components/ui/button";
@@ -28,12 +28,10 @@ export const EngineSwitch = () => {
 
 	return status.rbacV2 ? (
 		<div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm">
-			<span className="text-muted-foreground">
-				Per-project access and teams are on.
-			</span>
+			<span className="text-muted-foreground">Per-project access is on.</span>
 			<DialogAction
 				title="Turn off per-project access?"
-				description="The legacy per-member permissions apply again. Teams and grants are kept and return when you turn it back on."
+				description="Per-member permissions apply again. Teams and grants are kept."
 				type="destructive"
 				onClick={() => toggle(false)}
 			>
@@ -45,18 +43,17 @@ export const EngineSwitch = () => {
 	) : (
 		<div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
 			<div className="flex items-start gap-3">
-				<Sparkles className="mt-0.5 size-5 text-primary" />
+				<Users className="mt-0.5 size-5 text-muted-foreground" />
 				<div>
 					<p className="text-sm font-medium">Per-project access and teams</p>
 					<p className="text-sm text-muted-foreground">
-						Give people and teams a role on specific projects. Current access
-						carries over exactly; nobody gains or loses anything.
+						Roles per project. Current access carries over unchanged.
 					</p>
 				</div>
 			</div>
 			<DialogAction
 				title="Turn on per-project access?"
-				description="Every member keeps exactly the access they have today. You can then grant roles per project and use teams. You can turn it off again at any time."
+				description="Everyone keeps the access they have today. Reversible."
 				onClick={() => toggle(true)}
 			>
 				<Button isLoading={setEnabled.isPending}>Turn on</Button>

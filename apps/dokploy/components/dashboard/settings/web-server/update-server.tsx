@@ -1,11 +1,11 @@
 import type { IUpdateData } from "@dokploy/server/index";
 import {
+	ArrowUpCircle,
 	Bug,
 	Download,
 	Info,
 	RefreshCcw,
 	Server,
-	Sparkles,
 	Stars,
 	X,
 } from "lucide-react";
@@ -208,7 +208,7 @@ export const UpdateServer = ({
 					<div className="mb-8">
 						<div className="flex flex-col items-center gap-6 mb-6">
 							<div className="rounded-full p-4 bg-emerald-400/40">
-								<Sparkles className="h-8 w-8 text-emerald-400" />
+								<ArrowUpCircle className="h-8 w-8 text-emerald-400" />
 							</div>
 							<div className="text-center space-y-2">
 								<h3 className="text-lg font-medium">

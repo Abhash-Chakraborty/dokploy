@@ -3,6 +3,7 @@ import { DatabaseBackup, Play, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DialogAction } from "@/components/shared/dialog-action";
+import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,8 +55,7 @@ const AddRepository = () => {
 				<DialogHeader>
 					<DialogTitle>Add a backup repository</DialogTitle>
 					<DialogDescription>
-						A restic repository: encrypted, deduplicated and checksummed. It can
-						live on S3, B2, SFTP, WebDAV or a local disk.
+						Encrypted and deduplicated, on S3, B2, SFTP, WebDAV or local disk.
 					</DialogDescription>
 				</DialogHeader>
 				<div className="flex flex-col gap-3">
@@ -82,8 +82,7 @@ const AddRepository = () => {
 							onChange={(event) => setPasswordRef(event.target.value)}
 						/>
 						<p className="text-xs text-muted-foreground">
-							Without this password the backups cannot be read — keep a copy
-							somewhere else too.
+							Without it the backups cannot be read. Keep a copy elsewhere.
 						</p>
 					</div>
 					<div className="flex flex-col gap-1.5">
@@ -149,8 +148,7 @@ const AddPolicy = ({ repositories }: { repositories: Repository[] }) => {
 				<DialogHeader>
 					<DialogTitle>New backup</DialogTitle>
 					<DialogDescription>
-						What to back up, where to, and how often. Old snapshots are kept
-						daily, weekly, monthly and yearly, and pruned automatically.
+						Kept daily, weekly, monthly and yearly, and pruned automatically.
 					</DialogDescription>
 				</DialogHeader>
 				<div className="grid gap-3 sm:grid-cols-2">
@@ -349,26 +347,19 @@ export const BackupHealth = () => {
 
 	return (
 		<section className="flex flex-col gap-4">
-			<div className="flex flex-wrap items-start justify-between gap-3">
-				<div>
-					<h2 className="flex items-center gap-2 text-lg font-medium">
-						<DatabaseBackup className="size-5 text-muted-foreground" />
-						Backups and drills
-					</h2>
-					<p className="max-w-2xl text-sm text-muted-foreground">
-						Encrypted, deduplicated snapshots with daily, weekly and monthly
-						retention. A drill restores the latest snapshot into an isolated
-						copy and checks it, so you know a restore actually works — and how
-						long it takes.
-					</p>
-				</div>
-				<div className="flex gap-2">
-					<AddRepository />
-					{data && data.repositories.length > 0 && (
-						<AddPolicy repositories={data.repositories} />
-					)}
-				</div>
-			</div>
+			<PageHeader
+				icon={<DatabaseBackup className="size-5" />}
+				title="Backups and drills"
+				description="Encrypted snapshots, and drills that prove a restore works."
+				actions={
+					<div className="flex gap-2">
+						<AddRepository />
+						{data && data.repositories.length > 0 && (
+							<AddPolicy repositories={data.repositories} />
+						)}
+					</div>
+				}
+			/>
 
 			{data && data.repositories.length > 0 && (
 				<ul className="flex flex-wrap gap-2">

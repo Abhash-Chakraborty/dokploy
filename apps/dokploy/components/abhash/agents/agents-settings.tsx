@@ -3,6 +3,7 @@ import { Bot, Check, Copy, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DialogAction } from "@/components/shared/dialog-action";
+import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,8 +51,8 @@ const CreateAgent = () => {
 				<DialogHeader>
 					<DialogTitle>New agent</DialogTitle>
 					<DialogDescription>
-						An agent is a service account with its own keys. Give it access the
-						same way you would a person: through teams and per-project roles.
+						A service account with its own keys. Give it access like a person:
+						teams and per-project roles.
 					</DialogDescription>
 				</DialogHeader>
 				<div className="flex flex-col gap-3">
@@ -146,8 +147,7 @@ const NewKey = ({ agent }: { agent: Agent }) => {
 				<DialogHeader>
 					<DialogTitle>New key for {agent.name}</DialogTitle>
 					<DialogDescription>
-						The key is shown once. It carries the agent's access, narrowed by
-						what you set here.
+						Shown once. Carries the agent's access, narrowed by these limits.
 					</DialogDescription>
 				</DialogHeader>
 				{issued ? (
@@ -186,9 +186,7 @@ const NewKey = ({ agent }: { agent: Agent }) => {
 						<div className="flex items-center justify-between rounded-md border p-3">
 							<div>
 								<p className="text-sm font-medium">Read-only</p>
-								<p className="text-xs text-muted-foreground">
-									The key can read, never change anything.
-								</p>
+								<p className="text-xs text-muted-foreground">Reads only.</p>
 							</div>
 							<Switch checked={readOnly} onCheckedChange={setReadOnly} />
 						</div>
@@ -333,21 +331,12 @@ export const AgentsSettings = () => {
 
 	return (
 		<section className="flex flex-col gap-4">
-			<div className="flex flex-wrap items-start justify-between gap-3">
-				<div>
-					<h2 className="flex items-center gap-2 text-lg font-medium">
-						<Bot className="size-5 text-muted-foreground" />
-						Agents
-					</h2>
-					<p className="max-w-2xl text-sm text-muted-foreground">
-						Service accounts for AI agents and scripts. Each key can be
-						read-only, limited to certain calls and addresses, and can require
-						your approval before anything destructive runs. Agents never see
-						secret values.
-					</p>
-				</div>
-				<CreateAgent />
-			</div>
+			<PageHeader
+				icon={<Bot className="size-5" />}
+				title="Agents"
+				description="Service accounts with scoped keys. They never see secret values."
+				actions={<CreateAgent />}
+			/>
 
 			<Approvals />
 

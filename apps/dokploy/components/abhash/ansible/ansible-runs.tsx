@@ -2,6 +2,7 @@ import { Play, Plus, ScrollText, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DialogAction } from "@/components/shared/dialog-action";
+import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,8 +51,7 @@ const EditProject = ({ project }: { project: Project }) => {
 				<DialogHeader>
 					<DialogTitle>{project.name}</DialogTitle>
 					<DialogDescription>
-						Playbooks and the files they use. They run in a throwaway container,
-						never inside Dokploy.
+						Playbooks and the files they use.
 					</DialogDescription>
 				</DialogHeader>
 				<div className="flex gap-2">
@@ -163,8 +163,7 @@ const EditTemplate = ({
 				<DialogHeader>
 					<DialogTitle>{template ? "Edit run" : "New run"}</DialogTitle>
 					<DialogDescription>
-						A playbook, the servers to run it on, and when. Check mode is the
-						default: it reports what would change without changing it.
+						Check mode reports what would change, without changing it.
 					</DialogDescription>
 				</DialogHeader>
 				<div className="flex flex-col gap-3">
@@ -303,27 +302,21 @@ export const AnsibleRuns = () => {
 
 	return (
 		<section className="flex flex-col gap-4">
-			<div className="flex flex-wrap items-start justify-between gap-3">
-				<div>
-					<h2 className="flex items-center gap-2 text-lg font-medium">
-						<ScrollText className="size-5 text-muted-foreground" />
-						Ansible
-					</h2>
-					<p className="max-w-2xl text-sm text-muted-foreground">
-						Run playbooks against your servers from here. Each run happens in a
-						throwaway container with a generated inventory and pinned host keys;
-						Dokploy itself never carries Ansible.
-					</p>
-				</div>
-				<div className="flex flex-wrap gap-2">
-					{projects?.map((project) => (
-						<EditProject key={project.id} project={project} />
-					))}
-					{projects && projects.length > 0 && (
-						<EditTemplate projects={projects} />
-					)}
-				</div>
-			</div>
+			<PageHeader
+				icon={<ScrollText className="size-5" />}
+				title="Ansible"
+				description="Playbooks run in a throwaway container, with host keys pinned."
+				actions={
+					<div className="flex flex-wrap gap-2">
+						{projects?.map((project) => (
+							<EditProject key={project.id} project={project} />
+						))}
+						{projects && projects.length > 0 && (
+							<EditTemplate projects={projects} />
+						)}
+					</div>
+				}
+			/>
 
 			<ul className="divide-y rounded-md border">
 				{templates?.length === 0 && (
