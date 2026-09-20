@@ -25,7 +25,11 @@ const providerLabels: Record<string, string> = {
 	phase: "Phase",
 };
 
-export const ShowVaultProviders = () => {
+export const ShowVaultProviders = ({
+	embedded = false,
+}: {
+	embedded?: boolean;
+}) => {
 	const { mutateAsync, isPending: isRemoving } =
 		api.vaultProvider.remove.useMutation();
 	const { data, isPending, refetch } = api.vaultProvider.all.useQuery();
@@ -33,20 +37,29 @@ export const ShowVaultProviders = () => {
 
 	return (
 		<div className="w-full">
-			<Card className="h-full bg-sidebar p-2.5 rounded-xl w-full">
-				<div className="rounded-xl bg-background shadow-md">
-					<CardHeader>
-						<CardTitle className="text-xl flex flex-row gap-2">
-							<Vault className="size-6 text-muted-foreground self-center" />
-							Secrets Providers
-						</CardTitle>
+			<Card className="w-full border-none bg-transparent p-0 shadow-none">
+				<div className="w-full">
+					<CardHeader className={embedded ? "px-0 pt-0" : undefined}>
+						{/* Inside the Secrets tabs the tab label is the heading already. */}
+						{!embedded && (
+							<CardTitle className="text-xl flex flex-row gap-2">
+								<Vault className="size-6 text-muted-foreground self-center" />
+								Secrets Providers
+							</CardTitle>
+						)}
 						<CardDescription>
 							Connect external secret managers and reference their secrets in
 							environment variables with{" "}
 							<code>{"${{vault.<name>.<secret>}}"}</code>
 						</CardDescription>
 					</CardHeader>
-					<CardContent className="space-y-2 py-8 border-t">
+					<CardContent
+						className={
+							embedded
+								? "space-y-2 border-t px-0 py-6"
+								: "space-y-2 py-8 border-t"
+						}
+					>
 						{isPending ? (
 							<div className="flex flex-row gap-2 items-center justify-center text-sm text-muted-foreground min-h-[25vh]">
 								<span>Loading...</span>

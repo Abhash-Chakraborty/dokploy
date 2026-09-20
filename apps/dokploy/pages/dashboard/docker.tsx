@@ -93,7 +93,7 @@ const Dashboard = () => {
 								<SwarmMonitorCard serverId={serverId} />
 							</TabsContent>
 							<TabsContent value="containers">
-								<Card className="h-full bg-sidebar p-2.5 rounded-xl mx-auto w-full">
+								<Card className="mx-auto w-full border-none bg-transparent p-0 shadow-none">
 									<div className="rounded-xl bg-background shadow-md p-6">
 										<ShowSwarmContainers serverId={serverId} />
 									</div>

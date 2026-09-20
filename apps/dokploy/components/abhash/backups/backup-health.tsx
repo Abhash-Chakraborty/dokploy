@@ -43,6 +43,22 @@ const fail = (error: Error) => toast.error(error.message);
 const megabytes = (bytes: number | null | undefined) =>
 	bytes ? `${(bytes / 1_048_576).toFixed(1)} MB` : "—";
 
+/**
+ * An S3 destination and a restic repository are different objects: the
+ * destination is a bucket credential the legacy jobs use, the repository is an
+ * encrypted store restic owns a prefix of. They can share a bucket, which is
+ * the usual reason someone is confused about being asked for both.
+ */
+export const repositoryFromDestination = (destination: {
+	endpoint: string;
+	bucket: string;
+}) => {
+	const host = destination.endpoint
+		.replace(/^https?:\/\//, "")
+		.replace(/\/+$/, "");
+	return `s3:${host}/${destination.bucket}/restic`;
+};
+
 const AddRepository = () => {
 	const utils = api.useUtils();
 	const [open, setOpen] = useState(false);
@@ -51,6 +67,7 @@ const AddRepository = () => {
 	const [passwordRef, setPasswordRef] = useState("${{secret.RESTIC_PASSWORD}}");
 	const [envText, setEnvText] = useState("");
 	const save = api.abhashBackups.saveRepository.useMutation();
+	const { data: destinations } = api.destination.all.useQuery();
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
@@ -67,6 +84,43 @@ const AddRepository = () => {
 					</DialogDescription>
 				</DialogHeader>
 				<div className="flex flex-col gap-3">
+					{destinations && destinations.length > 0 && (
+						<div className="flex flex-col gap-1.5">
+							<Label>Start from an S3 destination</Label>
+							<Select
+								onValueChange={(id) => {
+									const picked = destinations.find(
+										(row) => row.destinationId === id,
+									);
+									if (!picked) return;
+									setName((current) => current || `${picked.name} (restic)`);
+									setRepository(repositoryFromDestination(picked));
+									setEnvText(
+										"AWS_ACCESS_KEY_ID=${{secret.S3_KEY}}, AWS_SECRET_ACCESS_KEY=${{secret.S3_SECRET}}",
+									);
+								}}
+							>
+								<SelectTrigger>
+									<SelectValue placeholder="Reuse a bucket you already added" />
+								</SelectTrigger>
+								<SelectContent>
+									{destinations.map((row) => (
+										<SelectItem
+											key={row.destinationId}
+											value={row.destinationId}
+										>
+											{row.name} · {row.bucket}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+							<p className="text-xs text-muted-foreground">
+								Fills in the repository path. Restic needs its own prefix and
+								its own password, so put the bucket keys in the vault and
+								reference them below.
+							</p>
+						</div>
+					)}
 					<div className="flex flex-col gap-1.5">
 						<Label>Name</Label>
 						<Input
@@ -471,7 +525,7 @@ const walLine = (policy: Policy) => {
 		: " · WAL not shipped yet";
 };
 
-export const BackupHealth = () => {
+export const BackupHealth = ({ embedded = false }: { embedded?: boolean }) => {
 	const utils = api.useUtils();
 	const { data } = api.abhashBackups.overview.useQuery(undefined, {
 		refetchInterval: 30_000,
@@ -483,8 +537,9 @@ export const BackupHealth = () => {
 	return (
 		<section className="flex flex-col gap-4">
 			<PageHeader
-				icon={<DatabaseBackup className="size-5" />}
-				title="Backups and drills"
+				icon={embedded ? undefined : <DatabaseBackup className="size-5" />}
+				// Inside the Backups tabs the tab label is the heading already.
+				title={embedded ? "" : "Backups and drills"}
 				description="Encrypted snapshots, and drills that prove a restore works."
 				actions={
 					<div className="flex gap-2">

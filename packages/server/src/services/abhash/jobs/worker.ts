@@ -134,7 +134,11 @@ const runJob = async (
 				finishedAt: new Date(),
 			})
 			.where(eq(abhashJob.id, row.id));
-		if (definition.ephemeral && row.scheduleId) {
+		const discardable =
+			typeof definition.ephemeral === "function"
+				? definition.ephemeral(result, input)
+				: definition.ephemeral === true;
+		if (discardable && row.scheduleId) {
 			await db.delete(abhashJob).where(eq(abhashJob.id, row.id));
 			await removeJobLog(row.id).catch(() => {});
 			return;

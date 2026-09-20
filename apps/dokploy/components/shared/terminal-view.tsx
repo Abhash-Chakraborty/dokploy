@@ -135,14 +135,17 @@ export const TerminalView = ({
 
 			{isLocalServer && <LocalServerConfig onSave={reconnect} />}
 
+			{/* A flex column, so the title bar takes its height and the canvas gets
+			    the rest. Sized any other way the bar pushes the canvas past the
+			    bottom edge and overflow-hidden eats the last few lines. */}
 			<div
 				className={
 					fillHeight
-						? "min-h-0 flex-1 overflow-hidden rounded-xl border border-white/10 bg-[#090b0e] shadow-2xl shadow-black/20"
-						: `${heightClassName} overflow-hidden rounded-xl border border-white/10 bg-[#090b0e] shadow-2xl shadow-black/20`
+						? "flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-[#090b0e] shadow-2xl shadow-black/20"
+						: `${heightClassName} flex flex-col overflow-hidden rounded-xl border border-white/10 bg-[#090b0e] shadow-2xl shadow-black/20`
 				}
 			>
-				<div className="flex h-11 items-center justify-between border-b border-white/10 bg-[#111419] px-3 text-slate-300">
+				<div className="flex h-11 shrink-0 items-center justify-between border-b border-white/10 bg-[#111419] px-3 text-slate-300">
 					<div className="flex min-w-0 items-center gap-2 font-mono text-xs">
 						<span className="flex gap-1.5" aria-hidden="true">
 							<span className="size-2.5 rounded-full bg-rose-400/80" />
@@ -184,12 +187,14 @@ export const TerminalView = ({
 						</Button>
 					</div>
 				</div>
-				<Terminal
-					id={terminalId}
-					key={terminalKey}
-					serverId={serverId}
-					onStatusChange={setConnectionStatus}
-				/>
+				<div className="min-h-0 flex-1">
+					<Terminal
+						id={terminalId}
+						key={terminalKey}
+						serverId={serverId}
+						onStatusChange={setConnectionStatus}
+					/>
+				</div>
 			</div>
 		</div>
 	);

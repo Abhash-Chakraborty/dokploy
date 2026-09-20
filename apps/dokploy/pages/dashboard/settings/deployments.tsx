@@ -1,13 +1,18 @@
 import { IS_CLOUD, validateRequest } from "@dokploy/server";
 import { createServerSideHelpers } from "@trpc/react-query/server";
-import { Hammer } from "lucide-react";
+import { Eye, Hammer } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
 import superjson from "superjson";
 import { BuildsConcurrency } from "@/components/dashboard/settings/servers/actions/builds-concurrency";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
-import { AlertBlock } from "@/components/shared/alert-block";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
+import { Button } from "@/components/ui/button";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { appRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
 
@@ -20,14 +25,27 @@ const Page = () => {
 				title="Builds"
 				description="How many deployments may build at the same time on each server. Builds of the same service always run one after another."
 				icon={<Hammer className="size-5" />}
+				actions={
+					<Tooltip delayDuration={200}>
+						<TooltipTrigger asChild>
+							<Button
+								variant="ghost"
+								size="icon"
+								aria-label="What raising this costs"
+							>
+								<Eye className="size-4 text-muted-foreground transition-colors hover:text-foreground" />
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent side="left" className="max-w-80">
+							Each concurrent build runs its own builder and image build, so
+							raising this multiplies CPU, memory and disk use on the server.
+							Set it to what the machine can actually handle: too high and
+							builds exhaust memory and fail.
+						</TooltipContent>
+					</Tooltip>
+				}
 			/>
 			<div className="flex flex-col gap-6">
-				<AlertBlock type="warning">
-					Running multiple builds at once increases CPU, memory and disk usage
-					on each server. Each concurrent build runs its own builder and image
-					build, so set this based on the resources the machine can handle — too
-					high a value can exhaust memory and make deployments fail.
-				</AlertBlock>
 				<div className="flex flex-col gap-2">
 					<p className="text-sm font-medium text-muted-foreground">
 						Dokploy Server

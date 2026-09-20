@@ -63,7 +63,7 @@ export const ServerFilter = ({ children, actions }: Props) => {
 
 	if (isLoadingServers || isLoadingCloud) {
 		return (
-			<Card className="bg-sidebar p-2.5 rounded-xl w-full">
+			<Card className="w-full border-none bg-transparent p-0 shadow-none">
 				<div className="rounded-xl bg-background shadow-md flex flex-col gap-2 items-center justify-center min-h-[60vh]">
 					<span className="text-muted-foreground text-lg font-medium">
 						Loading...
@@ -76,7 +76,7 @@ export const ServerFilter = ({ children, actions }: Props) => {
 
 	if (isCloud && !servers?.length) {
 		return (
-			<Card className="bg-sidebar p-2.5 rounded-xl w-full">
+			<Card className="w-full border-none bg-transparent p-0 shadow-none">
 				<div className="rounded-xl bg-background shadow-md flex flex-col items-center justify-center gap-5 min-h-[60vh] border border-dashed px-4">
 					<div className="flex items-center justify-center size-16 rounded-full bg-muted">
 						<ServerIcon className="size-8 text-muted-foreground" />

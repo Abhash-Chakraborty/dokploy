@@ -269,7 +269,7 @@ export const ShowOverviewServices = () => {
 	};
 
 	return (
-		<Card className="bg-sidebar p-2.5 rounded-xl w-full">
+		<Card className="w-full border-none bg-transparent p-0 shadow-none">
 			<div className="rounded-xl bg-background shadow-md p-6 flex flex-col gap-4">
 				<div className="flex flex-wrap items-center gap-3 justify-between">
 					<h3 className="text-lg font-medium">

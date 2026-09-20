@@ -15,7 +15,6 @@ import {
 	ChartLine,
 	ChevronRight,
 	ChevronsUpDown,
-	CircleHelp,
 	ClipboardList,
 	Clock,
 	Cloud,
@@ -29,6 +28,7 @@ import {
 	GitBranch,
 	Globe,
 	HardDrive,
+	HeartHandshake,
 	HeartPulse,
 	House,
 	Key,
@@ -112,6 +112,11 @@ import {
 	SidebarTrigger,
 	useSidebar,
 } from "@/components/ui/sidebar";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import type { AppRouter } from "@/server/api/root";
@@ -143,6 +148,8 @@ type SingleNavItem = {
 	title: string;
 	url: string;
 	icon?: LucideIcon;
+	/** Shown on hover, so a page's purpose is legible without opening it. */
+	description?: string;
 	isEnabled?: (opts: EnabledOpts) => boolean;
 };
 
@@ -293,6 +300,7 @@ const MENU: Menu = {
 			isSingle: true,
 			title: "Settings",
 			url: "/dashboard/settings/profile",
+			description: "Your name, avatar and password.",
 			icon: Settings,
 		},
 	],
@@ -306,6 +314,7 @@ const MENU: Menu = {
 				{
 					title: "Security",
 					url: "/dashboard/settings/devices",
+					description: "Active sessions, two-factor and passkeys.",
 					icon: ShieldCheck,
 				},
 			],
@@ -318,12 +327,14 @@ const MENU: Menu = {
 				{
 					title: "Members & access",
 					url: "/dashboard/settings/users",
+					description: "Invite people and choose what each role may do.",
 					icon: Users,
 					isEnabled: ({ permissions }) => !!permissions?.member.read,
 				},
 				{
 					title: "Authentication",
 					url: "/dashboard/settings/authentication",
+					description: "Which sign-in methods are allowed, and single sign-on.",
 					icon: LockKeyhole,
 					isEnabled: ({ auth, isCloud }) =>
 						!!(auth?.role === "owner" || auth?.role === "admin") && !isCloud,
@@ -331,30 +342,37 @@ const MENU: Menu = {
 				{
 					title: "Command centre",
 					url: "/dashboard/command-center",
+					description:
+						"Run Docker, Traefik and Swarm operations across every server.",
 					icon: ServerCog,
 					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
 				},
 				{
 					title: "Ansible",
 					url: "/dashboard/settings/ansible",
+					description: "Playbooks that set up and patch your servers.",
 					icon: ScrollText,
 					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
 				},
 				{
 					title: "Agents",
 					url: "/dashboard/settings/agents",
+					description:
+						"Service accounts with scoped API keys. They never see secret values.",
 					icon: Bot,
 					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
 				},
 				{
 					title: "Audit log",
 					url: "/dashboard/settings/audit-logs",
+					description: "Who changed what, and when.",
 					icon: ClipboardList,
 					isEnabled: ({ permissions }) => !!permissions?.auditLog.read,
 				},
 				{
 					title: "Whitelabeling",
 					url: "/dashboard/settings/whitelabeling",
+					description: "Your own name, logo and colours on this dashboard.",
 					icon: Palette,
 					isEnabled: ({ auth, isCloud }) =>
 						!!(auth?.role === "owner" && !isCloud),
@@ -362,6 +380,7 @@ const MENU: Menu = {
 				{
 					title: "Billing",
 					url: "/dashboard/settings/billing",
+					description: "Plan and payment method.",
 					icon: CreditCard,
 					isEnabled: ({ auth, isCloud }) =>
 						!!(auth?.role === "owner" && isCloud),
@@ -376,6 +395,8 @@ const MENU: Menu = {
 				{
 					title: "Overview",
 					url: "/dashboard/settings/server",
+					description:
+						"Health, disk and resource use of the machine running Dokploy.",
 					icon: Activity,
 					isEnabled: ({ permissions, isCloud }) =>
 						!!(permissions?.organization.update && !isCloud),
@@ -383,6 +404,7 @@ const MENU: Menu = {
 				{
 					title: "Builds",
 					url: "/dashboard/settings/deployments",
+					description: "Build concurrency and the queue of running builds.",
 					icon: Boxes,
 					isEnabled: ({ permissions, isCloud }) =>
 						!!(permissions?.server.read && !isCloud),
@@ -397,12 +419,15 @@ const MENU: Menu = {
 				{
 					title: "Remote servers",
 					url: "/dashboard/settings/servers",
+					description: "The machines Dokploy deploys to, and their state.",
 					icon: Server,
 					isEnabled: ({ permissions }) => !!permissions?.server.read,
 				},
 				{
 					title: "Tunnels",
 					url: "/dashboard/settings/tunnels",
+					description:
+						"Reach a host with no public IP through Cloudflare's edge.",
 					icon: Cloud,
 					isEnabled: ({ auth }) =>
 						auth?.role === "owner" || auth?.role === "admin",
@@ -410,30 +435,36 @@ const MENU: Menu = {
 				{
 					title: "Certificates",
 					url: "/dashboard/settings/certificates",
+					description: "TLS certificates Traefik serves for your domains.",
 					icon: FileLock,
 					isEnabled: ({ permissions }) => !!permissions?.certificate.read,
 				},
 				{
 					title: "DNS providers",
 					url: "/dashboard/settings/dns",
+					description:
+						"Let Dokploy create a domain's DNS record instead of you.",
 					icon: Globe,
 					isEnabled: ({ permissions }) => !!permissions?.dnsProvider.read,
 				},
 				{
 					title: "Firewall",
 					url: "/dashboard/settings/firewall",
+					description: "Rules applied to your servers, and drift from them.",
 					icon: ShieldCheck,
 					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
 				},
 				{
 					title: "Secure network",
 					url: "/dashboard/settings/secure-network",
+					description: "One private mesh network across your servers.",
 					icon: Network,
 					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
 				},
 				{
 					title: "Registries",
 					url: "/dashboard/settings/registry",
+					description: "Container registries to pull from and push to.",
 					icon: Package,
 					isEnabled: ({ permissions }) => !!permissions?.registry.read,
 				},
@@ -447,30 +478,30 @@ const MENU: Menu = {
 				{
 					title: "Git providers",
 					url: "/dashboard/settings/git-providers",
+					description: "GitHub, GitLab and others Dokploy deploys from.",
 					icon: GitBranch,
 					isEnabled: ({ permissions }) => !!permissions?.gitProviders.read,
 				},
 				{
 					title: "SSH keys",
 					url: "/dashboard/settings/ssh-keys",
+					description: "Keys used to reach your servers.",
 					icon: KeyRound,
 					isEnabled: ({ permissions }) => !!permissions?.sshKeys.read,
 				},
 				{
-					title: "Vault",
+					title: "Secrets",
 					url: "/dashboard/settings/vault",
+					description:
+						"Dokploy's own encrypted store, plus any external secret manager you connect.",
 					icon: Lock,
 					isEnabled: ({ isCloud }) => !isCloud,
 				},
 				{
-					title: "Secret providers",
-					url: "/dashboard/settings/secrets",
-					icon: Cloud,
-					isEnabled: ({ permissions }) => !!permissions?.vaultProvider.read,
-				},
-				{
 					title: "S3 destinations",
 					url: "/dashboard/settings/destinations",
+					description:
+						"S3 buckets that legacy database and volume backups write to.",
 					icon: HardDrive,
 					isEnabled: ({ permissions }) => !!permissions?.destination.read,
 				},
@@ -484,30 +515,30 @@ const MENU: Menu = {
 				{
 					title: "Databases and services",
 					url: "/dashboard/settings/engines",
+					description: "Run more database and service types as managed stacks.",
 					icon: Boxes,
 					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
 				},
 				{
-					title: "Backups and drills",
+					title: "Backups",
 					url: "/dashboard/settings/backup-health",
+					description:
+						"Restic repositories with restore drills, and the older per-service jobs.",
 					icon: DatabaseBackup,
 					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
 				},
 				{
-					title: "Backups (legacy)",
-					url: "/dashboard/settings/backups",
-					icon: Database,
-					isEnabled: ({ permissions }) => !!permissions?.backup?.read,
-				},
-				{
 					title: "Notifications",
 					url: "/dashboard/settings/notifications",
+					description:
+						"Where Dokploy sends alerts, and the SMTP used for invitations.",
 					icon: Bell,
 					isEnabled: ({ permissions }) => !!permissions?.notification.read,
 				},
 				{
 					title: "Log drains",
 					url: "/dashboard/settings/log-drains",
+					description: "Ship container logs off the host before they are lost.",
 					icon: Waypoints,
 					isEnabled: ({ auth }) =>
 						auth?.role === "owner" || auth?.role === "admin",
@@ -515,12 +546,14 @@ const MENU: Menu = {
 				{
 					title: "AI",
 					url: "/dashboard/settings/ai",
+					description: "The model provider and key used by the assistant.",
 					icon: BotIcon,
 					isEnabled: ({ permissions }) => !!permissions?.organization.update,
 				},
 				{
 					title: "Tags",
 					url: "/dashboard/settings/tags",
+					description: "Labels for grouping projects and services.",
 					icon: Tags,
 					isEnabled: ({ permissions }) => !!permissions?.tag.read,
 				},
@@ -537,7 +570,7 @@ const MENU: Menu = {
 		{
 			name: "Support",
 			url: "https://discord.gg/2tBnJ3jDJc",
-			icon: CircleHelp,
+			icon: HeartHandshake,
 		},
 	],
 } as const;
@@ -602,6 +635,19 @@ const DATABASE_SERVICE_NAVIGATION = [
 for (const service of ["postgres", "mysql", "mariadb", "mongo"]) {
 	SERVICE_NAVIGATION[service] = DATABASE_SERVICE_NAVIGATION;
 }
+
+/**
+ * Every URL reachable from the settings nav. Command centre is listed there but
+ * lives outside /dashboard/settings, and without this the sidebar would fall
+ * back to the home nav while that page is open.
+ */
+const SETTINGS_ROUTES = MENU.settings.flatMap((item) =>
+	"items" in item && item.items
+		? item.items.map((sub) => sub.url)
+		: "url" in item && item.url
+			? [item.url]
+			: [],
+);
 
 /**
  * Creates a menu based on the current user's role and permissions
@@ -1100,7 +1146,9 @@ export default function Page({ children }: Props) {
 	});
 
 	const includesProjects = pathname?.includes("/dashboard/project");
-	const isSettings = pathname?.startsWith("/dashboard/settings");
+	const isSettings =
+		pathname?.startsWith("/dashboard/settings") ||
+		SETTINGS_ROUTES.some((route) => pathname === route);
 	const serviceType = pathname?.match(/\/services\/([^/]+)\//)?.[1];
 	const isService = !!serviceType;
 	const activeServiceTab = searchParams.get("tab") || "general";
@@ -1240,32 +1288,51 @@ export default function Page({ children }: Props) {
 																	itemUrl: subItem.url,
 																	pathname,
 																});
+																const link = (
+																	<SidebarMenuSubButton
+																		asChild
+																		className={cn(
+																			isSubItemActive && "bg-border",
+																		)}
+																	>
+																		<Link
+																			href={subItem.url}
+																			className="flex w-full items-center"
+																		>
+																			{subItem.icon && (
+																				<span className="mr-2">
+																					<subItem.icon
+																						className={cn(
+																							"h-4 w-4 text-muted-foreground",
+																							isSubItemActive && "text-primary",
+																						)}
+																					/>
+																				</span>
+																			)}
+																			<span>{subItem.title}</span>
+																		</Link>
+																	</SidebarMenuSubButton>
+																);
 																return (
 																	<SidebarMenuSubItem key={subItem.title}>
-																		<SidebarMenuSubButton
-																			asChild
-																			className={cn(
-																				isSubItemActive && "bg-border",
-																			)}
-																		>
-																			<Link
-																				href={subItem.url}
-																				className="flex w-full items-center"
-																			>
-																				{subItem.icon && (
-																					<span className="mr-2">
-																						<subItem.icon
-																							className={cn(
-																								"h-4 w-4 text-muted-foreground",
-																								isSubItemActive &&
-																									"text-primary",
-																							)}
-																						/>
-																					</span>
-																				)}
-																				<span>{subItem.title}</span>
-																			</Link>
-																		</SidebarMenuSubButton>
+																		{subItem.description ? (
+																			// The app-wide provider opens instantly, which
+																			// flashes a tooltip for every row the pointer
+																			// crosses on the way down the list.
+																			<Tooltip delayDuration={400}>
+																				<TooltipTrigger asChild>
+																					{link}
+																				</TooltipTrigger>
+																				<TooltipContent
+																					side="right"
+																					className="max-w-64"
+																				>
+																					{subItem.description}
+																				</TooltipContent>
+																			</Tooltip>
+																		) : (
+																			link
+																		)}
 																	</SidebarMenuSubItem>
 																);
 															})}

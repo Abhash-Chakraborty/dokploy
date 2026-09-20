@@ -260,6 +260,10 @@ export const firewallDriftJob = defineJob({
 	input: z.object({ organizationId: z.string().optional() }),
 	title: () => "Check the firewalls for drift",
 	timeoutMs: 10 * 60_000,
+	// Hourly, and almost always finds nothing. A run that did find drift
+	// keeps its history so the evidence survives.
+	ephemeral: (result) =>
+		((result as { drifted?: string[] } | null)?.drifted?.length ?? 0) === 0,
 	run: async ({ input, log }) => {
 		const all = await db.query.abhashServerFirewall.findMany();
 		const rows = input.organizationId

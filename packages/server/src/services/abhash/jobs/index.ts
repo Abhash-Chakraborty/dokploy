@@ -34,7 +34,9 @@ const startEngine = async () => {
 		id: "fleet.collect-facts",
 		type: "fleet.collect-facts",
 		input: {},
-		cron: "*/5 * * * *",
+		// Every five minutes meant an SSH round to every server 288 times a day
+		// to feed a dashboard nobody watches that closely.
+		cron: "*/15 * * * *",
 		organizationId: null,
 	});
 	await upsertSchedule({

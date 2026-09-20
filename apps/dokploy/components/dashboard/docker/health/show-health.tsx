@@ -184,7 +184,7 @@ export const ShowHealth = ({ serverId }: Props) => {
 
 	return (
 		<div className="flex flex-col gap-4 w-full">
-			<Card className="bg-sidebar p-2.5 rounded-xl w-full">
+			<Card className="w-full border-none bg-transparent p-0 shadow-none">
 				<div className="rounded-xl bg-background shadow-md p-6 flex flex-col gap-4">
 					<div className="flex items-center justify-between gap-4 flex-wrap">
 						<div>

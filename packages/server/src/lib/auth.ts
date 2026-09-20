@@ -2,7 +2,6 @@ import type { IncomingMessage } from "node:http";
 import { apiKey } from "@better-auth/api-key";
 import { passkey } from "@better-auth/passkey";
 import { scim } from "@better-auth/scim";
-import { sso } from "@better-auth/sso";
 import * as bcrypt from "bcrypt";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -43,6 +42,7 @@ import {
 import { getPublicIpWithFallback } from "../wss/utils";
 import { ac, adminRole, memberRole, ownerRole } from "./access-control";
 import { betterAuthSecret } from "./auth-secret";
+import { ssoWithDomainVerified } from "./sso-plugin";
 
 const authBaseURL =
 	process.env.BETTER_AUTH_URL ||
@@ -497,7 +497,7 @@ const { handler, api } = betterAuth({
 			enableMetadata: true,
 			references: "user",
 		}),
-		sso({
+		ssoWithDomainVerified({
 			// Account linking is trusted per provider (sso_provider.domain_verified,
 			// set explicitly by an admin), never from the IdP's email_verified claim.
 			provisionUser: syncSsoUser,

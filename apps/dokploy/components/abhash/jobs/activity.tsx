@@ -233,10 +233,23 @@ export const ActivityButton = () => {
 					if (!next) setSelected(null);
 				}}
 			>
-				<SheetContent className="flex w-full flex-col gap-4 sm:max-w-xl">
-					<SheetHeader>
-						<SheetTitle>Activity</SheetTitle>
-						<SheetDescription>Background jobs.</SheetDescription>
+				<SheetContent className="flex w-full flex-col gap-0 sm:max-w-xl">
+					{/* The sheet's own close button sits at top-3 right-3. */}
+					<SheetHeader className="flex-row items-center justify-between gap-4 px-4 pt-4 pr-12 pb-3">
+						<div className="flex flex-col gap-0.5">
+							<SheetTitle>Activity</SheetTitle>
+							<SheetDescription>Background jobs.</SheetDescription>
+						</div>
+						{enabled && !selected && isAdmin && (
+							<Button
+								variant="outline"
+								size="sm"
+								isLoading={selfTest.isPending}
+								onClick={() => selfTest.mutate()}
+							>
+								Run self-test
+							</Button>
+						)}
 					</SheetHeader>
 					<div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4">
 						<EnginePanel isOwner={me?.role === "owner"} />
@@ -251,18 +264,6 @@ export const ActivityButton = () => {
 						)}
 						{enabled && !selected && (
 							<>
-								{isAdmin && (
-									<div className="flex justify-end">
-										<Button
-											variant="outline"
-											size="sm"
-											isLoading={selfTest.isPending}
-											onClick={() => selfTest.mutate()}
-										>
-											Run self-test
-										</Button>
-									</div>
-								)}
 								<div className="min-h-0 flex-1 divide-y overflow-auto rounded-md border">
 									{data?.jobs.length === 0 && (
 										<p className="p-6 text-center text-sm text-muted-foreground">

@@ -1,3 +1,4 @@
+export * from "./detect";
 export * from "./headscale";
 export * from "./jobs";
 export * from "./netbird";

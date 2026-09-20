@@ -1,13 +1,7 @@
 import { Loader2, RotateCcw, ServerIcon, TriangleAlert } from "lucide-react";
+import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
 import {
 	Table,
 	TableBody,
@@ -80,16 +74,12 @@ export const FleetOverview = () => {
 					.join(" · ");
 
 	return (
-		<Card className="h-full bg-sidebar p-2.5 rounded-xl w-full">
-			<div className="rounded-xl bg-background shadow-md">
-				<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
-					<div className="flex flex-col gap-1.5">
-						<CardTitle className="text-xl flex flex-row gap-2">
-							<ServerIcon className="size-6 text-muted-foreground self-center" />
-							Fleet
-						</CardTitle>
-						<CardDescription>{summary}</CardDescription>
-					</div>
+		<PageContainer>
+			<PageHeader
+				title="Fleet"
+				description={summary}
+				icon={<ServerIcon className="size-5" />}
+				actions={
 					<Button
 						variant="outline"
 						size="sm"
@@ -99,172 +89,170 @@ export const FleetOverview = () => {
 						<RotateCcw className="size-4" />
 						Re-probe
 					</Button>
-				</CardHeader>
-				<CardContent className="border-t p-0">
-					{isPending ? (
-						<div className="flex min-h-[25vh] flex-row items-center justify-center gap-2 text-sm text-muted-foreground">
-							<span>Probing every server…</span>
-							<Loader2 className="size-4 animate-spin" />
-						</div>
-					) : servers.length === 0 ? (
-						<div className="flex min-h-[25vh] flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
-							<ServerIcon className="size-8 opacity-40" />
-							<span>No servers to show yet.</span>
-						</div>
-					) : (
-						<div className="w-full overflow-x-auto">
-							<TooltipProvider delayDuration={100}>
-								<Table>
-									<TableHeader>
-										<TableRow>
-											<TableHead>Server</TableHead>
-											<TableHead>Docker</TableHead>
-											<TableHead>Swarm</TableHead>
-											<TableHead>Traefik</TableHead>
-											<TableHead className="text-right">Containers</TableHead>
-											<TableHead className="text-right">Disk</TableHead>
-											<TableHead className="text-right">Memory</TableHead>
-											<TableHead className="text-right">Load/core</TableHead>
-											<TableHead className="text-right">Capacity</TableHead>
-											<TableHead>Uptime</TableHead>
-										</TableRow>
-									</TableHeader>
-									<TableBody>
-										{servers.map((server) => {
-											const key = server.serverId ?? "dokploy-host";
-											const driftedDocker =
-												dockerDrift && Boolean(server.dockerVersion);
-											const driftedTraefik =
-												traefikDrift && Boolean(server.traefikVersion);
+				}
+			/>
+			<div>
+				{isPending ? (
+					<div className="flex min-h-[25vh] flex-row items-center justify-center gap-2 text-sm text-muted-foreground">
+						<span>Probing every server…</span>
+						<Loader2 className="size-4 animate-spin" />
+					</div>
+				) : servers.length === 0 ? (
+					<div className="flex min-h-[25vh] flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
+						<ServerIcon className="size-8 opacity-40" />
+						<span>No servers to show yet.</span>
+					</div>
+				) : (
+					<div className="w-full overflow-x-auto">
+						<TooltipProvider delayDuration={100}>
+							<Table>
+								<TableHeader>
+									<TableRow>
+										<TableHead>Server</TableHead>
+										<TableHead>Docker</TableHead>
+										<TableHead>Swarm</TableHead>
+										<TableHead>Traefik</TableHead>
+										<TableHead className="text-right">Containers</TableHead>
+										<TableHead className="text-right">Disk</TableHead>
+										<TableHead className="text-right">Memory</TableHead>
+										<TableHead className="text-right">Load/core</TableHead>
+										<TableHead className="text-right">Capacity</TableHead>
+										<TableHead>Uptime</TableHead>
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{servers.map((server) => {
+										const key = server.serverId ?? "dokploy-host";
+										const driftedDocker =
+											dockerDrift && Boolean(server.dockerVersion);
+										const driftedTraefik =
+											traefikDrift && Boolean(server.traefikVersion);
 
-											return (
-												<TableRow key={key}>
-													<TableCell>
-														<div className="flex flex-col gap-0.5">
-															<div className="flex items-center gap-2">
-																<span
-																	className={cn(
-																		"size-2 shrink-0 rounded-full",
-																		server.reachable
-																			? "bg-emerald-500"
-																			: "bg-red-500",
-																	)}
-																	aria-hidden
-																/>
-																<span className="font-medium">
-																	{server.name}
-																</span>
-																<Badge
-																	variant="secondary"
-																	className="text-[10px] uppercase"
-																>
-																	{server.serverType}
-																</Badge>
-															</div>
-															<span className="text-xs text-muted-foreground">
-																{server.reachable
-																	? (server.ipAddress ?? "local")
-																	: server.error}
-															</span>
-														</div>
-													</TableCell>
-													<TableCell>
-														<span className="flex items-center gap-1.5 font-mono text-xs">
-															{server.dockerVersion ?? "—"}
-															{driftedDocker && (
-																<Tooltip>
-																	<TooltipTrigger asChild>
-																		<TriangleAlert className="size-3.5 text-amber-500" />
-																	</TooltipTrigger>
-																	<TooltipContent>
-																		<p>
-																			Fleet runs{" "}
-																			{data?.drift.dockerVersions.join(", ")}
-																		</p>
-																	</TooltipContent>
-																</Tooltip>
-															)}
-														</span>
-													</TableCell>
-													<TableCell>
-														{server.swarmState === "active" ? (
-															<Badge variant="green" className="text-[10px]">
-																{server.swarmRole ?? "active"}
+										return (
+											<TableRow key={key}>
+												<TableCell>
+													<div className="flex flex-col gap-0.5">
+														<div className="flex items-center gap-2">
+															<span
+																className={cn(
+																	"size-2 shrink-0 rounded-full",
+																	server.reachable
+																		? "bg-emerald-500"
+																		: "bg-red-500",
+																)}
+																aria-hidden
+															/>
+															<span className="font-medium">{server.name}</span>
+															<Badge
+																variant="secondary"
+																className="text-[10px] uppercase"
+															>
+																{server.serverType}
 															</Badge>
-														) : (
-															<span className="text-xs text-muted-foreground">
-																{server.swarmState || "—"}
-															</span>
-														)}
-													</TableCell>
-													<TableCell>
-														<span className="flex items-center gap-1.5 font-mono text-xs">
-															{server.traefikVersion ?? "—"}
-															{driftedTraefik && (
-																<Tooltip>
-																	<TooltipTrigger asChild>
-																		<TriangleAlert className="size-3.5 text-amber-500" />
-																	</TooltipTrigger>
-																	<TooltipContent>
-																		<p>
-																			Fleet runs{" "}
-																			{data?.drift.traefikVersions.join(", ")}
-																		</p>
-																	</TooltipContent>
-																</Tooltip>
-															)}
+														</div>
+														<span className="text-xs text-muted-foreground">
+															{server.reachable
+																? (server.ipAddress ?? "local")
+																: server.error}
 														</span>
-													</TableCell>
-													<TableCell className="text-right tabular-nums text-sm">
-														{server.containersRunning === undefined ? (
-															<span className="text-muted-foreground">—</span>
-														) : (
-															<span>
-																{server.containersRunning}
-																<span className="text-muted-foreground">
-																	{" / "}
-																	{server.containersTotal ?? 0}
-																</span>
-															</span>
+													</div>
+												</TableCell>
+												<TableCell>
+													<span className="flex items-center gap-1.5 font-mono text-xs">
+														{server.dockerVersion ?? "—"}
+														{driftedDocker && (
+															<Tooltip>
+																<TooltipTrigger asChild>
+																	<TriangleAlert className="size-3.5 text-amber-500" />
+																</TooltipTrigger>
+																<TooltipContent>
+																	<p>
+																		Fleet runs{" "}
+																		{data?.drift.dockerVersions.join(", ")}
+																	</p>
+																</TooltipContent>
+															</Tooltip>
 														)}
-													</TableCell>
-													<TableCell className="text-right text-sm">
-														<Usage percent={server.diskUsedPercent} />
-													</TableCell>
-													<TableCell className="text-right text-sm">
-														<Usage percent={server.memUsedPercent} />
-													</TableCell>
-													<TableCell className="text-right tabular-nums text-sm text-muted-foreground">
-														{server.loadPerCore ?? "—"}
-													</TableCell>
-													<TableCell className="text-right text-xs text-muted-foreground">
-														{server.cpuCores === undefined ? (
-															"—"
-														) : (
-															<span className="whitespace-nowrap tabular-nums">
-																{server.cpuCores} vCPU
-																{server.memoryTotalMb
-																	? ` · ${formatMb(server.memoryTotalMb)}`
-																	: ""}
-																{server.diskTotalMb
-																	? ` · ${formatMb(server.diskTotalMb)} disk`
-																	: ""}
-															</span>
+													</span>
+												</TableCell>
+												<TableCell>
+													{server.swarmState === "active" ? (
+														<Badge variant="green" className="text-[10px]">
+															{server.swarmRole ?? "active"}
+														</Badge>
+													) : (
+														<span className="text-xs text-muted-foreground">
+															{server.swarmState || "—"}
+														</span>
+													)}
+												</TableCell>
+												<TableCell>
+													<span className="flex items-center gap-1.5 font-mono text-xs">
+														{server.traefikVersion ?? "—"}
+														{driftedTraefik && (
+															<Tooltip>
+																<TooltipTrigger asChild>
+																	<TriangleAlert className="size-3.5 text-amber-500" />
+																</TooltipTrigger>
+																<TooltipContent>
+																	<p>
+																		Fleet runs{" "}
+																		{data?.drift.traefikVersions.join(", ")}
+																	</p>
+																</TooltipContent>
+															</Tooltip>
 														)}
-													</TableCell>
-													<TableCell className="text-xs text-muted-foreground">
-														{server.uptime ?? "—"}
-													</TableCell>
-												</TableRow>
-											);
-										})}
-									</TableBody>
-								</Table>
-							</TooltipProvider>
-						</div>
-					)}
-				</CardContent>
+													</span>
+												</TableCell>
+												<TableCell className="text-right tabular-nums text-sm">
+													{server.containersRunning === undefined ? (
+														<span className="text-muted-foreground">—</span>
+													) : (
+														<span>
+															{server.containersRunning}
+															<span className="text-muted-foreground">
+																{" / "}
+																{server.containersTotal ?? 0}
+															</span>
+														</span>
+													)}
+												</TableCell>
+												<TableCell className="text-right text-sm">
+													<Usage percent={server.diskUsedPercent} />
+												</TableCell>
+												<TableCell className="text-right text-sm">
+													<Usage percent={server.memUsedPercent} />
+												</TableCell>
+												<TableCell className="text-right tabular-nums text-sm text-muted-foreground">
+													{server.loadPerCore ?? "—"}
+												</TableCell>
+												<TableCell className="text-right text-xs text-muted-foreground">
+													{server.cpuCores === undefined ? (
+														"—"
+													) : (
+														<span className="whitespace-nowrap tabular-nums">
+															{server.cpuCores} vCPU
+															{server.memoryTotalMb
+																? ` · ${formatMb(server.memoryTotalMb)}`
+																: ""}
+															{server.diskTotalMb
+																? ` · ${formatMb(server.diskTotalMb)} disk`
+																: ""}
+														</span>
+													)}
+												</TableCell>
+												<TableCell className="text-xs text-muted-foreground">
+													{server.uptime ?? "—"}
+												</TableCell>
+											</TableRow>
+										);
+									})}
+								</TableBody>
+							</Table>
+						</TooltipProvider>
+					</div>
+				)}
 			</div>
-		</Card>
+		</PageContainer>
 	);
 };
