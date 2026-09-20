@@ -1,5 +1,12 @@
 import { formatDistanceToNow } from "date-fns";
-import { DatabaseBackup, Play, Plus, ShieldCheck, Trash2 } from "lucide-react";
+import {
+	DatabaseBackup,
+	History,
+	Play,
+	Plus,
+	ShieldCheck,
+	Trash2,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DialogAction } from "@/components/shared/dialog-action";
@@ -24,6 +31,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { api, type RouterOutputs } from "@/utils/api";
 
 type Overview = RouterOutputs["abhashBackups"]["overview"];
@@ -336,6 +344,133 @@ const DrillCell = ({ policy }: { policy: Policy }) => {
 	);
 };
 
+const queued = (result: { approvalId: string | null }, started: string) =>
+	toast.success(result.approvalId ? "Waiting for approval" : started);
+
+/** Point-in-time recovery: only Postgres keeps a log it can be replayed from. */
+const WalCell = ({ policy }: { policy: Policy }) => {
+	const utils = api.useUtils();
+	const [open, setOpen] = useState(false);
+	const [when, setWhen] = useState("");
+	const [replace, setReplace] = useState(false);
+	const setWal = api.abhashBackups.setWal.useMutation();
+	const recover = api.abhashBackups.recover.useMutation();
+	const { data: window } = api.abhashBackups.recoveryWindow.useQuery(
+		{ policyId: policy.id },
+		{ enabled: open },
+	);
+	if (policy.targetKind !== "postgres") return null;
+
+	const toggle = async (enabled: boolean) => {
+		await setWal
+			.mutateAsync({ policyId: policy.id, enabled })
+			.then(async (result) => {
+				queued(
+					result,
+					enabled ? "Turning on — follow it in Activity" : "Archiving is off",
+				);
+				await utils.abhashBackups.overview.invalidate();
+				setOpen(false);
+			})
+			.catch(fail);
+	};
+
+	if (!policy.walEnabled) {
+		return (
+			<DialogAction
+				title="Turn on point-in-time recovery?"
+				description="The database is redeployed once. From then on its write-ahead log is archived, and backups become physical copies."
+				onClick={() => toggle(true)}
+			>
+				<Button variant="ghost" size="sm">
+					<History className="size-4" />
+					Point-in-time
+				</Button>
+			</DialogAction>
+		);
+	}
+
+	return (
+		<Dialog open={open} onOpenChange={setOpen}>
+			<DialogTrigger asChild>
+				<Button variant="outline" size="sm">
+					<History className="size-4" />
+					Recover
+				</Button>
+			</DialogTrigger>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Recover {policy.name}</DialogTitle>
+					<DialogDescription>
+						{window?.earliest
+							? `Any moment since ${new Date(window.earliest).toLocaleString()}.`
+							: "Needs a base backup first."}
+					</DialogDescription>
+				</DialogHeader>
+				<div className="flex flex-col gap-3">
+					<div className="flex flex-col gap-1.5">
+						<Label>Moment (blank = latest)</Label>
+						<Input
+							type="datetime-local"
+							step={1}
+							value={when}
+							onChange={(event) => setWhen(event.target.value)}
+						/>
+					</div>
+					<div className="flex items-center justify-between rounded-md border p-3">
+						<div>
+							<p className="text-sm font-medium">Replace the live database</p>
+							<p className="text-xs text-muted-foreground">
+								Off recovers a copy. The old data is kept either way.
+							</p>
+						</div>
+						<Switch checked={replace} onCheckedChange={setReplace} />
+					</div>
+				</div>
+				<DialogFooter className="sm:justify-between">
+					<Button
+						variant="ghost"
+						isLoading={setWal.isPending}
+						onClick={() => toggle(false)}
+					>
+						Turn off archiving
+					</Button>
+					<Button
+						variant={replace ? "destructive" : "default"}
+						isLoading={recover.isPending}
+						disabled={!window?.earliest}
+						onClick={async () => {
+							await recover
+								.mutateAsync({
+									policyId: policy.id,
+									targetTime: when ? new Date(when).toISOString() : null,
+									replaceService: replace,
+								})
+								.then((result) => {
+									queued(result, "Recovering — follow it in Activity");
+									setOpen(false);
+								})
+								.catch(fail);
+						}}
+					>
+						Recover
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	);
+};
+
+const walLine = (policy: Policy) => {
+	if (!policy.walEnabled) return "";
+	const status = policy.walStatus;
+	if (!status) return " · WAL starting";
+	if (status.problem) return ` · WAL: ${status.problem}`;
+	return status.lastShippedAt
+		? ` · WAL shipped ${formatDistanceToNow(new Date(status.lastShippedAt), { addSuffix: true })}`
+		: " · WAL not shipped yet";
+};
+
 export const BackupHealth = () => {
 	const utils = api.useUtils();
 	const { data } = api.abhashBackups.overview.useQuery(undefined, {
@@ -420,6 +555,11 @@ export const BackupHealth = () => {
 								) : (
 									<Badge variant="green">up to date</Badge>
 								)}
+								{policy.walEnabled && (
+									<Badge variant={policy.walStatus?.problem ? "red" : "green"}>
+										WAL
+									</Badge>
+								)}
 								{policy.cronExpression && (
 									<code className="text-xs text-muted-foreground">
 										{policy.cronExpression}
@@ -433,8 +573,10 @@ export const BackupHealth = () => {
 								{policy.lastRun?.status === "failed"
 									? ` · last attempt failed: ${policy.lastRun.error?.slice(0, 120)}`
 									: ""}
+								{walLine(policy)}
 							</p>
 						</div>
+						<WalCell policy={policy} />
 						<DrillCell policy={policy} />
 						<Button
 							size="sm"

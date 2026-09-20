@@ -301,8 +301,58 @@ export const ABHASH_TOOLS: McpTool[] = [
 							rtoSeconds: policy.lastDrill.rtoSeconds,
 						}
 					: null,
+				wal: policy.walEnabled
+					? {
+							lastShippedAt: policy.walStatus?.lastShippedAt ?? null,
+							lastArchivedAt: policy.walStatus?.lastArchivedAt ?? null,
+							pendingSegments: policy.walStatus?.pendingSegments ?? 0,
+							problem: policy.walStatus?.problem ?? null,
+						}
+					: null,
 			}));
 		},
+	},
+	{
+		name: "recovery_window",
+		description:
+			"For a Postgres backup with WAL archiving: the earliest and latest moment it can be recovered to.",
+		annotations: { readOnlyHint: true },
+		inputSchema: {
+			type: "object",
+			properties: { policyId: { type: "string" } },
+			required: ["policyId"],
+		},
+		run: async (caller, args) =>
+			caller.abhashBackups.recoveryWindow({
+				policyId: str(args.policyId, "policyId"),
+			}),
+	},
+	{
+		name: "recover_to_point_in_time",
+		description:
+			"Rebuild a Postgres database as it was at one moment, from its base backup and archived WAL. By default the result is a verified copy in a new volume and the live database is not touched. With replaceService the copy is swapped in for the live database (the old data is kept in a volume); that needs a person's approval.",
+		annotations: { destructiveHint: true, idempotentHint: false },
+		inputSchema: {
+			type: "object",
+			properties: {
+				policyId: { type: "string" },
+				targetTime: {
+					type: "string",
+					description:
+						"ISO 8601 with offset, e.g. 2026-09-20T05:51:56Z. Omit for the latest moment.",
+				},
+				replaceService: { type: "boolean", default: false },
+			},
+			required: ["policyId"],
+		},
+		run: async (caller, args) =>
+			queued(
+				await caller.abhashBackups.recover({
+					policyId: str(args.policyId, "policyId"),
+					targetTime: optionalStr(args.targetTime) ?? null,
+					replaceService: bool(args.replaceService, false),
+				}),
+			),
 	},
 	{
 		name: "run_backup",

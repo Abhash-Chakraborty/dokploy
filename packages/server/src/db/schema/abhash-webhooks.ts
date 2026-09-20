@@ -14,6 +14,7 @@ export const WEBHOOK_EVENTS = [
 	"job.failed",
 	"backup.failed",
 	"backup.stale",
+	"wal.lagging",
 	"drill.failed",
 	"approval.requested",
 	"server.offline",
@@ -37,7 +38,11 @@ export const abhashWebhook = pgTable(
 		url: text("url").notNull(),
 		/** Signs every delivery; a vault reference or a literal. */
 		secretRef: text("secret_ref").notNull(),
-		events: text("events").array().$type<WebhookEvent[]>().notNull().default([]),
+		events: text("events")
+			.array()
+			.$type<WebhookEvent[]>()
+			.notNull()
+			.default([]),
 		enabled: boolean("enabled").notNull().default(true),
 		lastStatus: integer("last_status"),
 		lastError: text("last_error"),

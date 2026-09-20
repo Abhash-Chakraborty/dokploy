@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNotNull, notInArray } from "drizzle-orm";
 import { db } from "../../../db";
 import {
 	abhashBackupPolicy,
@@ -26,6 +26,13 @@ import {
 	resticCommand,
 	retentionArgs,
 } from "./restic";
+import {
+	BASE_TAG,
+	baseBackupDumpCommand,
+	baseBackupFilename,
+	currentWalCommand,
+	isSegmentName,
+} from "./wal";
 
 export type PolicyRow = typeof abhashBackupPolicy.$inferSelect;
 export type RepositoryRow = typeof abhashBackupRepository.$inferSelect;
@@ -239,11 +246,27 @@ export const runBackup = async (
 	for (const value of Object.values(env)) redact(value);
 	const mount = repoMountOf(repository);
 	const target = await resolveTarget(policy);
-	const plan = dumpPlan(policy.targetKind, target);
+	// WAL can only be replayed onto a physical copy, never onto a dump.
+	const physical = policy.walEnabled && policy.targetKind === "postgres";
+	const logical = dumpPlan(policy.targetKind, target);
+	const plan = physical
+		? {
+				...logical,
+				command: baseBackupDumpCommand({
+					appName: target.appName,
+					username: (target as { username?: string }).username ?? "postgres",
+				}),
+				filename: baseBackupFilename(target.appName),
+			}
+		: logical;
 
 	const [run] = await db
 		.insert(abhashBackupRun)
-		.values({ policyId: policy.id, status: "running" })
+		.values({
+			policyId: policy.id,
+			status: "running",
+			method: physical ? "base" : "logical",
+		})
 		.returning();
 	const runId = run?.id as string;
 	const startedAt = Date.now();
@@ -268,6 +291,25 @@ export const runBackup = async (
 			if (Number.isFinite(tables)) stats = { tables };
 		}
 
+		// Read before the copy starts, so it can only be too early, never too
+		// late: recovery replays from here, and pruning keeps from here.
+		let walStart: string | null = null;
+		if (physical) {
+			const current = await runWhereDataIs(
+				policy.serverId,
+				currentWalCommand({
+					appName: target.appName,
+					username: (target as { username?: string }).username ?? "postgres",
+					database: (target as { database?: string }).database ?? "postgres",
+				}),
+				{ timeoutMs: 60_000 },
+			);
+			walStart = current.stdout.trim();
+			if (current.exitCode !== 0 || !isSegmentName(walStart)) {
+				throw new Error("Could not read the current WAL position");
+			}
+		}
+
 		await log(`Backing up ${policy.name} into ${repository.name}…`);
 		const command = backupCommand({
 			dump: plan,
@@ -278,6 +320,7 @@ export const runBackup = async (
 				`policy:${policy.id}`,
 				`kind:${policy.targetKind}`,
 				`org:${organizationId}`,
+				...(physical ? [BASE_TAG] : []),
 			],
 		});
 		const result = await runWhereDataIs(policy.serverId, command, {
@@ -326,6 +369,18 @@ export const runBackup = async (
 		if (forget.exitCode !== 0) {
 			await log(`Retention did not run cleanly: ${forget.stderr.slice(-300)}`);
 		}
+		if (forget.exitCode === 0) {
+			await forgetExpiredRuns(policy, env, mount, summary.snapshotId);
+		}
+		if (physical) {
+			const { forgetOldWal } = await import("./pitr");
+			const trimmed = await forgetOldWal(policy, env, mount);
+			if (trimmed.exitCode !== 0) {
+				await log(
+					`WAL retention did not run cleanly: ${trimmed.stderr.slice(-300)}`,
+				);
+			}
+		}
 
 		for (const copyId of policy.copyToRepositoryIds) {
 			const secondary = await findRepository(organizationId, copyId);
@@ -355,6 +410,7 @@ export const runBackup = async (
 			.set({
 				status: "succeeded",
 				snapshotId: summary.snapshotId,
+				walStart,
 				bytesAdded: summary.bytesAdded,
 				bytesProcessed: summary.bytesProcessed,
 				durationMs: Date.now() - startedAt,
@@ -385,6 +441,40 @@ export const runBackup = async (
 		});
 		throw error;
 	}
+};
+
+/**
+ * Retention deletes snapshots from the repository; the rows that recorded
+ * them must stop pointing at them, or a recovery could pick a base backup
+ * that is no longer there. Nothing is touched unless the listing is
+ * trustworthy, which the snapshot just written proves.
+ */
+const forgetExpiredRuns = async (
+	policy: PolicyRow,
+	env: ResticEnv,
+	mount: string | null,
+	justWritten: string,
+) => {
+	const listed = await runWhereDataIs(
+		policy.serverId,
+		`${envPrefix(env)} ${resticCommand(
+			["snapshots", "--json", `--tag policy:${policy.id}`],
+			{ env, repoMount: mount },
+		)}`,
+		{ timeoutMs: 300_000 },
+	);
+	const present = parseSnapshots(listed.stdout).map((snapshot) => snapshot.id);
+	if (listed.exitCode !== 0 || !present.includes(justWritten)) return;
+	await db
+		.update(abhashBackupRun)
+		.set({ snapshotId: null })
+		.where(
+			and(
+				eq(abhashBackupRun.policyId, policy.id),
+				isNotNull(abhashBackupRun.snapshotId),
+				notInArray(abhashBackupRun.snapshotId, present),
+			),
+		);
 };
 
 export const listSnapshots = async (

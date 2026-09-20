@@ -373,6 +373,58 @@ Covered end to end in the sandbox against a real Postgres: backup, integrity
 check, drill passing, nothing left behind, and a drill correctly failing when
 the data does not match.
 
+### Point-in-time recovery (WAL archiving)
+A backup restores the database as it was when the backup ran. For Postgres,
+turning on **Point-in-time** on a policy closes the gap between backups:
+the write-ahead log is archived continuously, so the database can be rebuilt
+as it was at any moment, and base backups can be taken far less often.
+
+It reuses the policy's restic repository and installs nothing: no WAL-G
+binary, no credentials inside the database container, and it works the same
+on the Debian and the Alpine images, on amd64 and arm64.
+
+- **Archive.** `archive_command` gzips each finished segment into a volume of
+  its own (`<app>-wal`). It writes under a temporary name and renames, accepts
+  a segment Postgres sends twice after a crash, and refuses to overwrite one
+  with different bytes. `archive_timeout` is 60 s, which bounds what a quiet
+  database can lose. The settings are written with `ALTER SYSTEM`, so they
+  live in the data volume and survive redeploys; turning it on costs one
+  redeploy, which also attaches the volume.
+- **Ship.** Every few minutes a job snapshots that volume into the repository.
+  restic deduplicates, so only new segments upload. It reads the volume and
+  not the database, so it keeps working when Postgres is down, which is when
+  the last segments matter most. Successful ships leave no job history;
+  failures do. WAL snapshots carry their own tag, so base-backup retention
+  never sees them.
+- **Base backups.** WAL replays onto a physical copy, never onto a dump, so a
+  policy with archiving on takes `pg_basebackup` on its schedule instead.
+- **Health.** The signal is the queue of segments waiting to be archived and
+  the archiver's failure count, not the time since the last segment: an idle
+  database writes no WAL, and silence is normal. A problem raises
+  `wal.lagging` once per incident.
+- **Local pruning.** Segments older than the newest base backup are removed
+  from the volume, but only after a ship has run two minutes past that base.
+  That ordering guarantees a snapshot holding both the old segments and the
+  new base exists, so every moment stays recoverable. Timeline history files
+  are never pruned.
+- **Recover.** Pick a moment, or none for the latest. The base backup before
+  it goes into a fresh volume, the WAL is checked for holes, replayed in a
+  container on an internal network with no ports, promoted and queried. By
+  default that is a verified copy and the live database is never touched.
+  **Replace the live database** swaps the copy in: it needs approval, the old
+  data is kept in its own volume, and a new base backup follows because the
+  database continues on a new timeline.
+- **Drills** for such a policy are a real point-in-time recovery.
+
+Turning it off sets `archive_command` to `/bin/true` first: `archive_mode`
+only changes at a restart, and until then an empty command would make
+Postgres keep every segment forever.
+
+Covered in the sandbox against a real Postgres: recovery to a moment between
+two writes returning exactly the rows before it, recovery with the database
+stopped, targets that cannot be reached leaving nothing behind, the swap and
+archiving continuing on timeline 2, pruning, and drills passing and failing.
+
 ### AI agents: tools and events
 The MCP endpoint (`/api/mcp`, JSON-RPC over one POST) now exposes write
 tools alongside the read-only ones, each with MCP annotations so a client
@@ -447,4 +499,5 @@ no-op: `0197`-`0199` (auth methods, log drains, Cloudflare tunnels),
 (agents, key policies and approvals), `0207` (Ansible projects and runs), `0208` (server groups and
 server metadata), `0209` (mesh providers and server peers), `0210` (firewall policies, rules
 and per-server state), `0211` (backup repositories, policies, runs and
-drills), `0212` (event webhooks), `0213` (managed services).
+drills), `0212` (event webhooks), `0213` (managed services), `0214` (WAL
+archiving on backup policies).

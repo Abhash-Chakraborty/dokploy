@@ -5,7 +5,7 @@ import { abhashJob } from "../../../db/schema";
 import { emitEvent } from "../webhooks";
 import { connectionOptions, queuePrefix } from "./connection";
 import { tryAcquire } from "./locks";
-import { createJobLogger } from "./logs";
+import { createJobLogger, removeJobLog } from "./logs";
 import {
 	cancelChannel,
 	type QueuePayload,
@@ -134,6 +134,11 @@ const runJob = async (
 				finishedAt: new Date(),
 			})
 			.where(eq(abhashJob.id, row.id));
+		if (definition.ephemeral && row.scheduleId) {
+			await db.delete(abhashJob).where(eq(abhashJob.id, row.id));
+			await removeJobLog(row.id).catch(() => {});
+			return;
+		}
 		await emitEvent(row.organizationId, "job.succeeded", {
 			jobId: row.id,
 			type: row.type,

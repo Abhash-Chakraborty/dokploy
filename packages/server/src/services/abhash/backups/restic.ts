@@ -21,6 +21,8 @@ export const resticCommand = (
 		repoMount?: string | null;
 		stdin?: boolean;
 		network?: "host" | "none";
+		/** Extra `name:/path[:ro]` mounts, e.g. the volume being backed up. */
+		volumes?: string[];
 	},
 ) => {
 	const parts = [
@@ -30,6 +32,7 @@ export const resticCommand = (
 		options.repoMount
 			? `-v ${shellQuote(options.repoMount)}:${shellQuote(options.repoMount)}`
 			: "",
+		...(options.volumes ?? []).map((volume) => `-v ${shellQuote(volume)}`),
 		...Object.keys(options.env).map((key) => `-e ${key}`),
 		RESTIC_IMAGE(),
 		...args,

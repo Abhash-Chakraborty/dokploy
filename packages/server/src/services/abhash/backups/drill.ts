@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNotNull } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "../../../db";
 import {
@@ -9,7 +9,7 @@ import {
 	type DrillCheck,
 } from "../../../db/schema";
 import { emitEvent } from "../webhooks";
-import { dumpPlan, envPrefix, type ResticEnv, resticCommand } from "./restic";
+import { dumpPlan, envPrefix, resticCommand } from "./restic";
 import {
 	findPolicy,
 	repoMountOf,
@@ -131,6 +131,7 @@ export const runDrill = async (
 		where: and(
 			eq(abhashBackupRun.policyId, policy.id),
 			eq(abhashBackupRun.status, "succeeded"),
+			isNotNull(abhashBackupRun.snapshotId),
 		),
 		orderBy: [desc(abhashBackupRun.startedAt)],
 	});
@@ -140,6 +141,18 @@ export const runDrill = async (
 
 	const where =
 		drill.where === "drill-server" ? drill.drillServerId : policy.serverId;
+	if (previous.method === "base") {
+		return runRecoveryDrill({
+			organizationId,
+			drill,
+			policyName: policy.name,
+			snapshotId: previous.snapshotId,
+			expectedTables: previous.stats?.tables,
+			where,
+			log,
+			redact,
+		});
+	}
 	const id = nanoid(8).toLowerCase();
 	const name = `abhash-drill-${id}`;
 	const network = `abhash-drill-${id}`;
@@ -299,5 +312,103 @@ export const runDrill = async (
 		await runWhereDataIs(where, cleanup, { timeoutMs: 120_000 }).catch(
 			() => {},
 		);
+	}
+};
+
+/**
+ * For a policy with WAL archiving the drill is a real point-in-time
+ * recovery: base backup, WAL replay to the latest moment, promotion, and
+ * the same checks, all in a copy that is thrown away afterwards.
+ */
+const runRecoveryDrill = async (options: {
+	organizationId: string;
+	drill: typeof abhashDrillPolicy.$inferSelect;
+	policyName: string;
+	snapshotId: string;
+	expectedTables: number | undefined;
+	where: string | null;
+	log: (line: string) => Promise<void> | void;
+	redact: (value: string) => void;
+}): Promise<DrillOutcome> => {
+	const { drill } = options;
+	const { recoverToPointInTime } = await import("./pitr");
+	const [run] = await db
+		.insert(abhashDrillRun)
+		.values({
+			drillPolicyId: drill.id,
+			snapshotId: options.snapshotId,
+			status: "running",
+		})
+		.returning();
+	const runId = run?.id as string;
+	const startedAt = Date.now();
+	const checks: DrillCheck[] = [];
+	try {
+		const outcome = await recoverToPointInTime(
+			options.organizationId,
+			drill.policyId,
+			{
+				targetTime: null,
+				keepVolume: false,
+				serverId: options.where,
+				verify: async (query) => {
+					for (const assertion of drill.queries) {
+						const result = await query(assertion.sql);
+						checks.push({
+							name: assertion.name,
+							ok:
+								result.ok &&
+								(assertion.expect === undefined ||
+									result.value === assertion.expect),
+							detail: assertion.expect
+								? `${result.value} (expected ${assertion.expect})`
+								: result.value,
+						});
+					}
+				},
+			},
+			options.log,
+			options.redact,
+		);
+		checks.unshift(...outcome.checks);
+		if (options.expectedTables !== undefined) {
+			checks.push({
+				name: "Nothing went missing",
+				ok: outcome.tables >= options.expectedTables,
+				detail: `${outcome.tables} tables, ${options.expectedTables} at backup time`,
+			});
+		}
+		const rtoSeconds = Math.round((Date.now() - startedAt) / 1000);
+		checks.push({
+			name: "Within the recovery-time budget",
+			ok: rtoSeconds <= drill.rtoMinutes * 60,
+			detail: `${rtoSeconds}s of ${drill.rtoMinutes * 60}s`,
+		});
+		const status = checks.every((check) => check.ok) ? "passed" : "failed";
+		if (status === "failed") {
+			await emitEvent(options.organizationId, "drill.failed", {
+				drillPolicyId: drill.id,
+				policy: options.policyName,
+				checks: checks.filter((check) => !check.ok),
+			});
+		}
+		await db
+			.update(abhashDrillRun)
+			.set({ status, rtoSeconds, checks, finishedAt: new Date() })
+			.where(eq(abhashDrillRun.id, runId));
+		await options.log(`Drill ${status} in ${rtoSeconds}s`);
+		return { status, rtoSeconds, checks, snapshotId: options.snapshotId };
+	} catch (error) {
+		await db
+			.update(abhashDrillRun)
+			.set({
+				status: "failed",
+				error: error instanceof Error ? error.message : String(error),
+				checks,
+				rtoSeconds: Math.round((Date.now() - startedAt) / 1000),
+				finishedAt: new Date(),
+			})
+			.where(eq(abhashDrillRun.id, runId));
+		throw error;
 	}
 };

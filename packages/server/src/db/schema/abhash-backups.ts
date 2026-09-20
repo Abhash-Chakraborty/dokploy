@@ -62,6 +62,23 @@ export const abhashBackupRepository = pgTable(
 	],
 );
 
+export type WalStatus = {
+	checkedAt: string;
+	/** Null when the database could not be asked, e.g. because it is down. */
+	archiveMode: string | null;
+	lastArchivedWal: string | null;
+	lastArchivedAt: string | null;
+	failedCount: number;
+	lagSeconds: number | null;
+	pendingSegments: number;
+	lastShippedAt: string | null;
+	lastShipSnapshotId: string | null;
+	/** The base backup the local archive was last pruned up to. */
+	prunedBefore?: string | null;
+	/** Set while something needs attention; cleared when it recovers. */
+	problem: string | null;
+};
+
 export type BackupTargetKind =
 	| "postgres"
 	| "mysql"
@@ -109,6 +126,16 @@ export const abhashBackupPolicy = pgTable(
 		preHook: text("pre_hook"),
 		postHook: text("post_hook"),
 		enabled: boolean("enabled").notNull().default(true),
+		/**
+		 * Postgres only: archive the write-ahead log continuously, so the
+		 * database can be recovered to any moment and not only to a backup.
+		 * Backups of such a policy are physical base backups.
+		 */
+		walEnabled: boolean("wal_enabled").notNull().default(false),
+		walShipMinutes: integer("wal_ship_minutes").notNull().default(5),
+		/** How far back a point in time can be chosen. */
+		walRetentionDays: integer("wal_retention_days").notNull().default(7),
+		walStatus: jsonb("wal_status").$type<WalStatus>(),
 		createdAt: timestamp("created_at").defaultNow().notNull(),
 	},
 	(t) => [
@@ -141,6 +168,13 @@ export const abhashBackupRun = pgTable(
 			.notNull()
 			.default("running"),
 		snapshotId: text("snapshot_id"),
+		/** `base` is a physical copy that WAL can be replayed onto. */
+		method: text("method")
+			.$type<"logical" | "base">()
+			.notNull()
+			.default("logical"),
+		/** The WAL segment being written when a base backup began. */
+		walStart: text("wal_start"),
 		bytesAdded: bigint("bytes_added", { mode: "number" }),
 		bytesProcessed: bigint("bytes_processed", { mode: "number" }),
 		durationMs: integer("duration_ms"),
@@ -211,5 +245,7 @@ export const abhashDrillRun = pgTable(
 		startedAt: timestamp("started_at").defaultNow().notNull(),
 		finishedAt: timestamp("finished_at"),
 	},
-	(t) => [index("abhash_drill_run_policy_idx").on(t.drillPolicyId, t.startedAt)],
+	(t) => [
+		index("abhash_drill_run_policy_idx").on(t.drillPolicyId, t.startedAt),
+	],
 );

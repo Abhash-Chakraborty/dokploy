@@ -15,8 +15,11 @@ import {
 	findPolicy,
 	initRepository,
 	listSnapshots,
+	recoveryWindow,
+	removeBackupSchedules,
 	syncBackupSchedule,
 	syncDrillSchedule,
+	turnOffWal,
 } from "@dokploy/server/services/abhash/backups";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, inArray } from "drizzle-orm";
@@ -48,38 +51,60 @@ export const abhashBackupsRouter = createTRPCRouter({
 	/** Everything the backup health page shows, in one call. */
 	overview: adminProcedure.query(async ({ ctx }) => {
 		const organizationId = ctx.session.activeOrganizationId;
-		const repositories = await db.query.abhashBackupRepository.findMany({
-			where: eq(abhashBackupRepository.organizationId, organizationId),
-		});
-		const policies = await db.query.abhashBackupPolicy.findMany({
-			where: eq(abhashBackupPolicy.organizationId, organizationId),
-		});
-		const drills = await db.query.abhashDrillPolicy.findMany({
-			where: eq(abhashDrillPolicy.organizationId, organizationId),
-		});
+		const [repositories, policies, drills] = await Promise.all([
+			db.query.abhashBackupRepository.findMany({
+				where: eq(abhashBackupRepository.organizationId, organizationId),
+			}),
+			db.query.abhashBackupPolicy.findMany({
+				where: eq(abhashBackupPolicy.organizationId, organizationId),
+			}),
+			db.query.abhashDrillPolicy.findMany({
+				where: eq(abhashDrillPolicy.organizationId, organizationId),
+			}),
+		]);
+		// One row per policy, straight off the (policy, started) index. Taking
+		// "the latest N runs" instead would drop quiet policies off the end and
+		// report a healthy backup as never run.
 		const policyIds = policies.map((policy) => policy.id);
-		const runs = policyIds.length
-			? await db.query.abhashBackupRun.findMany({
-					where: inArray(abhashBackupRun.policyId, policyIds),
-					orderBy: [desc(abhashBackupRun.startedAt)],
-					limit: 200,
-				})
-			: [];
+		const latestRuns = (succeededOnly: boolean) =>
+			policyIds.length
+				? db
+						.selectDistinctOn([abhashBackupRun.policyId])
+						.from(abhashBackupRun)
+						.where(
+							and(
+								inArray(abhashBackupRun.policyId, policyIds),
+								...(succeededOnly
+									? [eq(abhashBackupRun.status, "succeeded")]
+									: []),
+							),
+						)
+						.orderBy(abhashBackupRun.policyId, desc(abhashBackupRun.startedAt))
+				: Promise.resolve([]);
 		const drillIds = drills.map((drill) => drill.id);
-		const drillRuns = drillIds.length
-			? await db.query.abhashDrillRun.findMany({
-					where: inArray(abhashDrillRun.drillPolicyId, drillIds),
-					orderBy: [desc(abhashDrillRun.startedAt)],
-					limit: 200,
-				})
-			: [];
+		const [lastRuns, lastSuccesses, drillRuns] = await Promise.all([
+			latestRuns(false),
+			latestRuns(true),
+			drillIds.length
+				? db
+						.selectDistinctOn([abhashDrillRun.drillPolicyId])
+						.from(abhashDrillRun)
+						.where(inArray(abhashDrillRun.drillPolicyId, drillIds))
+						.orderBy(
+							abhashDrillRun.drillPolicyId,
+							desc(abhashDrillRun.startedAt),
+						)
+				: Promise.resolve([]),
+		]);
 
 		const now = Date.now();
 		return {
 			repositories,
 			policies: policies.map((policy) => {
-				const mine = runs.filter((run) => run.policyId === policy.id);
-				const lastSuccess = mine.find((run) => run.status === "succeeded");
+				const lastRun = lastRuns.find((run) => run.policyId === policy.id);
+				const lastSuccess = lastSuccesses.find(
+					(run) => run.policyId === policy.id,
+				);
 				const drill = drills.find((row) => row.policyId === policy.id) ?? null;
 				const lastDrill = drill
 					? (drillRuns.find((run) => run.drillPolicyId === drill.id) ?? null)
@@ -90,7 +115,7 @@ export const abhashBackupsRouter = createTRPCRouter({
 				return {
 					...policy,
 					drill,
-					lastRun: mine[0] ?? null,
+					lastRun: lastRun ?? null,
 					lastSuccess: lastSuccess ?? null,
 					lastDrill,
 					// "Stale" is the honest signal: a backup that exists but is too
@@ -186,11 +211,33 @@ export const abhashBackupsRouter = createTRPCRouter({
 				preHook: z.string().trim().max(2000).nullable().default(null),
 				postHook: z.string().trim().max(2000).nullable().default(null),
 				enabled: z.boolean().default(true),
+				walShipMinutes: z.number().int().min(1).max(59).default(5),
+				walRetentionDays: z.number().int().min(1).max(365).default(7),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
 			const organizationId = ctx.session.activeOrganizationId;
 			const { id, ...values } = input;
+			if (id) {
+				const { policy } = await findPolicy(organizationId, id).catch(
+					(error) => {
+						throw asTrpc(error);
+					},
+				);
+				// The archive belongs to one database; pointing the policy at
+				// another would replay its WAL onto the wrong base backup.
+				if (
+					policy.walEnabled &&
+					(policy.target !== values.target ||
+						policy.targetKind !== values.targetKind ||
+						policy.serverId !== values.serverId)
+				) {
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message: "Turn WAL archiving off before changing what is backed up",
+					});
+				}
+			}
 			const [row] = id
 				? await db
 						.update(abhashBackupPolicy)
@@ -220,6 +267,7 @@ export const abhashBackupsRouter = createTRPCRouter({
 	removePolicy: adminProcedure
 		.input(z.object({ id: z.string() }))
 		.mutation(async ({ ctx, input }) => {
+			await removeBackupSchedules(input.id);
 			await db
 				.delete(abhashBackupPolicy)
 				.where(
@@ -341,6 +389,90 @@ export const abhashBackupsRouter = createTRPCRouter({
 				resourceType: "backup",
 				resourceId: input.drillPolicyId,
 				resourceName: "restore drill",
+			});
+			return {
+				jobId: queued.job?.id ?? null,
+				approvalId: queued.approval?.id ?? null,
+			};
+		}),
+
+	/** Turning it on redeploys the database once, so it runs as a job. */
+	setWal: adminProcedure
+		.input(z.object({ policyId: z.string(), enabled: z.boolean() }))
+		.mutation(async ({ ctx, input }) => {
+			const organizationId = ctx.session.activeOrganizationId;
+			const { policy } = await findPolicy(organizationId, input.policyId).catch(
+				(error) => {
+					throw asTrpc(error);
+				},
+			);
+			if (policy.targetKind !== "postgres") {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "WAL archiving is for Postgres policies",
+				});
+			}
+			await audit(ctx, {
+				action: "update",
+				resourceType: "backup",
+				resourceId: policy.id,
+				resourceName: `${policy.name}: WAL archiving ${input.enabled ? "on" : "off"}`,
+			});
+			if (!input.enabled) {
+				await turnOffWal(organizationId, policy.id).catch((error) => {
+					throw asTrpc(error);
+				});
+				return { jobId: null, approvalId: null };
+			}
+			const queued = await enqueueJobForActor(
+				"backup.walEnable",
+				{ organizationId, policyId: policy.id },
+				{ actor: actorOf(ctx), organizationId },
+			);
+			return {
+				jobId: queued.job?.id ?? null,
+				approvalId: queued.approval?.id ?? null,
+			};
+		}),
+
+	recoveryWindow: adminProcedure
+		.input(z.object({ policyId: z.string() }))
+		.query(async ({ ctx, input }) => {
+			try {
+				return await recoveryWindow(
+					ctx.session.activeOrganizationId,
+					input.policyId,
+				);
+			} catch (error) {
+				throw asTrpc(error);
+			}
+		}),
+
+	recover: adminProcedure
+		.input(
+			z.object({
+				policyId: z.string(),
+				targetTime: z.string().datetime().nullable().default(null),
+				replaceService: z.boolean().default(false),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const organizationId = ctx.session.activeOrganizationId;
+			await findPolicy(organizationId, input.policyId).catch((error) => {
+				throw asTrpc(error);
+			});
+			const queued = await enqueueJobForActor(
+				"backup.pitr",
+				{ organizationId, ...input },
+				{ actor: actorOf(ctx), organizationId },
+			);
+			await audit(ctx, {
+				action: "run",
+				resourceType: "backup",
+				resourceId: input.policyId,
+				resourceName: input.replaceService
+					? "point-in-time recovery (in place)"
+					: "point-in-time recovery (copy)",
 			});
 			return {
 				jobId: queued.job?.id ?? null,

@@ -41,6 +41,11 @@ export interface JobDefinition<I = unknown> {
 	/** Infrastructure changes default to a single attempt. */
 	attempts?: number;
 	timeoutMs?: number;
+	/**
+	 * For jobs that run every few minutes: a scheduled run that succeeds
+	 * leaves no history behind. Failures are always kept.
+	 */
+	ephemeral?: boolean;
 	run: (ctx: JobContext<I>) => Promise<unknown>;
 }
 
