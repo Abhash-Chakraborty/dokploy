@@ -39,8 +39,20 @@ repo or in the production database; the rest still need investigation.
   instance actually is: one OCPU is two vCPUs, and 954 MB is a gigabyte less
   what the kernel reserves. Nothing to fix here.
 
-Still open: firewall adoption, the fleet warning links into Command centre,
-SCIM, members and roles, and running baseline for real.
+### Third batch
+
+- Drills can compare a restore against the live database, not only against the
+  numbers recorded when the backup was taken (new; this was the gap behind
+  "test if the backup works"). WAL shipping and point-in-time recovery already
+  existed and were not the missing piece.
+- Service cards on the project page no longer overlap each other; the status
+  and select controls used to hang outside the card on negative offsets.
+- Fleet drift warnings for Docker, Traefik and swarm state now link into
+  Command centre, which is where patching and baselines are run (2.7).
+- Baseline repairs a half-configured package state before installing.
+
+Still open: firewall adoption, SCIM, members and roles, and running baseline
+against a repaired host.
 
 ## 1. Bugs that block something today
 
