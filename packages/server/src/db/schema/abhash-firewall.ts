@@ -1,5 +1,6 @@
 import {
 	boolean,
+	customType,
 	index,
 	integer,
 	pgTable,
@@ -27,6 +28,32 @@ export type RuleSource =
 	| { kind: "mesh" }
 	| { kind: "control" }
 	| { kind: "group"; groupId: string };
+
+/**
+ * The column is text, and a bare object handed to a text column is written
+ * as "[object Object]": every source was lost and read back as "anywhere".
+ * It is serialised here instead. What cannot be parsed comes back as a kind
+ * the compiler does not know, which it drops rather than opens.
+ */
+const ruleSource = customType<{ data: RuleSource; driverData: string }>({
+	dataType() {
+		return "text";
+	},
+	toDriver(value) {
+		return JSON.stringify(value);
+	},
+	fromDriver(value) {
+		try {
+			const parsed = JSON.parse(value) as RuleSource;
+			if (parsed && typeof parsed === "object" && "kind" in parsed) {
+				return parsed;
+			}
+		} catch {
+			// Falls through to the unreadable marker.
+		}
+		return { kind: "unreadable" } as unknown as RuleSource;
+	},
+});
 
 export const abhashFirewallPolicy = pgTable(
 	"abhash_firewall_policy",
@@ -66,7 +93,7 @@ export const abhashFirewallRule = pgTable(
 		protocol: text("protocol").$type<RuleProtocol>().notNull().default("tcp"),
 		/** A single port or an inclusive range, e.g. 8000:8010. */
 		port: text("port").notNull(),
-		source: text("source").$type<RuleSource>().notNull(),
+		source: ruleSource("source").notNull(),
 		comment: text("comment").notNull().default(""),
 		priority: integer("priority").notNull().default(100),
 		enabled: boolean("enabled").notNull().default(true),

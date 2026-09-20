@@ -50,8 +50,11 @@ export const credentialJson = <T>() =>
 			return "jsonb";
 		},
 		toDriver(value) {
+			// The ciphertext goes into a jsonb column, so it has to be a JSON
+			// string: handed over bare, Postgres rejects "enc:v1:…" as invalid
+			// JSON. This is the same shape the backfill writes.
 			return credentialEncryptionOn()
-				? encryptValue(JSON.stringify(value))
+				? JSON.stringify(encryptValue(JSON.stringify(value)))
 				: (value as unknown);
 		},
 		fromDriver(value) {

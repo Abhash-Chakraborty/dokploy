@@ -7,6 +7,7 @@ import {
 	timestamp,
 } from "drizzle-orm/pg-core";
 import { nanoid } from "nanoid";
+import { credentialText } from "./abhash-credential";
 import { organization } from "./account";
 
 export const WEBHOOK_EVENTS = [
@@ -37,7 +38,7 @@ export const abhashWebhook = pgTable(
 		name: text("name").notNull(),
 		url: text("url").notNull(),
 		/** Signs every delivery; a vault reference or a literal. */
-		secretRef: text("secret_ref").notNull(),
+		secretRef: credentialText("secret_ref").notNull(),
 		events: text("events")
 			.array()
 			.$type<WebhookEvent[]>()

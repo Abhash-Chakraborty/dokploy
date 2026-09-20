@@ -125,20 +125,30 @@ export const decideApproval = async (input: {
 }) => {
 	const approval = await getApproval(input.organizationId, input.id);
 	if (!approval) throw new Error("Approval not found");
-	if (approval.status !== "pending") {
-		throw new Error(`This request is already ${approval.status}`);
-	}
 	const decided = {
 		decidedBy: input.decidedBy.id,
 		decidedAt: new Date(),
 		reason: input.reason ?? null,
 	};
-	if (!input.approve) {
-		await db
-			.update(abhashApproval)
-			.set({ ...decided, status: "rejected" })
-			.where(eq(abhashApproval.id, approval.id));
-	} else {
+	// The decision is claimed in one statement. Reading "pending" and then
+	// acting on it let two approvals arrive together and both run the job.
+	const [claimed] = await db
+		.update(abhashApproval)
+		.set({ ...decided, status: input.approve ? "approved" : "rejected" })
+		.where(
+			and(
+				eq(abhashApproval.id, approval.id),
+				eq(abhashApproval.status, "pending"),
+			),
+		)
+		.returning({ id: abhashApproval.id });
+	if (!claimed) {
+		const current = await getApproval(input.organizationId, input.id);
+		throw new Error(
+			`This request is already ${current?.status ?? approval.status}`,
+		);
+	}
+	if (input.approve) {
 		const definition = getJobDefinition(approval.operation);
 		if (!definition) throw new Error(`Unknown operation ${approval.operation}`);
 		try {

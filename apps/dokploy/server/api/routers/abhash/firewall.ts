@@ -11,6 +11,7 @@ import {
 	ensureFirewallRow,
 	planFirewall,
 } from "@dokploy/server/services/abhash/firewall";
+import { isCidr } from "@dokploy/server/services/abhash/firewall/cidr";
 import { TRPCError } from "@trpc/server";
 import { and, asc, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -27,7 +28,13 @@ const sourceInput = z.discriminatedUnion("kind", [
 	z.object({ kind: z.literal("any") }),
 	z.object({
 		kind: z.literal("cidr"),
-		value: z.string().trim().min(7).max(43),
+		// It is written into a root shell script, so it is an address and
+		// nothing else: length limits alone let shell syntax through.
+		value: z
+			.string()
+			.trim()
+			.max(43)
+			.refine(isCidr, "An address or a range like 10.0.0.0/8"),
 	}),
 	z.object({ kind: z.literal("mesh") }),
 	z.object({ kind: z.literal("control") }),

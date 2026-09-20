@@ -82,16 +82,22 @@ describe("the apply script", () => {
 
 	it("snapshots before it changes anything", () => {
 		const snapshot = script.indexOf("iptables-save");
-		const change = script.indexOf("ufw --force reset");
+		const change = script.indexOf("ufw show added");
 		expect(snapshot).toBeGreaterThan(-1);
+		expect(change).toBeGreaterThan(-1);
 		expect(snapshot).toBeLessThan(change);
 	});
 
 	it("arms the rollback before applying, and works without systemd", () => {
 		const arm = script.indexOf("rollback.sh");
-		expect(arm).toBeLessThan(script.indexOf("ufw --force reset"));
+		expect(arm).toBeLessThan(script.indexOf("ufw show added"));
 		expect(script).toContain("systemd-run");
 		expect(script).toContain("nohup sh -c 'sleep 120");
+	});
+
+	it("replaces only the rules it owns, never the operator's", () => {
+		expect(script).not.toContain("ufw --force reset");
+		expect(script).toContain(`grep "comment 'dokploy:"`);
 	});
 
 	it("defaults incoming traffic to deny", () => {
@@ -120,6 +126,100 @@ describe("the lockout guard", () => {
 
 	it("does not count a deny rule as access", () => {
 		expect(wouldLockOut([rule({ action: "deny" })], context)).toMatch(/lock/i);
+	});
+});
+
+describe("the lockout guard and rule order", () => {
+	const allow = rule({ from: "100.97.0.0/16" });
+
+	it("sees a deny placed before the allow, as the server would", () => {
+		const deny = rule({ action: "deny", from: "any", origin: "user:x" });
+		expect(wouldLockOut([deny, allow], context)).toMatch(/blocks SSH/);
+		// The other way round the allow matches first and the deny is moot.
+		expect(wouldLockOut([allow, deny], context)).toBeNull();
+	});
+
+	it("knows a wider range covers the address Dokploy comes from", () => {
+		const deny = rule({
+			action: "deny",
+			from: "100.0.0.0/8",
+			origin: "user:x",
+		});
+		expect(wouldLockOut([deny, allow], context)).toMatch(/blocks SSH/);
+	});
+
+	it("ignores a deny that is about somewhere else", () => {
+		const deny = rule({ action: "deny", from: "203.0.113.0/24" });
+		expect(wouldLockOut([deny, allow], context)).toBeNull();
+	});
+
+	it("reads port ranges", () => {
+		const deny = rule({ action: "deny", port: "1:1024", origin: "user:x" });
+		expect(wouldLockOut([deny, allow], context)).toMatch(/blocks SSH/);
+	});
+});
+
+describe("what may reach the script", () => {
+	const hostile = [
+		"10.0.0.0/8; rm -rf /",
+		"$(reboot)",
+		"`id`",
+		"1.2.3.4 && curl evil",
+		"10.0.0.0/33",
+		"not-an-address",
+		"",
+	];
+
+	it("refuses to render a source that is not an address", () => {
+		for (const from of hostile) {
+			expect(() => renderUfwRules([rule({ from })])).toThrow(/Refusing/);
+			expect(() =>
+				renderDockerChain([rule({ chain: "docker", from })]),
+			).toThrow(/Refusing/);
+		}
+	});
+
+	it("refuses a port or a tag that is not one either", () => {
+		expect(() => renderUfwRules([rule({ port: "22; reboot" })])).toThrow();
+		expect(() =>
+			renderUfwRules([rule({ origin: "user:x' ; reboot #" })]),
+		).toThrow();
+	});
+
+	it("still renders addresses, ranges and IPv6", () => {
+		for (const from of ["any", "10.0.0.5", "10.0.0.0/8", "fd00::/8"]) {
+			expect(renderUfwRules([rule({ from })])[0]).toContain(`from ${from} `);
+		}
+	});
+});
+
+describe("a published port with several allowed sources", () => {
+	const chain = renderDockerChain([
+		rule({
+			chain: "docker",
+			port: "5432",
+			from: "203.0.113.7",
+			origin: "user:a",
+		}),
+		rule({
+			chain: "docker",
+			port: "5432",
+			from: "100.97.0.0/16",
+			origin: "auto:db",
+		}),
+	]).split("\n");
+	const drop = chain.findIndex((line) => line.includes("default-deny"));
+
+	it("closes the port once, after every source has been let through", () => {
+		expect(chain.filter((line) => line.includes("default-deny"))).toHaveLength(
+			1,
+		);
+		expect(drop).toBeGreaterThan(
+			chain.findIndex((line) => line.includes("-s 100.97.0.0/16")),
+		);
+		expect(drop).toBeGreaterThan(
+			chain.findIndex((line) => line.includes("-s 203.0.113.7")),
+		);
 	});
 });
 

@@ -21,6 +21,11 @@ import {
 	syncDrillSchedule,
 	turnOffWal,
 } from "@dokploy/server/services/abhash/backups";
+import {
+	assertServerInOrganization,
+	assertServiceInOrganization,
+	type OwnedServiceKind,
+} from "@dokploy/server/services/abhash/ownership";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
@@ -40,6 +45,20 @@ const retentionInput = z.object({
 	monthly: z.number().int().min(0).max(1000),
 	yearly: z.number().int().min(0).max(1000),
 });
+
+const DATABASE_KINDS = new Set([
+	"postgres",
+	"mysql",
+	"mariadb",
+	"mongo",
+	"redis",
+]);
+
+/** A server id from the client is only a claim until it is checked. */
+const ownServer = (organizationId: string, serverId: string | null) =>
+	assertServerInOrganization(organizationId, serverId).catch((error) => {
+		throw asTrpc(error);
+	});
 
 const actorOf = (ctx: {
 	actor?: Actor;
@@ -173,6 +192,7 @@ export const abhashBackupsRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			await ownServer(ctx.session.activeOrganizationId, input.serverId);
 			try {
 				return await initRepository(
 					ctx.session.activeOrganizationId,
@@ -218,6 +238,33 @@ export const abhashBackupsRouter = createTRPCRouter({
 		.mutation(async ({ ctx, input }) => {
 			const organizationId = ctx.session.activeOrganizationId;
 			const { id, ...values } = input;
+			await ownServer(organizationId, values.serverId);
+			if (DATABASE_KINDS.has(values.targetKind)) {
+				await assertServiceInOrganization(
+					organizationId,
+					values.targetKind as OwnedServiceKind,
+					values.target,
+				).catch((error) => {
+					throw asTrpc(error);
+				});
+			}
+			const repositoryIds = [
+				values.repositoryId,
+				...values.copyToRepositoryIds,
+			];
+			const owned = await db.query.abhashBackupRepository.findMany({
+				where: and(
+					eq(abhashBackupRepository.organizationId, organizationId),
+					inArray(abhashBackupRepository.id, repositoryIds),
+				),
+				columns: { id: true },
+			});
+			if (owned.length !== new Set(repositoryIds).size) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Backup repository not found",
+				});
+			}
 			if (id) {
 				const { policy } = await findPolicy(organizationId, id).catch(
 					(error) => {
@@ -317,6 +364,7 @@ export const abhashBackupsRouter = createTRPCRouter({
 			await findPolicy(organizationId, input.policyId).catch((error) => {
 				throw asTrpc(error);
 			});
+			await ownServer(organizationId, input.drillServerId);
 			const { id, ...values } = input;
 			const [row] = id
 				? await db
@@ -489,6 +537,7 @@ export const abhashBackupsRouter = createTRPCRouter({
 		)
 		.mutation(async ({ ctx, input }) => {
 			const organizationId = ctx.session.activeOrganizationId;
+			await ownServer(organizationId, input.serverId);
 			const queued = await enqueueJobForActor(
 				"backup.check",
 				{ organizationId, ...input, readDataPercent: 5 },

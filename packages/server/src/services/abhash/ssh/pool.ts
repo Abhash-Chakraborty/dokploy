@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 import { Client } from "ssh2";
 import { db } from "../../../db";
-import { abhashServerMesh, abhashServerMeta } from "../../../db/schema";
+import { abhashServerMesh, abhashServerMeta, server } from "../../../db/schema";
 import { findServerById } from "../../server";
 
 const IDLE_MS = 60_000;
@@ -49,18 +49,35 @@ const meta = (serverId: string) =>
 		where: eq(abhashServerMeta.serverId, serverId),
 	});
 
-/** Trust on first use: the first key seen is remembered and then enforced. */
-const verifyHostKey = async (serverId: string, key: Buffer) => {
+/**
+ * Trust on first use: the first key seen is remembered and then enforced.
+ * The row is created here if nothing has made one yet. Accepting a key
+ * without recording it would leave the server unpinned, and every later
+ * connection would accept whatever key it was shown.
+ */
+export const verifyHostKey = async (serverId: string, key: Buffer) => {
 	const seen = fingerprint(key);
 	const row = await meta(serverId);
 	if (!row?.hostKey) {
-		if (row) {
-			await db
-				.update(abhashServerMeta)
-				.set({ hostKey: seen, hostKeyMismatch: false, updatedAt: new Date() })
-				.where(eq(abhashServerMeta.serverId, serverId));
-		}
-		return true;
+		const organizationId =
+			row?.organizationId ??
+			(
+				await db.query.server.findFirst({
+					where: eq(server.serverId, serverId),
+					columns: { organizationId: true },
+				})
+			)?.organizationId;
+		if (!organizationId) return false;
+		await db
+			.insert(abhashServerMeta)
+			.values({ serverId, organizationId, hostKey: seen })
+			.onConflictDoUpdate({
+				target: abhashServerMeta.serverId,
+				set: { hostKey: seen, hostKeyMismatch: false, updatedAt: new Date() },
+				// Two first connections can race; only one of them pins.
+				setWhere: isNull(abhashServerMeta.hostKey),
+			});
+		return (await meta(serverId))?.hostKey === seen;
 	}
 	if (row.hostKey === seen) return true;
 	await db
