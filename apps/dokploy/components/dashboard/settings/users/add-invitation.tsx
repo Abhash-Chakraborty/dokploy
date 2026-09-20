@@ -1,5 +1,6 @@
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
 import { PlusIcon } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -132,6 +133,14 @@ export const AddInvitation = () => {
 			form.setValue("mode", "invitation");
 		}
 	}, [form, isCloud]);
+
+	// One provider is the common case; making it the default saves a click and
+	// stops an invitation being created with no mail sent by accident.
+	useEffect(() => {
+		if (emailProviders?.length === 1 && !form.getValues("notificationId")) {
+			form.setValue("notificationId", emailProviders[0]!.notificationId);
+		}
+	}, [form, emailProviders]);
 
 	useEffect(() => {
 		if (
@@ -303,46 +312,59 @@ export const AddInvitation = () => {
 							}}
 						/>
 
-						{!isCloud && mode === "invitation" && (
-							<FormField
-								control={form.control}
-								name="notificationId"
-								render={({ field }) => {
-									return (
-										<FormItem>
-											<FormLabel>Email Provider</FormLabel>
-											<Select
-												onValueChange={field.onChange}
-												defaultValue={field.value}
-											>
-												<FormControl>
-													<SelectTrigger>
-														<SelectValue placeholder="Select an email provider" />
-													</SelectTrigger>
-												</FormControl>
-												<SelectContent>
-													{emailProviders?.map((provider) => (
-														<SelectItem
-															key={provider.notificationId}
-															value={provider.notificationId}
-														>
-															{provider.name}
-														</SelectItem>
-													))}
-													<SelectItem value="none" disabled>
-														None
-													</SelectItem>
-												</SelectContent>
-											</Select>
-											<FormDescription>
-												Select the email provider to send the invitation
-											</FormDescription>
-											<FormMessage />
-										</FormItem>
-									);
-								}}
-							/>
-						)}
+						{!isCloud &&
+							mode === "invitation" &&
+							(emailProviders?.length ? (
+								<FormField
+									control={form.control}
+									name="notificationId"
+									render={({ field }) => {
+										return (
+											<FormItem>
+												<FormLabel>Email Provider</FormLabel>
+												<Select
+													onValueChange={field.onChange}
+													value={field.value}
+												>
+													<FormControl>
+														<SelectTrigger>
+															<SelectValue placeholder="Select an email provider" />
+														</SelectTrigger>
+													</FormControl>
+													<SelectContent>
+														{emailProviders.map((provider) => (
+															<SelectItem
+																key={provider.notificationId}
+																value={provider.notificationId}
+															>
+																{provider.name}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+												<FormDescription>
+													The SMTP settings of this provider are used to send
+													the invitation.
+												</FormDescription>
+												<FormMessage />
+											</FormItem>
+										);
+									}}
+								/>
+							) : (
+								<div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+									No email provider is set up, so the invitation is created as a
+									link for you to copy and send yourself. Add an email
+									notification under{" "}
+									<Link
+										href="/dashboard/settings/notifications"
+										className="text-primary underline underline-offset-2"
+									>
+										Notifications
+									</Link>{" "}
+									to have Dokploy send it.
+								</div>
+							))}
 
 						{!isCloud && mode === "credentials" && (
 							<>
