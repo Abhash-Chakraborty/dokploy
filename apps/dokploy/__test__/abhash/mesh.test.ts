@@ -1,5 +1,6 @@
 import { createServer, type Server } from "node:http";
 import { DEFAULT_MESH_SETTINGS } from "@dokploy/server/db/schema";
+import { isMeshAddress } from "@dokploy/server/services/abhash/mesh/detect";
 import {
 	headscale,
 	headscalePolicySnippet,
@@ -177,5 +178,31 @@ describe("reading the mesh address the client got", () => {
 		expect(readMeshIp("netbird", "NetBird IP: 100.97.9.9/16")).toBe(
 			"100.97.9.9",
 		);
+	});
+});
+
+describe("isMeshAddress", () => {
+	it("accepts the CGNAT range mesh clients hand out", () => {
+		for (const address of ["100.64.0.1", "100.97.140.122", "100.127.255.254"]) {
+			expect(isMeshAddress(address)).toBe(true);
+		}
+	});
+
+	it("rejects public and private addresses outside that range", () => {
+		for (const address of [
+			"100.63.255.255",
+			"100.128.0.1",
+			"10.0.0.1",
+			"192.168.1.10",
+			"8.8.8.8",
+		]) {
+			expect(isMeshAddress(address)).toBe(false);
+		}
+	});
+
+	it("rejects anything that is not four numeric octets", () => {
+		for (const address of ["", "100.97.140", "example.com", "::1"]) {
+			expect(isMeshAddress(address)).toBe(false);
+		}
 	});
 });

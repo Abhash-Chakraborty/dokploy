@@ -93,8 +93,12 @@ export const AiSidebar = () => {
 					<Bot className="size-5" />
 				</Button>
 			</SheetTrigger>
-			<SheetContent side="right" className="w-full sm:max-w-md flex flex-col">
-				<SheetHeader>
+			<SheetContent
+				side="right"
+				className="flex w-full flex-col gap-0 sm:max-w-md"
+			>
+				{/* The sheet's own close button sits at top-3 right-3. */}
+				<SheetHeader className="gap-0.5 px-4 pt-4 pr-12 pb-3">
 					<SheetTitle className="flex items-center gap-2">
 						<Bot className="size-4" /> AI Assistant
 					</SheetTitle>
@@ -103,7 +107,7 @@ export const AiSidebar = () => {
 					</SheetDescription>
 				</SheetHeader>
 
-				<div className="flex items-center gap-2 py-2">
+				<div className="flex items-center gap-2 px-4 pb-3">
 					<Select
 						value={effectiveAiId}
 						onValueChange={setAiId}
@@ -137,7 +141,7 @@ export const AiSidebar = () => {
 					</Select>
 				</div>
 
-				<div className="flex-1 overflow-y-auto rounded-md border p-3 space-y-3 text-sm">
+				<div className="mx-4 min-h-0 flex-1 space-y-3 overflow-y-auto rounded-md border p-3 text-sm">
 					{messages.length === 0 ? (
 						<p className="text-muted-foreground">
 							Ask about this page, your deployments, backups, schedules, or how
@@ -162,7 +166,7 @@ export const AiSidebar = () => {
 					)}
 				</div>
 
-				<div className="flex items-end gap-2 pt-2">
+				<div className="flex items-end gap-2 px-4 pt-3 pb-4">
 					<Textarea
 						value={input}
 						onChange={(e) => setInput(e.target.value)}

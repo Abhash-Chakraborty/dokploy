@@ -1,7 +1,6 @@
 import { db } from "@dokploy/server/db";
 import {
 	abhashMeshProvider,
-	abhashServerMesh,
 	DEFAULT_MESH_SETTINGS,
 	server,
 } from "@dokploy/server/db/schema";
@@ -9,6 +8,7 @@ import { enqueueJobForActor } from "@dokploy/server/services/abhash/agents";
 import {
 	activeProvider,
 	clientFor,
+	detectMesh,
 	findProvider,
 	headscalePolicySnippet,
 	listProviders,
@@ -70,6 +70,14 @@ export const abhashMeshRouter = createTRPCRouter({
 			})),
 		};
 	}),
+
+	/**
+	 * Reads the mesh client on each server directly. A fleet already joined by
+	 * hand has no provider record here, so the provider API cannot see it.
+	 */
+	detect: adminProcedure.query(async ({ ctx }) =>
+		detectMesh(ctx.session.activeOrganizationId),
+	),
 
 	save: adminProcedure
 		.input(

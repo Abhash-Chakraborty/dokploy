@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from "date-fns";
-import { Network, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Network, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { MeshIcon } from "@/components/icons/abhash/mesh-icons";
@@ -205,6 +205,84 @@ const EditProvider = ({ provider }: { provider?: Provider }) => {
 	);
 };
 
+/**
+ * A fleet joined to NetBird or Tailscale by hand leaves no trace in Dokploy,
+ * so the provider list is empty and the page looks like nothing is set up.
+ * This reads the client on each server instead of asking a provider API.
+ */
+const DetectedMesh = () => {
+	const [open, setOpen] = useState(false);
+	const { data, isFetching, refetch } = api.mesh.detect.useQuery(undefined, {
+		enabled: open,
+		refetchOnWindowFocus: false,
+	});
+
+	const found = data?.filter((row) => row.kind) ?? [];
+
+	return (
+		<div className="flex flex-col gap-3 rounded-md border border-dashed p-4">
+			<div className="flex flex-wrap items-center justify-between gap-2">
+				<div className="min-w-0">
+					<p className="font-medium">Already on a mesh?</p>
+					<p className="text-sm text-muted-foreground">
+						Check what each server is running, without changing anything.
+					</p>
+				</div>
+				<Button
+					variant="outline"
+					size="sm"
+					isLoading={isFetching}
+					onClick={() => (open ? refetch() : setOpen(true))}
+				>
+					<Search className="size-4" />
+					{open ? "Scan again" : "Scan servers"}
+				</Button>
+			</div>
+
+			{open && !isFetching && data && (
+				<>
+					<p className="text-sm text-muted-foreground">
+						{found.length === 0
+							? "No mesh client found on any server."
+							: `Found a client on ${found.length} of ${data.length} servers. Add the matching provider above to manage them here.`}
+					</p>
+					<ul className="divide-y rounded-md border">
+						{data.map((row) => (
+							<li
+								key={row.serverId}
+								className="flex flex-wrap items-center gap-2 px-3 py-2"
+							>
+								<div className="min-w-0 flex-1">
+									<div className="flex flex-wrap items-center gap-2">
+										<span className="font-medium">{row.name}</span>
+										{row.kind ? (
+											<Badge variant="green">{KIND_LABEL[row.kind]}</Badge>
+										) : row.error ? (
+											<Badge variant="red">unreachable</Badge>
+										) : (
+											<Badge variant="outline">no client</Badge>
+										)}
+										{row.tracked && <Badge variant="secondary">tracked</Badge>}
+										{row.connectedOverMesh && (
+											<Badge variant="blue">Dokploy connects over it</Badge>
+										)}
+									</div>
+									<p className="truncate text-xs text-muted-foreground">
+										{row.error ??
+											[row.meshIp ?? row.ipAddress, row.clientVersion]
+												.filter(Boolean)
+												.join(" · ")}
+									</p>
+								</div>
+							</li>
+						))}
+					</ul>
+				</>
+			)}
+		</div>
+	);
+};
+
 export const MeshSettings = () => {
 	const utils = api.useUtils();
 	const { data } = api.mesh.list.useQuery();
@@ -383,6 +461,8 @@ export const MeshSettings = () => {
 					{preview}
 				</pre>
 			)}
+
+			{!active && <DetectedMesh />}
 
 			{active && (
 				<ul className="divide-y rounded-md border">
