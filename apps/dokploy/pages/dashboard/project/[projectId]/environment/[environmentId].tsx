@@ -1619,7 +1619,7 @@ const EnvironmentPage = (
 									</div>
 								) : (
 									<div className="flex w-full flex-col gap-4">
-										<div className="gap-5 pb-10 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+										<div className="grid grid-cols-1 gap-4 pb-6 lg:grid-cols-2 xl:grid-cols-3">
 											{filteredServices?.map((service) => (
 												<ContextMenu key={service.id}>
 													<ContextMenuTrigger asChild>
@@ -1627,22 +1627,28 @@ const EnvironmentPage = (
 															href={`/dashboard/project/${projectId}/environment/${environmentId}/services/${service.type}/${service.id}`}
 															className="block h-full"
 														>
-															<Card className="flex flex-col h-full group relative cursor-pointer bg-transparent transition-colors hover:bg-border">
-																{service.serverId && (
-																	<div className="absolute -left-1 -top-2">
-																		<ServerIcon className="size-4 text-muted-foreground" />
-																	</div>
-																)}
-																<div className="absolute -right-1 -top-2">
+															{/* The status, server and select affordances used to hang
+															    outside the card on negative offsets, which overlapped
+															    the neighbouring card at this grid gap and was clipped
+															    at the edges of the row. They sit inside now. */}
+															<Card className="group relative flex h-full cursor-pointer flex-col bg-transparent pt-9 transition-colors hover:bg-border">
+																{/* Status and select used to hang outside the card on
+																    negative offsets, overlapping the neighbouring card
+																    at this grid gap and clipping at the ends of a row.
+																    Both sit inside now, on a reserved top strip, so
+																    neither can land on the title or the footer. The
+																    server is named in the footer already, so the icon
+																    that used to sit up here as well is gone. */}
+																<div className="absolute right-3 top-3">
 																	<StatusTooltip status={service.status} />
 																</div>
 
 																<div
 																	className={cn(
-																		"absolute -left-3 -bottom-3 size-9 translate-y-1 rounded-full p-0 transition-all duration-200 z-10 bg-background border",
+																		"absolute left-3 top-2.5 z-10 size-8 rounded-full border bg-background p-0 transition-opacity duration-200",
 																		selectedServices.includes(service.id)
-																			? "opacity-100 translate-y-0"
-																			: "opacity-0 group-hover:translate-y-0 group-hover:opacity-100",
+																			? "opacity-100"
+																			: "opacity-0 group-hover:opacity-100",
 																	)}
 																	onClick={(e) =>
 																		handleServiceSelect(service.id, e)
