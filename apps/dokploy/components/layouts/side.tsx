@@ -15,7 +15,6 @@ import {
 	ChartLine,
 	ChevronRight,
 	ChevronsUpDown,
-	CircleHelp,
 	ClipboardList,
 	Clock,
 	Cloud,
@@ -29,6 +28,7 @@ import {
 	GitBranch,
 	Globe,
 	HardDrive,
+	HeartHandshake,
 	HeartPulse,
 	House,
 	Key,
@@ -586,7 +586,7 @@ const MENU: Menu = {
 		{
 			name: "Support",
 			url: "https://discord.gg/2tBnJ3jDJc",
-			icon: CircleHelp,
+			icon: HeartHandshake,
 		},
 	],
 } as const;

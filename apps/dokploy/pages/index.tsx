@@ -536,6 +536,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 	// Prefetch the public branding so the login/onboarding logo and app name
 	// render correctly on the server (no flash of default branding).
 	await helpers.whitelabeling.getPublic.prefetch();
+	// Same reason: without this the first paint assumes every method is on and
+	// the credential form appears for a frame even when it is disabled.
+	await helpers.settings.getAuthMethods.prefetch();
 
 	if (IS_CLOUD) {
 		try {
