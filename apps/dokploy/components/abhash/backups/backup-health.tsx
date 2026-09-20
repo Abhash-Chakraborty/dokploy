@@ -350,6 +350,10 @@ const DrillCell = ({ policy }: { policy: Policy }) => {
 							timezone: "UTC",
 							rtoMinutes: 30,
 							queries: [],
+							// Reading the live database is the point of a drill: a
+							// snapshot that only agrees with its own recorded numbers
+							// proves nothing.
+							compareLive: true,
 							enabled: true,
 						})
 						.then(async () => {

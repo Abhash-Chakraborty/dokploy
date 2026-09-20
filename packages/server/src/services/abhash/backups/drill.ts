@@ -20,6 +20,104 @@ import {
 
 const quote = (value: string) => `'${value.replace(/'/g, `'"'"'`)}'`;
 
+/**
+ * Per-object row counts as `name<TAB>count` lines, sorted, so the same command
+ * shape can be run against the restored copy and the live database and the two
+ * outputs compared directly.
+ *
+ * Postgres counts every table for real rather than reading the planner's
+ * estimate: an estimate that happens to match proves nothing about whether the
+ * rows actually came back. MySQL has no cheap exact equivalent, so its counts
+ * are the engine's own and are treated as approximate.
+ */
+export const fingerprintCommand = (
+	kind: BackupTargetKind,
+	target: { container: string; database: string; username: string },
+): string | null => {
+	const { container, database, username } = target;
+	switch (kind) {
+		case "postgres":
+			return `docker exec ${container} psql -U ${quote(username)} -d ${quote(database)} -tAF'\t' -c ${quote(
+				"select table_name, (xpath('/row/c/text()', query_to_xml(format('select count(*) as c from %I.%I', table_schema, table_name), false, true, '')))[1]::text::bigint from information_schema.tables where table_schema not in ('pg_catalog','information_schema') and table_type = 'BASE TABLE' order by table_name",
+			)}`;
+		case "mysql":
+		case "mariadb":
+			return `docker exec ${container} sh -c ${quote(
+				`exec ${kind === "mysql" ? "mysql" : "mariadb"} -u root -p"$MYSQL_ROOT_PASSWORD" -N -B -e "select table_name, table_rows from information_schema.tables where table_schema = '${database}' order by table_name"`,
+			)}`;
+		case "mongo":
+			return `docker exec ${container} mongosh --quiet --eval ${quote(
+				"db.getSiblingDB(process.env.MONGO_DB || 'test').getCollectionNames().sort().forEach(c => print(c + '\t' + db.getSiblingDB(process.env.MONGO_DB || 'test').getCollection(c).countDocuments()))",
+			)}`;
+		default:
+			return null;
+	}
+};
+
+export type FingerprintRow = { name: string; rows: number };
+
+export const parseFingerprint = (stdout: string): FingerprintRow[] =>
+	stdout
+		.split("\n")
+		.map((line) => line.trim())
+		.filter(Boolean)
+		.map((line) => {
+			const [name = "", count = ""] = line.split(/\t+/);
+			return { name: name.trim(), rows: Number(count.trim()) };
+		})
+		.filter((row) => row.name.length > 0 && Number.isFinite(row.rows))
+		.sort((a, b) => a.name.localeCompare(b.name));
+
+export type LiveComparison = {
+	ok: boolean;
+	detail: string;
+};
+
+/**
+ * A backup is older than the database it came from, so equal counts are not
+ * the bar. What must hold is that nothing has gone missing: every object
+ * present live is present in the restore, and nothing that holds rows live
+ * came back empty. Rows added since the snapshot are expected and reported
+ * rather than failed.
+ */
+export const compareToLive = (
+	live: FingerprintRow[],
+	restored: FingerprintRow[],
+): LiveComparison => {
+	if (live.length === 0) {
+		return { ok: false, detail: "the live database reported no tables" };
+	}
+	const byName = new Map(restored.map((row) => [row.name, row.rows]));
+	const missing = live
+		.filter((row) => !byName.has(row.name))
+		.map((r) => r.name);
+	if (missing.length > 0) {
+		return {
+			ok: false,
+			detail: `missing from the restore: ${missing.slice(0, 5).join(", ")}${missing.length > 5 ? ` and ${missing.length - 5} more` : ""}`,
+		};
+	}
+	const emptied = live
+		.filter((row) => row.rows > 0 && (byName.get(row.name) ?? 0) === 0)
+		.map((row) => row.name);
+	if (emptied.length > 0) {
+		return {
+			ok: false,
+			detail: `empty in the restore but not live: ${emptied.slice(0, 5).join(", ")}`,
+		};
+	}
+	const liveRows = live.reduce((total, row) => total + row.rows, 0);
+	const restoredRows = restored.reduce((total, row) => total + row.rows, 0);
+	const behind = liveRows - restoredRows;
+	return {
+		ok: true,
+		detail:
+			behind === 0
+				? `${live.length} tables, ${liveRows} rows, identical`
+				: `${live.length} tables, ${restoredRows} rows restored against ${liveRows} live (${behind} written since the snapshot)`,
+	};
+};
+
 type DrillPlan = {
 	image: string;
 	env: string[];
@@ -254,6 +352,57 @@ export const runDrill = async (
 						? `${found} found`
 						: `${found} found, ${expected} at backup time`,
 			});
+		}
+
+		if (drill.compareLive) {
+			const liveContainer = `$(docker ps --filter "label=com.docker.swarm.service.name=${(target as { appName?: string }).appName ?? ""}" --filter "status=running" -q | head -1)`;
+			const live = fingerprintCommand(policy.targetKind, {
+				container: liveContainer,
+				database: (target as { database?: string }).database ?? "postgres",
+				username: (target as { username?: string }).username ?? "postgres",
+			});
+			const copy = fingerprintCommand(policy.targetKind, {
+				container: name,
+				database: (target as { database?: string }).database ?? "postgres",
+				username: (target as { username?: string }).username ?? "postgres",
+			});
+			if (!live || !copy) {
+				checks.push({
+					name: "Matches the live database",
+					ok: true,
+					detail: `not supported for ${policy.targetKind}; skipped`,
+				});
+			} else {
+				// The live read happens on the server that holds the data, which is
+				// not necessarily where the restore was brought up.
+				const liveOut = await runWhereDataIs(policy.serverId, live, {
+					timeoutMs: 300_000,
+				});
+				const copyOut = await runWhereDataIs(where, copy, {
+					timeoutMs: 300_000,
+				});
+				if (liveOut.exitCode !== 0 || copyOut.exitCode !== 0) {
+					checks.push({
+						name: "Matches the live database",
+						ok: false,
+						detail: (
+							liveOut.stderr ||
+							copyOut.stderr ||
+							"could not read one of the two"
+						).slice(-200),
+					});
+				} else {
+					const result = compareToLive(
+						parseFingerprint(liveOut.stdout),
+						parseFingerprint(copyOut.stdout),
+					);
+					checks.push({
+						name: "Matches the live database",
+						ok: result.ok,
+						detail: result.detail,
+					});
+				}
+			}
 		}
 
 		for (const query of drill.queries) {
