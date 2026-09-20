@@ -653,6 +653,19 @@ for (const service of ["postgres", "mysql", "mariadb", "mongo"]) {
 }
 
 /**
+ * Every URL reachable from the settings nav. Command centre is listed there but
+ * lives outside /dashboard/settings, and without this the sidebar would fall
+ * back to the home nav while that page is open.
+ */
+const SETTINGS_ROUTES = MENU.settings.flatMap((item) =>
+	"items" in item && item.items
+		? item.items.map((sub) => sub.url)
+		: "url" in item && item.url
+			? [item.url]
+			: [],
+);
+
+/**
  * Creates a menu based on the current user's role and permissions
  * @returns a menu object with the home, settings, and help items
  */
@@ -1149,7 +1162,9 @@ export default function Page({ children }: Props) {
 	});
 
 	const includesProjects = pathname?.includes("/dashboard/project");
-	const isSettings = pathname?.startsWith("/dashboard/settings");
+	const isSettings =
+		pathname?.startsWith("/dashboard/settings") ||
+		SETTINGS_ROUTES.some((route) => pathname === route);
 	const serviceType = pathname?.match(/\/services\/([^/]+)\//)?.[1];
 	const isService = !!serviceType;
 	const activeServiceTab = searchParams.get("tab") || "general";
