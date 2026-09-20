@@ -529,6 +529,97 @@
         }
       }
     },
+    "/application.deployNginxQuickstart": {
+      "post": {
+        "operationId": "application-deployNginxQuickstart",
+        "tags": [
+          "application"
+        ],
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "environmentId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "serverId": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "environmentId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.BAD_REQUEST"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization not provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.FORBIDDEN"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/application.one": {
       "get": {
         "operationId": "application-one",
@@ -7828,6 +7919,93 @@
         }
       }
     },
+    "/network.resync": {
+      "post": {
+        "operationId": "network-resync",
+        "tags": [
+          "network"
+        ],
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "networkId": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "networkId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.BAD_REQUEST"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization not provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.FORBIDDEN"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/network.remove": {
       "post": {
         "operationId": "network-remove",
@@ -9264,6 +9442,9 @@
                   "isolatedDeploymentsVolume": {
                     "type": "boolean"
                   },
+                  "pullImages": {
+                    "type": "boolean"
+                  },
                   "triggerType": {
                     "anyOf": [
                       {
@@ -10492,6 +10673,9 @@
                   },
                   "description": {
                     "type": "string"
+                  },
+                  "freshVolumes": {
+                    "type": "boolean"
                   }
                 },
                 "required": [
@@ -10585,6 +10769,9 @@
                   },
                   "description": {
                     "type": "string"
+                  },
+                  "freshVolumes": {
+                    "type": "boolean"
                   }
                 },
                 "required": [
@@ -13787,6 +13974,85 @@
                           "accessKeyId",
                           "secretAccessKey"
                         ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "providerType": {
+                            "type": "string",
+                            "const": "porkbun"
+                          },
+                          "apiKey": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "secretApiKey": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "providerType",
+                          "apiKey",
+                          "secretApiKey"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "providerType": {
+                            "type": "string",
+                            "const": "infomaniak"
+                          },
+                          "apiToken": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "providerType",
+                          "apiToken"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "providerType": {
+                            "type": "string",
+                            "const": "ovh"
+                          },
+                          "endpoint": {
+                            "default": "ovh-eu",
+                            "type": "string",
+                            "enum": [
+                              "ovh-eu",
+                              "ovh-ca",
+                              "ovh-us",
+                              "kimsufi-eu",
+                              "kimsufi-ca",
+                              "soyoustart-eu",
+                              "soyoustart-ca"
+                            ]
+                          },
+                          "applicationKey": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "applicationSecret": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "consumerKey": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "providerType",
+                          "applicationKey",
+                          "applicationSecret",
+                          "consumerKey"
+                        ]
                       }
                     ],
                     "type": "object"
@@ -13924,6 +14190,85 @@
                           "providerType",
                           "accessKeyId",
                           "secretAccessKey"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "providerType": {
+                            "type": "string",
+                            "const": "porkbun"
+                          },
+                          "apiKey": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "secretApiKey": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "providerType",
+                          "apiKey",
+                          "secretApiKey"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "providerType": {
+                            "type": "string",
+                            "const": "infomaniak"
+                          },
+                          "apiToken": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "providerType",
+                          "apiToken"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "providerType": {
+                            "type": "string",
+                            "const": "ovh"
+                          },
+                          "endpoint": {
+                            "default": "ovh-eu",
+                            "type": "string",
+                            "enum": [
+                              "ovh-eu",
+                              "ovh-ca",
+                              "ovh-us",
+                              "kimsufi-eu",
+                              "kimsufi-ca",
+                              "soyoustart-eu",
+                              "soyoustart-ca"
+                            ]
+                          },
+                          "applicationKey": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "applicationSecret": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "consumerKey": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "providerType",
+                          "applicationKey",
+                          "applicationSecret",
+                          "consumerKey"
                         ]
                       }
                     ],
@@ -14310,6 +14655,85 @@
                           "accessKeyId",
                           "secretAccessKey"
                         ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "providerType": {
+                            "type": "string",
+                            "const": "porkbun"
+                          },
+                          "apiKey": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "secretApiKey": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "providerType",
+                          "apiKey",
+                          "secretApiKey"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "providerType": {
+                            "type": "string",
+                            "const": "infomaniak"
+                          },
+                          "apiToken": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "providerType",
+                          "apiToken"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "providerType": {
+                            "type": "string",
+                            "const": "ovh"
+                          },
+                          "endpoint": {
+                            "default": "ovh-eu",
+                            "type": "string",
+                            "enum": [
+                              "ovh-eu",
+                              "ovh-ca",
+                              "ovh-us",
+                              "kimsufi-eu",
+                              "kimsufi-ca",
+                              "soyoustart-eu",
+                              "soyoustart-ca"
+                            ]
+                          },
+                          "applicationKey": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "applicationSecret": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "consumerKey": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "providerType",
+                          "applicationKey",
+                          "applicationSecret",
+                          "consumerKey"
+                        ]
                       }
                     ],
                     "type": "object"
@@ -14583,7 +15007,14 @@
                     "type": "string",
                     "enum": [
                       "A",
-                      "CNAME"
+                      "AAAA",
+                      "CNAME",
+                      "MX",
+                      "TXT",
+                      "NS",
+                      "SRV",
+                      "CAA",
+                      "PTR"
                     ]
                   },
                   "name": {
@@ -14598,6 +15029,9 @@
                     "type": "integer",
                     "exclusiveMinimum": 0,
                     "maximum": 9007199254740991
+                  },
+                  "proxied": {
+                    "type": "boolean"
                   },
                   "dnsProviderId": {
                     "type": "string",
@@ -14698,7 +15132,14 @@
                     "type": "string",
                     "enum": [
                       "A",
-                      "CNAME"
+                      "AAAA",
+                      "CNAME",
+                      "MX",
+                      "TXT",
+                      "NS",
+                      "SRV",
+                      "CAA",
+                      "PTR"
                     ]
                   },
                   "name": {
@@ -14713,6 +15154,9 @@
                     "type": "integer",
                     "exclusiveMinimum": 0,
                     "maximum": 9007199254740991
+                  },
+                  "proxied": {
+                    "type": "boolean"
                   },
                   "dnsProviderId": {
                     "type": "string",
@@ -19098,7 +19542,7 @@
                   "domain": {
                     "type": "string"
                   },
-                  "serverIp": {
+                  "serverId": {
                     "type": "string"
                   }
                 },
@@ -33054,6 +33498,9 @@
                   "dockerCleanup": {
                     "type": "boolean"
                   },
+                  "serverThreshold": {
+                    "type": "boolean"
+                  },
                   "serverUrl": {
                     "type": "string",
                     "minLength": 1
@@ -33079,6 +33526,7 @@
                   "name",
                   "appDeploy",
                   "dockerCleanup",
+                  "serverThreshold",
                   "serverUrl",
                   "appToken",
                   "priority",
@@ -33185,6 +33633,9 @@
                     "type": "boolean"
                   },
                   "dockerCleanup": {
+                    "type": "boolean"
+                  },
+                  "serverThreshold": {
                     "type": "boolean"
                   },
                   "serverUrl": {
@@ -33421,6 +33872,9 @@
                   "dockerCleanup": {
                     "type": "boolean"
                   },
+                  "serverThreshold": {
+                    "type": "boolean"
+                  },
                   "serverUrl": {
                     "type": "string",
                     "minLength": 1
@@ -33446,6 +33900,7 @@
                   "name",
                   "appDeploy",
                   "dockerCleanup",
+                  "serverThreshold",
                   "serverUrl",
                   "topic",
                   "accessToken",
@@ -33552,6 +34007,9 @@
                     "type": "boolean"
                   },
                   "dockerCleanup": {
+                    "type": "boolean"
+                  },
+                  "serverThreshold": {
                     "type": "boolean"
                   },
                   "serverUrl": {
@@ -38996,6 +39454,150 @@
         }
       }
     },
+    "/project.onboardingStatus": {
+      "get": {
+        "operationId": "project-onboardingStatus",
+        "tags": [
+          "project"
+        ],
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.BAD_REQUEST"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization not provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.FORBIDDEN"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.NOT_FOUND"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/project.completeOnboarding": {
+      "post": {
+        "operationId": "project-completeOnboarding",
+        "tags": [
+          "project"
+        ],
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.BAD_REQUEST"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization not provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.FORBIDDEN"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/project.search": {
       "get": {
         "operationId": "project-search",
@@ -43356,6 +43958,186 @@
         "security": [
           {
             "Authorization": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.BAD_REQUEST"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization not provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.FORBIDDEN"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.NOT_FOUND"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/server.upgradeDocker": {
+      "post": {
+        "operationId": "server-upgradeDocker",
+        "tags": [
+          "server"
+        ],
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "serverId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "targetVersion": {
+                    "type": "string",
+                    "pattern": "^\\d+\\.\\d+\\.\\d+$"
+                  }
+                },
+                "required": [
+                  "serverId",
+                  "targetVersion"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.BAD_REQUEST"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization not provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.FORBIDDEN"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/server.getServices": {
+      "get": {
+        "operationId": "server-getServices",
+        "tags": [
+          "server"
+        ],
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "serverId",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true
           }
         ],
         "responses": {
@@ -50096,6 +50878,173 @@
         }
       }
     },
+    "/stripe.getBillingStatus": {
+      "get": {
+        "operationId": "stripe-getBillingStatus",
+        "tags": [
+          "stripe"
+        ],
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.BAD_REQUEST"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization not provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.FORBIDDEN"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.NOT_FOUND"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stripe.startFreeTrial": {
+      "post": {
+        "operationId": "stripe-startFreeTrial",
+        "tags": [
+          "stripe"
+        ],
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tier": {
+                    "type": "string",
+                    "enum": [
+                      "hobby",
+                      "startup"
+                    ]
+                  }
+                },
+                "required": [
+                  "tier"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.BAD_REQUEST"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization not provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.FORBIDDEN"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/stripe.getProducts": {
       "get": {
         "operationId": "stripe-getProducts",
@@ -53657,6 +54606,40 @@
                         "properties": {
                           "providerType": {
                             "type": "string",
+                            "const": "aws-parameter-store"
+                          },
+                          "region": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "accessKeyId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "secretAccessKey": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "endpoint": {
+                            "type": "string",
+                            "format": "uri"
+                          },
+                          "parameterPath": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "providerType",
+                          "region",
+                          "accessKeyId",
+                          "secretAccessKey"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "providerType": {
+                            "type": "string",
                             "const": "doppler"
                           },
                           "serviceToken": {
@@ -53737,6 +54720,42 @@
                           "providerType",
                           "projectId",
                           "secretKey"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "providerType": {
+                            "type": "string",
+                            "const": "phase"
+                          },
+                          "token": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "appId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "env": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "path": {
+                            "default": "/",
+                            "type": "string"
+                          },
+                          "apiUrl": {
+                            "default": "https://api.phase.dev",
+                            "type": "string",
+                            "format": "uri"
+                          }
+                        },
+                        "required": [
+                          "providerType",
+                          "token",
+                          "appId",
+                          "env"
                         ]
                       }
                     ],
@@ -53969,6 +54988,40 @@
                         "properties": {
                           "providerType": {
                             "type": "string",
+                            "const": "aws-parameter-store"
+                          },
+                          "region": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "accessKeyId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "secretAccessKey": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "endpoint": {
+                            "type": "string",
+                            "format": "uri"
+                          },
+                          "parameterPath": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "providerType",
+                          "region",
+                          "accessKeyId",
+                          "secretAccessKey"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "providerType": {
+                            "type": "string",
                             "const": "doppler"
                           },
                           "serviceToken": {
@@ -54049,6 +55102,42 @@
                           "providerType",
                           "projectId",
                           "secretKey"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "providerType": {
+                            "type": "string",
+                            "const": "phase"
+                          },
+                          "token": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "appId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "env": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "path": {
+                            "default": "/",
+                            "type": "string"
+                          },
+                          "apiUrl": {
+                            "default": "https://api.phase.dev",
+                            "type": "string",
+                            "format": "uri"
+                          }
+                        },
+                        "required": [
+                          "providerType",
+                          "token",
+                          "appId",
+                          "env"
                         ]
                       }
                     ],
@@ -54528,6 +55617,40 @@
                         "properties": {
                           "providerType": {
                             "type": "string",
+                            "const": "aws-parameter-store"
+                          },
+                          "region": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "accessKeyId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "secretAccessKey": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "endpoint": {
+                            "type": "string",
+                            "format": "uri"
+                          },
+                          "parameterPath": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "providerType",
+                          "region",
+                          "accessKeyId",
+                          "secretAccessKey"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "providerType": {
+                            "type": "string",
                             "const": "doppler"
                           },
                           "serviceToken": {
@@ -54608,6 +55731,42 @@
                           "providerType",
                           "projectId",
                           "secretKey"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "providerType": {
+                            "type": "string",
+                            "const": "phase"
+                          },
+                          "token": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "appId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "env": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "path": {
+                            "default": "/",
+                            "type": "string"
+                          },
+                          "apiUrl": {
+                            "default": "https://api.phase.dev",
+                            "type": "string",
+                            "format": "uri"
+                          }
+                        },
+                        "required": [
+                          "providerType",
+                          "token",
+                          "appId",
+                          "env"
                         ]
                       }
                     ],
@@ -56278,7 +57437,8 @@
                 "type": "object",
                 "properties": {
                   "name": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1
                   },
                   "logo": {
                     "type": "string"
@@ -56534,7 +57694,8 @@
                     "type": "string"
                   },
                   "name": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1
                   },
                   "logo": {
                     "type": "string"
@@ -59426,7 +60587,7 @@
                           }
                         ]
                       },
-                      "metaTitle": {
+                      "footerText": {
                         "anyOf": [
                           {
                             "type": "string"
@@ -59436,7 +60597,7 @@
                           }
                         ]
                       },
-                      "footerText": {
+                      "ogImageUrl": {
                         "anyOf": [
                           {
                             "type": "string"
@@ -59458,8 +60619,8 @@
                       "docsUrl",
                       "errorPageTitle",
                       "errorPageDescription",
-                      "metaTitle",
-                      "footerText"
+                      "footerText",
+                      "ogImageUrl"
                     ]
                   }
                 },
@@ -61013,6 +62174,83 @@
               ]
             },
             "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.BAD_REQUEST"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization not provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.FORBIDDEN"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.NOT_FOUND"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schedule.allForOrganization": {
+      "get": {
+        "operationId": "schedule-allForOrganization",
+        "tags": [
+          "schedule"
+        ],
+        "security": [
+          {
+            "Authorization": []
           }
         ],
         "responses": {
@@ -64979,6 +66217,95 @@
         "security": [
           {
             "Authorization": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.BAD_REQUEST"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization not provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.UNAUTHORIZED"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.FORBIDDEN"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.NOT_FOUND"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/overview.analytics": {
+      "get": {
+        "operationId": "overview-analytics",
+        "tags": [
+          "overview"
+        ],
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "rangeDays",
+            "schema": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "required": true
           }
         ],
         "responses": {

@@ -1,0 +1,115 @@
+# Throwaway dependencies for developing Dokploy on a production host.
+# Driven by sandbox.sh; do not run directly. Every resource carries the
+# com.abhash.sandbox label and every port is bound to 127.0.0.1 only.
+name: dkp-sbx-${SANDBOX_ID:?}
+
+x-labels: &labels
+  com.abhash.sandbox: ${SANDBOX_ID}
+
+services:
+  postgres:
+    image: postgres:16
+    labels: *labels
+    environment:
+      POSTGRES_USER: dokploy
+      POSTGRES_PASSWORD: sandbox
+      POSTGRES_DB: dokploy
+    tmpfs: [/var/lib/postgresql/data]
+    ports: ["127.0.0.1:${PG_PORT:?}:5432"]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "dokploy"]
+      interval: 2s
+      retries: 30
+
+  redis:
+    image: redis:7
+    labels: *labels
+    ports: ["127.0.0.1:${REDIS_PORT:?}:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      retries: 30
+
+  # The app and the "real" test suites drive this daemon instead of the host's.
+  dind:
+    image: docker:28-dind
+    labels: *labels
+    privileged: true
+    command: ["--host=tcp://0.0.0.0:2375", "--tls=false"]
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+    ports: ["127.0.0.1:${DIND_PORT:?}:2375"]
+    volumes: [dind-data:/var/lib/docker]
+    healthcheck:
+      test: ["CMD", "docker", "-H", "tcp://127.0.0.1:2375", "info"]
+      interval: 2s
+      retries: 60
+
+  mock-oidc:
+    profiles: [oidc]
+    image: ghcr.io/navikt/mock-oauth2-server:2.1.10
+    labels: *labels
+    environment:
+      SERVER_PORT: "8080"
+      JSON_CONFIG_PATH: /config/mock-oidc.json
+    volumes: ["./mock-oidc.json:/config/mock-oidc.json:ro"]
+    ports: ["127.0.0.1:${OIDC_PORT:?}:8080"]
+
+  traefik:
+    profiles: [traefik]
+    image: traefik:v3.6.25
+    labels: *labels
+    command:
+      - --entrypoints.web.address=:80
+      - --providers.file.directory=/dynamic
+      - --providers.file.watch=true
+      - --api.insecure=true
+      - --log.level=INFO
+    volumes: ["${TRAEFIK_DYNAMIC_DIR:?}:/dynamic:ro"]
+    ports:
+      - "127.0.0.1:${HTTP_PORT:?}:80"
+      - "127.0.0.1:${TRAEFIK_API_PORT:?}:8080"
+
+  whoami:
+    profiles: [traefik]
+    image: traefik/whoami:v1.11
+    labels: *labels
+
+  # Stand-ins for a forward-auth service: one refuses, one lets through.
+  fa-deny:
+    profiles: [traefik]
+    image: hashicorp/http-echo:1.0
+    labels: *labels
+    command: ["-listen=:5678", "-status-code=401", "-text=sign in first"]
+
+  fa-allow:
+    profiles: [traefik]
+    image: hashicorp/http-echo:1.0
+    labels: *labels
+    command: ["-listen=:5678", "-status-code=200", "-text=ok"]
+
+  # Stand-ins for managed servers: reachable over SSH, with their own
+  # network namespace so firewall rules never touch the host.
+  fleet-1: &fleet
+    profiles: [fleet]
+    build:
+      context: ./fleet
+      args: { SANDBOX_ID: "${SANDBOX_ID}" }
+    labels: *labels
+    cap_add: [NET_ADMIN]
+    volumes:
+      - "${FLEET_KEY_PUB:?}:/root/.ssh/authorized_keys:ro"
+
+  fleet-2:
+    <<: *fleet
+
+  fleet-3:
+    <<: *fleet
+
+volumes:
+  dind-data:
+    labels: *labels
+
+networks:
+  default:
+    labels: *labels

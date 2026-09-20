@@ -27,11 +27,14 @@ import {
 	session,
 	user,
 } from "@dokploy/server/db/schema";
+import { assertAppNameAccess } from "@dokploy/server/services/abhash/app-access";
+import { isEntitled } from "@dokploy/server/services/abhash/entitlements";
+import { isMetricsUrlAllowed } from "@dokploy/server/services/abhash/metrics-endpoints";
+import { syncLegacyBindingsForUser } from "@dokploy/server/services/abhash/rbac";
 import {
 	hasPermission,
 	resolvePermissions,
 } from "@dokploy/server/services/permission";
-import { hasValidLicense } from "@dokploy/server/services/proprietary/license-key";
 import { TRPCError } from "@trpc/server";
 import * as bcrypt from "bcrypt";
 import { and, asc, desc, eq, gt, ne } from "drizzle-orm";
@@ -498,7 +501,7 @@ export const userRouter = createTRPCRouter({
 
 				const { id, accessedGitProviders, accessedServers, ...rest } = input;
 
-				const licensed = await hasValidLicense(
+				const licensed = await isEntitled(
 					ctx.session?.activeOrganizationId || "",
 				);
 
@@ -522,6 +525,10 @@ export const userRouter = createTRPCRouter({
 							),
 						),
 					);
+				await syncLegacyBindingsForUser(
+					input.id,
+					ctx.session?.activeOrganizationId || "",
+				);
 				await audit(ctx, {
 					action: "update",
 					resourceType: "user",
@@ -554,7 +561,23 @@ export const userRouter = createTRPCRouter({
 				dataPoints: z.string(),
 			}),
 		)
-		.query(async ({ input }) => {
+		.query(async ({ input, ctx }) => {
+			if (input.appName) {
+				await assertAppNameAccess(ctx, input.appName, {
+					monitoring: ["read"],
+				});
+			}
+			if (
+				!(await isMetricsUrlAllowed(
+					input.url,
+					ctx.session.activeOrganizationId,
+				))
+			) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Unknown monitoring endpoint",
+				});
+			}
 			try {
 				if (!input.appName) {
 					throw new Error(

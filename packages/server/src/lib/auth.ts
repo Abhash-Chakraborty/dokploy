@@ -14,11 +14,22 @@ import { db } from "../db";
 import * as schema from "../db/schema";
 import { createAuditLog } from "../services/abhash/audit-log";
 import {
+	abhashAuthAfter,
+	abhashAuthBefore,
+} from "../services/abhash/auth-guard";
+import { resolveOrganizationDefaultRole } from "../services/abhash/entitlements";
+import { abhashScimGroups } from "../services/abhash/scim/groups-plugin";
+import { ssoTrustedOrigins } from "../services/abhash/sso/providers";
+import {
+	assertSsoSignUpAllowed,
+	ensureSsoMembership,
+	syncSsoUser,
+} from "../services/abhash/sso/provisioning";
+import {
 	getTrustedOrigins,
 	getTrustedProviders,
 	getUserByToken,
 } from "../services/admin";
-import { resolveOrganizationDefaultRole } from "../services/proprietary/license-key";
 import {
 	getWebServerSettings,
 	updateWebServerSettings,
@@ -87,6 +98,10 @@ const { handler, api } = betterAuth({
 	onAPIError: {
 		errorURL: "/",
 	},
+	hooks: {
+		before: abhashAuthBefore,
+		after: abhashAuthAfter,
+	},
 	// Better Auth enables rate limiting in production but only with its global
 	// 100-per-10s budget, which is no obstacle to credential stuffing. These
 	// rules put a real ceiling on the endpoints where guessing pays off.
@@ -105,6 +120,8 @@ const { handler, api } = betterAuth({
 			"/two-factor/verify-backup-code": { window: 300, max: 5 },
 			"/two-factor/verify-otp": { window: 60, max: 5 },
 			"/sign-in/passkey": { window: 60, max: 10 },
+			// Only starts a redirect to the IdP, which does its own throttling.
+			"/sign-in/sso": { window: 60, max: 30 },
 			"/change-password": { window: 300, max: 5 },
 			"/change-email": { window: 300, max: 5 },
 		},
@@ -162,6 +179,7 @@ const { handler, api } = betterAuth({
 				...(settings?.host ? [`https://${settings?.host}`] : []),
 				...devOrigins,
 				...trustedOrigins,
+				...(await ssoTrustedOrigins()),
 			];
 		} catch (error) {
 			console.error("Failed to resolve trusted origins:", error);
@@ -242,7 +260,12 @@ const { handler, api } = betterAuth({
 									message: "Email does not match invitation",
 								});
 							}
-						} else if (!isSSORequest) {
+						} else if (isSSORequest) {
+							await assertSsoSignUpAllowed(
+								context?.params?.providerId,
+								_user.email,
+							);
+						} else {
 							const isAdminPresent = await db.query.member.findFirst({
 								where: eq(schema.member.role, "owner"),
 							});
@@ -337,24 +360,7 @@ const { handler, api } = betterAuth({
 								message: "Provider ID is required",
 							});
 						}
-						const provider = await db.query.ssoProvider.findFirst({
-							where: eq(schema.ssoProvider.providerId, providerId),
-						});
-						if (!provider) {
-							throw new APIError("BAD_REQUEST", {
-								message: "Provider not found",
-							});
-						}
-						const defaultRole = provider.organizationId
-							? await resolveOrganizationDefaultRole(provider.organizationId)
-							: "member";
-						await db.insert(schema.member).values({
-							userId: user.id,
-							organizationId: provider.organizationId || "",
-							role: defaultRole,
-							createdAt: new Date(),
-							isDefault: true,
-						});
+						await ensureSsoMembership(user, providerId);
 					}
 				},
 			},
@@ -491,20 +497,18 @@ const { handler, api } = betterAuth({
 			enableMetadata: true,
 			references: "user",
 		}),
-		sso({ trustEmailVerified: true }),
-		scim({
-			beforeSCIMTokenGenerated: async ({ user }) => {
-				const dbUser = await db.query.user.findFirst({
-					where: eq(schema.user.id, user.id),
-					columns: { enableEnterpriseFeatures: true },
-				});
-				if (!dbUser?.enableEnterpriseFeatures) {
-					throw new APIError("FORBIDDEN", {
-						message: "SCIM provisioning requires an enterprise license",
-					});
-				}
-			},
+		sso({
+			// Account linking is trusted per provider (sso_provider.domain_verified,
+			// set explicitly by an admin), never from the IdP's email_verified claim.
+			provisionUser: syncSsoUser,
+			provisionUserOnEveryLogin: true,
+			organizationProvisioning: { disabled: true },
 		}),
+		scim({
+			// Tokens are issued by the fork's SCIM router, never over HTTP.
+			storeSCIMToken: "hashed",
+		}),
+		abhashScimGroups(),
 		twoFactor(),
 		passkey({
 			rpName: "Dokploy",
@@ -572,7 +576,9 @@ export const validateRequest = async (request: IncomingMessage) => {
 				},
 			});
 
-			if (!apiKeyRecord) {
+			// The admin plugin blocks new sessions for banned users, but API keys
+			// bypass sessions entirely.
+			if (!apiKeyRecord || apiKeyRecord.user.banned) {
 				return {
 					session: null,
 					user: null,
@@ -609,6 +615,9 @@ export const validateRequest = async (request: IncomingMessage) => {
 			};
 
 			const mockSession = {
+				// Which key authenticated the call, for the fork's actor,
+				// key policy and response redaction.
+				apiKey: { id: key.id, name: apiKeyRecord.name },
 				session: {
 					userId: apiKeyRecord.user.id,
 					activeOrganizationId: organizationId || "",
@@ -646,7 +655,7 @@ export const validateRequest = async (request: IncomingMessage) => {
 		}),
 	});
 
-	if (!session?.session || !session.user) {
+	if (!session?.session || !session.user || session.user.banned) {
 		return {
 			session: null,
 			user: null,

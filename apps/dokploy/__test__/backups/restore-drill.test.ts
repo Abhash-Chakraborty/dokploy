@@ -10,7 +10,7 @@ const credentials = { databaseUser: "app", databasePassword: "s3cret" };
 
 const script = (type: "postgres" | "mysql" | "mariadb") =>
 	buildRestoreDrillScript({
-		containerSearchCommand: 'CONTAINER_ID=$(docker ps -q | head -1)',
+		containerSearchCommand: "CONTAINER_ID=$(docker ps -q | head -1)",
 		rcloneCommand: "rclone cat :s3:bucket/dump.gz | gunzip",
 		commands: buildDrillCommands(type, "dokploy_drill_abc", credentials),
 	});
@@ -53,7 +53,9 @@ describe("drill script", () => {
 	);
 
 	it("bails out when no database container is running", () => {
-		expect(script("postgres")).toContain("DRILL_ERROR: database container not found");
+		expect(script("postgres")).toContain(
+			"DRILL_ERROR: database container not found",
+		);
 	});
 
 	it("drops the scratch database from a trap, not an inline command", () => {

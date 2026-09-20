@@ -1,5 +1,5 @@
 {
-  "id": "f4f38159-a8eb-44a7-b761-8d8c4b455197",
+  "id": "c9bd795e-2581-48e8-b8ff-c7a2a5d96dd1",
   "prevId": "8e851600-c994-4d52-a9d0-a8257e22a073",
   "version": "7",
   "dialect": "postgresql",
@@ -5321,6 +5321,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "dockerId": {
+          "name": "dockerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "driver": {
           "name": "driver",
           "type": "networkDriver",
@@ -5714,13 +5720,6 @@
         },
         "serverThreshold": {
           "name": "serverThreshold",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "userLogin": {
-          "name": "userLogin",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
@@ -8820,13 +8819,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
-        },
-        "authMethodsConfig": {
-          "name": "authMethodsConfig",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{\"emailPassword\":true,\"github\":true,\"google\":true,\"passkey\":true}'::jsonb"
         },
         "cleanupCacheApplications": {
           "name": "cleanupCacheApplications",

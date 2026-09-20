@@ -8,6 +8,7 @@ import { AlertBlock } from "@/components/shared/alert-block";
 import { CodeEditor } from "@/components/shared/code-editor";
 import { useEnvCompletionSource } from "@/components/shared/env-autocomplete";
 import { InfoTooltip } from "@/components/shared/info-tooltip";
+import { VaultImportDialog } from "@/components/shared/vault-import-dialog";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -170,7 +171,17 @@ export const EnvironmentVariables = ({ environmentId, children }: Props) => {
 									name="env"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>Environment variables</FormLabel>
+											<div className="flex items-center justify-between">
+												<FormLabel>Environment variables</FormLabel>
+												<VaultImportDialog
+													projectId={data?.projectId}
+													environmentId={environmentId}
+													currentEnv={field.value ?? ""}
+													onImport={(next) =>
+														form.setValue("env", next, { shouldDirty: true })
+													}
+												/>
+											</div>
 											<FormControl>
 												<CodeEditor
 													completionSource={completionSource}

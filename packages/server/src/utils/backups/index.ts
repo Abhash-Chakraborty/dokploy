@@ -138,8 +138,9 @@ export const keepLatestNBackups = async (
 		const appName = getServiceAppName(backup);
 		const backupFilesPath = `:s3:${destination.bucket}/${appName}/${normalizeS3Path(backup.prefix)}`;
 
-		// --include "*.bson.gz" or "*.sql.gz" or "*.zip" ensures nothing else other than the dokploy backup files are touched by rclone
-		const rcloneList = `rclone lsf ${rcloneFlags.join(" ")} --include "*${backup.databaseType === "web-server" ? ".zip" : ".{sql.gz,bson.gz}"}" ${backupFilesPath}`;
+		// The include pattern keeps retention to Dokploy's own files. libsql
+		// writes a gzipped tar, so it is listed here too or it never prunes.
+		const rcloneList = `rclone lsf ${rcloneFlags.join(" ")} --include "*${backup.databaseType === "web-server" ? ".zip" : ".{sql.gz,bson.gz,tar.gz}"}" ${backupFilesPath}`;
 		// when we pipe the above command with this one, we only get the list of files we want to delete
 		const sortAndPickUnwantedBackups = `sort -r | tail -n +$((${backup.keepLatestCount}+1)) | xargs -I{}`;
 		// this command deletes the files

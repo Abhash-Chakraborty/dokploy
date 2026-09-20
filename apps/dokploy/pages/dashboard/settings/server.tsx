@@ -7,7 +7,6 @@ import { ShowBackups } from "@/components/dashboard/database/backups/show-backup
 import { ServerPreflight } from "@/components/dashboard/settings/servers/server-preflight";
 import { WebDomain } from "@/components/dashboard/settings/web-domain";
 import { WebServer } from "@/components/dashboard/settings/web-server";
-import { LoginMethods } from "@/components/dashboard/settings/web-server/login-methods";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { appRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
@@ -15,18 +14,15 @@ import { api } from "@/utils/api";
 const Page = () => {
 	const { data: user } = api.user.get.useQuery();
 	return (
-		<div className="w-full">
-			<div className="h-full max-w-5xl mx-auto flex flex-col gap-4">
-				<ServerPreflight />
-				<WebDomain />
-				<WebServer />
-				<LoginMethods />
-				<ShowBackups
-					id={user?.userId ?? ""}
-					databaseType="web-server"
-					backupType="database"
-				/>
-			</div>
+		<div className="flex w-full flex-col gap-8">
+			<WebServer />
+			<WebDomain />
+			<ServerPreflight />
+			<ShowBackups
+				id={user?.userId ?? ""}
+				databaseType="web-server"
+				backupType="database"
+			/>
 		</div>
 	);
 };

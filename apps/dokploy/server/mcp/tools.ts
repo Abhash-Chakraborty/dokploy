@@ -1,10 +1,17 @@
 import type { appRouter } from "@/server/api/root";
+import { ABHASH_TOOLS } from "./abhash-tools";
 
 type Caller = ReturnType<(typeof appRouter)["createCaller"]>;
 
 export interface McpTool {
 	name: string;
 	description: string;
+	/** MCP hints, so a client can warn before a destructive call. */
+	annotations?: {
+		readOnlyHint?: boolean;
+		destructiveHint?: boolean;
+		idempotentHint?: boolean;
+	};
 	inputSchema: {
 		type: "object";
 		properties: Record<string, unknown>;
@@ -218,5 +225,11 @@ export const TOOLS: McpTool[] = [
 		run: async (caller) => caller.server.all(),
 	},
 ];
+
+// The read-only tools above plus the fork's, which also change things.
+TOOLS.push(...ABHASH_TOOLS);
+for (const tool of TOOLS) {
+	tool.annotations ??= { readOnlyHint: true };
+}
 
 export const TOOLS_BY_NAME = new Map(TOOLS.map((tool) => [tool.name, tool]));

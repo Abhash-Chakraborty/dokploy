@@ -10,6 +10,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { credentialText } from "./abhash-credential";
 import { environments } from "./environment";
 import { mounts } from "./mount";
 import { server } from "./server";
@@ -52,7 +53,7 @@ export const redis = pgTable("redis", {
 		.$defaultFn(() => generateAppName("redis"))
 		.unique(),
 	description: text("description"),
-	databasePassword: text("password").notNull(),
+	databasePassword: credentialText("password").notNull(),
 	dockerImage: text("dockerImage").notNull(),
 	command: text("command"),
 	args: text("args").array(),

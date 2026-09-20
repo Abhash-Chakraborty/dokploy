@@ -4,6 +4,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import { sshKeyCreate, sshKeyType } from "../validations";
+import { credentialText } from "./abhash-credential";
 import { organization } from "./account";
 import { applications } from "./application";
 import { compose } from "./compose";
@@ -14,7 +15,7 @@ export const sshKeys = pgTable("ssh-key", {
 		.notNull()
 		.primaryKey()
 		.$defaultFn(() => nanoid()),
-	privateKey: text("privateKey").notNull().default(""),
+	privateKey: credentialText("privateKey").notNull().default(""),
 	publicKey: text("publicKey").notNull(),
 	name: text("name").notNull(),
 	description: text("description"),

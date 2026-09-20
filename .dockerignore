@@ -3,3 +3,10 @@ node_modules
 .gitignore
 *.md
 dist
+**/node_modules
+**/.next
+**/dist
+**/.docker
+.turbo
+coverage
+**/proprietary/**

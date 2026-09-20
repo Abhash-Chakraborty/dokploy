@@ -10,6 +10,7 @@ import {
 	ownerRole,
 	statements,
 } from "../lib/access-control";
+import { rbacV2, rbacV2Enabled } from "./abhash/rbac";
 
 type Statements = typeof statements;
 type Resource = keyof Statements;
@@ -71,6 +72,7 @@ export const checkPermission = async (
 	ctx: PermissionCtx,
 	permissions: Permissions,
 ) => {
+	if (await rbacV2Enabled()) return rbacV2.checkPermission(ctx, permissions);
 	const { id: userId } = ctx.user;
 	const { activeOrganizationId: organizationId } = ctx.session;
 	const memberRecord = await findMemberByUserId(userId, organizationId);
@@ -214,6 +216,12 @@ export const checkProjectAccess = async (
 	action: "create" | "delete",
 	projectId?: string,
 ) => {
+	if (await rbacV2Enabled()) {
+		return rbacV2.checkProjectAccess(ctx, action, projectId);
+	}
+	if (await rbacV2Enabled()) {
+		return (await rbacV2.resolvePermissions(ctx)) as ResolvedPermissions;
+	}
 	const userId = ctx.user.id;
 	const organizationId = ctx.session.activeOrganizationId;
 	const memberRecord = await findMemberByUserId(userId, organizationId);
@@ -240,6 +248,9 @@ export const checkServicePermissionAndAccess = async (
 	serviceId: string,
 	permissions: Permissions,
 ) => {
+	if (await rbacV2Enabled()) {
+		return rbacV2.checkServicePermissionAndAccess(ctx, serviceId, permissions);
+	}
 	const userId = ctx.user.id;
 	const organizationId = ctx.session.activeOrganizationId;
 	const memberRecord = await findMemberByUserId(userId, organizationId);
@@ -259,6 +270,9 @@ export const checkServiceAccess = async (
 	serviceId: string,
 	action: "create" | "read" | "delete" = "read",
 ) => {
+	if (await rbacV2Enabled()) {
+		return rbacV2.checkServiceAccess(ctx, serviceId, action);
+	}
 	const userId = ctx.user.id;
 	const organizationId = ctx.session.activeOrganizationId;
 	const memberRecord = await findMemberByUserId(userId, organizationId);
@@ -289,6 +303,9 @@ export const checkEnvironmentAccess = async (
 	environmentId: string,
 	action: "read" | "create" | "delete" = "read",
 ) => {
+	if (await rbacV2Enabled()) {
+		return rbacV2.checkEnvironmentAccess(ctx, environmentId, action);
+	}
 	const userId = ctx.user.id;
 	const organizationId = ctx.session.activeOrganizationId;
 	const memberRecord = await findMemberByUserId(userId, organizationId);
@@ -313,6 +330,9 @@ export const checkEnvironmentCreationPermission = async (
 	ctx: PermissionCtx,
 	projectId: string,
 ) => {
+	if (await rbacV2Enabled()) {
+		return rbacV2.checkEnvironmentCreationPermission(ctx, projectId);
+	}
 	const userId = ctx.user.id;
 	const organizationId = ctx.session.activeOrganizationId;
 	const memberRecord = await findMemberByUserId(userId, organizationId);
@@ -333,6 +353,9 @@ export const checkEnvironmentDeletionPermission = async (
 	ctx: PermissionCtx,
 	projectId: string,
 ) => {
+	if (await rbacV2Enabled()) {
+		return rbacV2.checkEnvironmentDeletionPermission(ctx, projectId);
+	}
 	const userId = ctx.user.id;
 	const organizationId = ctx.session.activeOrganizationId;
 	const memberRecord = await findMemberByUserId(userId, organizationId);
@@ -364,6 +387,8 @@ export const addNewProject = async (ctx: PermissionCtx, projectId: string) => {
 				eq(member.organizationId, organizationId),
 			),
 		);
+	if (await rbacV2Enabled())
+		await rbacV2.grantCreator(ctx, "project", projectId);
 };
 
 export const addNewEnvironment = async (
@@ -387,6 +412,8 @@ export const addNewEnvironment = async (
 				eq(member.organizationId, organizationId),
 			),
 		);
+	if (await rbacV2Enabled())
+		await rbacV2.grantCreator(ctx, "environment", environmentId);
 };
 
 export const addNewService = async (ctx: PermissionCtx, serviceId: string) => {
@@ -404,12 +431,17 @@ export const addNewService = async (ctx: PermissionCtx, serviceId: string) => {
 				eq(member.organizationId, organizationId),
 			),
 		);
+	if (await rbacV2Enabled())
+		await rbacV2.grantCreator(ctx, "service", serviceId);
 };
 
 export const findMemberByUserId = async (
 	userId: string,
 	organizationId: string,
 ) => {
+	if (await rbacV2Enabled()) {
+		return rbacV2.findMemberByUserId(userId, organizationId);
+	}
 	const result = await db.query.member.findFirst({
 		where: and(
 			eq(member.userId, userId),

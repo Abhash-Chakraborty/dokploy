@@ -1,6 +1,7 @@
 import { db } from "@dokploy/server/db";
 import { gitProvider, member } from "@dokploy/server/db/schema";
-import { hasValidLicense } from "@dokploy/server/services/proprietary/license-key";
+import { isEntitled } from "@dokploy/server/services/abhash/entitlements";
+import { rbacV2, rbacV2Enabled } from "@dokploy/server/services/abhash/rbac";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 
@@ -80,6 +81,31 @@ export const getAccessibleGitProviderIds = async (session: {
 	activeOrganizationId: string;
 }): Promise<Set<string>> => {
 	const { userId, activeOrganizationId } = session;
+	if (await rbacV2Enabled()) {
+		const assigned = await rbacV2.accessibleIds(
+			userId,
+			activeOrganizationId,
+			"gitProviders",
+		);
+		const all = await db.query.gitProvider.findMany({
+			where: eq(gitProvider.organizationId, activeOrganizationId),
+			columns: {
+				gitProviderId: true,
+				userId: true,
+				sharedWithOrganization: true,
+			},
+		});
+		return new Set(
+			all
+				.filter(
+					(p) =>
+						p.userId === userId ||
+						p.sharedWithOrganization ||
+						assigned.has(p.gitProviderId),
+				)
+				.map((p) => p.gitProviderId),
+		);
+	}
 
 	const allOrgProviders = await db.query.gitProvider.findMany({
 		where: eq(gitProvider.organizationId, activeOrganizationId),
@@ -102,7 +128,7 @@ export const getAccessibleGitProviderIds = async (session: {
 		return new Set(allOrgProviders.map((p) => p.gitProviderId));
 	}
 
-	const licensed = await hasValidLicense(activeOrganizationId);
+	const licensed = await isEntitled(activeOrganizationId);
 	const assignedSet = licensed
 		? new Set(memberRecord?.accessedGitProviders ?? [])
 		: new Set<string>();
@@ -124,8 +150,12 @@ export const getAccessibleGitProviderIds = async (session: {
  * Authorizes read access to a specific git provider for the current session.
  * Throws if the provider belongs to a different organization (cross-org IDOR)
  * or if the caller is not entitled to it within the active organization.
- * Must be called before returning any git-provider record that carries secrets
- * (OAuth tokens, app private keys, webhook secrets).
+ *
+ * This only proves the caller may *use* the provider (e.g. pick it as a repo
+ * source when creating a deploy) - it does NOT mean they may see its raw
+ * credentials. Being able to use a shared provider and being able to read its
+ * OAuth tokens / client secrets / private keys are different privileges; gate
+ * the latter with canViewGitProviderSecrets before returning secret fields.
  */
 export const assertGitProviderAccess = async (
 	session: { userId: string; activeOrganizationId: string },
@@ -145,4 +175,25 @@ export const assertGitProviderAccess = async (
 			message: "You don't have access to this git provider",
 		});
 	}
+};
+
+// Being allowed to use a shared provider (assertGitProviderAccess) must not
+// imply being allowed to read its raw OAuth tokens / client secrets / private
+// keys. Only the provider's owner or an org owner/admin gets those back.
+export const canViewGitProviderSecrets = async (
+	session: { userId: string; activeOrganizationId: string },
+	provider: { userId: string; organizationId: string },
+): Promise<boolean> => {
+	if (provider.organizationId !== session.activeOrganizationId) return false;
+	if (provider.userId === session.userId) return true;
+
+	const memberRecord = await db.query.member.findFirst({
+		where: and(
+			eq(member.userId, session.userId),
+			eq(member.organizationId, session.activeOrganizationId),
+		),
+		columns: { role: true },
+	});
+
+	return memberRecord?.role === "owner" || memberRecord?.role === "admin";
 };

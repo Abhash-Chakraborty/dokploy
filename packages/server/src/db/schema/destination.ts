@@ -7,6 +7,7 @@ import {
 	ADDITIONAL_FLAG_ERROR,
 	ADDITIONAL_FLAG_REGEX,
 } from "../validations/destination";
+import { credentialText } from "./abhash-credential";
 import { organization } from "./account";
 import { backups } from "./backups";
 
@@ -17,8 +18,8 @@ export const destinations = pgTable("destination", {
 		.$defaultFn(() => nanoid()),
 	name: text("name").notNull(),
 	provider: text("provider"),
-	accessKey: text("accessKey").notNull(),
-	secretAccessKey: text("secretAccessKey").notNull(),
+	accessKey: credentialText("accessKey").notNull(),
+	secretAccessKey: credentialText("secretAccessKey").notNull(),
 	bucket: text("bucket").notNull(),
 	region: text("region").notNull(),
 	endpoint: text("endpoint").notNull(),

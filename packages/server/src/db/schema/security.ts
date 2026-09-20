@@ -3,6 +3,7 @@ import { pgTable, text, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { credentialText } from "./abhash-credential";
 import { applications } from "./application";
 
 export const security = pgTable(
@@ -13,7 +14,7 @@ export const security = pgTable(
 			.primaryKey()
 			.$defaultFn(() => nanoid()),
 		username: text("username").notNull(),
-		password: text("password").notNull(),
+		password: credentialText("password").notNull(),
 		createdAt: text("createdAt")
 			.notNull()
 			.$defaultFn(() => new Date().toISOString()),

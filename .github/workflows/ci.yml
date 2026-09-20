@@ -2,13 +2,17 @@ name: CI
 
 on:
   pull_request:
-    branches: [main, master]
-  push:
-    branches: [master, abhash-dokploy]
+    branches: [main]
+  # The nightly upstream sync dispatches this on its branch: PRs opened with
+  # GITHUB_TOKEN do not trigger pull_request workflows.
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   app-check:
@@ -20,7 +24,72 @@ jobs:
         with:
           node-version: 24.17.0
           cache: "pnpm"
+      - run: node scripts/check-no-proprietary-imports.mjs
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter=@dokploy/server run typecheck
       - run: pnpm --filter=@dokploy/server run build
       - run: pnpm --filter=dokploy run typecheck
+      # Suites that need a Docker daemon skip themselves; the rest run.
+      - run: pnpm --filter=dokploy run test --run
+      # Upstream keeps claiming the migration indices this fork uses. Catch a
+      # broken snapshot chain or schema/migration drift here rather than at
+      # container start.
+      - name: Check migrations
+        working-directory: apps/dokploy
+        run: |
+          pnpm exec drizzle-kit check --config ./server/db/drizzle.config.ts
+          pnpm exec drizzle-kit generate --config ./server/db/drizzle.config.ts
+          if [ -n "$(git status --porcelain -- drizzle)" ]; then
+            git status --short -- drizzle
+            echo "::error::Schema and migrations disagree; run pnpm migration:generate and commit the result."
+            exit 1
+          fi
+          # Read the journal, not the directory: upstream ships an orphaned
+          # 0130 file that no journal entry runs.
+          dupes=$(node -p "require('./drizzle/meta/_journal.json').entries.map(e => e.tag.slice(0, 4)).join('\n')" | sort | uniq -d)
+          if [ -n "$dupes" ]; then
+            echo "::error::Duplicate migration indices: $dupes"
+            exit 1
+          fi
+
+  # DB-backed tests (role-binding engine, migrations) against a throwaway
+  # Postgres service container.
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dokploy
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: dokploy
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U dokploy"
+          --health-interval 2s
+          --health-retries 30
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s
+          --health-retries 30
+    env:
+      DATABASE_URL: postgres://dokploy:ci@127.0.0.1:5432/dokploy
+      SANDBOX_DATABASE_URL: postgres://dokploy:ci@127.0.0.1:5432/dokploy
+      REDIS_URL: redis://127.0.0.1:6379
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.17.0
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter=@dokploy/server run build
+      - run: pnpm --filter=dokploy run migration:run
+      # Applying twice proves the fork's migrations are idempotent.
+      - run: psql "$DATABASE_URL" -c "DELETE FROM drizzle.__drizzle_migrations WHERE created_at > 1788995453103"
+      - run: pnpm --filter=dokploy run migration:run
+      - run: pnpm --filter=dokploy run test:integration

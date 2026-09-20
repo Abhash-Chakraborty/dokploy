@@ -43,9 +43,13 @@ vi.mock("@dokploy/server/db", () => ({
 	},
 }));
 
-vi.mock("@dokploy/server/services/proprietary/license-key", () => ({
-	hasValidLicense: vi.fn(() => Promise.resolve(false)),
-}));
+vi.mock(
+	"@dokploy/server/services/abhash/entitlements",
+	async (importOriginal) => ({
+		...(await importOriginal<object>()),
+		isEntitled: vi.fn(() => Promise.resolve(false)),
+	}),
+);
 
 const { checkPermission } = await import("@dokploy/server/services/permission");
 
@@ -124,6 +128,13 @@ describe("member is denied org-level enterprise resources (CVE: bypass via stati
 	it("member is denied server.read", async () => {
 		memberToReturn = mockMemberData("member");
 		await expect(checkPermission(ctx, { server: ["read"] })).rejects.toThrow();
+	});
+
+	it("member is denied server.terminal", async () => {
+		memberToReturn = mockMemberData("member");
+		await expect(
+			checkPermission(ctx, { server: ["terminal"] }),
+		).rejects.toThrow();
 	});
 
 	it("member is denied registry.create", async () => {

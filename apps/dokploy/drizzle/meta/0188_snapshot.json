@@ -1,6 +1,6 @@
 {
-  "id": "0999145d-3dac-446e-a7c5-b390e6e998e2",
-  "prevId": "97dbee1b-d403-4116-b3b8-f9be93716123",
+  "id": "92a9010e-bc5f-4c9f-b97e-f2867a602e90",
+  "prevId": "633b82a2-0321-4ef4-ae09-7a8861830873",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2457,95 +2457,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.cloudflare_tunnel": {
-      "name": "cloudflare_tunnel",
-      "schema": "",
-      "columns": {
-        "cloudflareTunnelId": {
-          "name": "cloudflareTunnelId",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "token": {
-          "name": "token",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "serverId": {
-          "name": "serverId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'pending'"
-        },
-        "statusMessage": {
-          "name": "statusMessage",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "organizationId": {
-          "name": "organizationId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "cloudflare_tunnel_serverId_server_serverId_fk": {
-          "name": "cloudflare_tunnel_serverId_server_serverId_fk",
-          "tableFrom": "cloudflare_tunnel",
-          "tableTo": "server",
-          "columnsFrom": [
-            "serverId"
-          ],
-          "columnsTo": [
-            "serverId"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "cloudflare_tunnel_organizationId_organization_id_fk": {
-          "name": "cloudflare_tunnel_organizationId_organization_id_fk",
-          "tableFrom": "cloudflare_tunnel",
-          "tableTo": "organization",
-          "columnsFrom": [
-            "organizationId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.compose": {
       "name": "compose",
       "schema": "",
@@ -4392,109 +4303,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.log_drain": {
-      "name": "log_drain",
-      "schema": "",
-      "columns": {
-        "logDrainId": {
-          "name": "logDrainId",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "drainType": {
-          "name": "drainType",
-          "type": "LogDrainType",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "config": {
-          "name": "config",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "enabled": {
-          "name": "enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "serverId": {
-          "name": "serverId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'pending'"
-        },
-        "statusMessage": {
-          "name": "statusMessage",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "organizationId": {
-          "name": "organizationId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "log_drain_serverId_server_serverId_fk": {
-          "name": "log_drain_serverId_server_serverId_fk",
-          "tableFrom": "log_drain",
-          "tableTo": "server",
-          "columnsFrom": [
-            "serverId"
-          ],
-          "columnsTo": [
-            "serverId"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "log_drain_organizationId_organization_id_fk": {
-          "name": "log_drain_organizationId_organization_id_fk",
-          "tableFrom": "log_drain",
-          "tableTo": "organization",
-          "columnsFrom": [
-            "organizationId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.mariadb": {
       "name": "mariadb",
       "schema": "",
@@ -5513,6 +5321,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "dockerId": {
+          "name": "dockerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "driver": {
           "name": "driver",
           "type": "networkDriver",
@@ -5906,13 +5720,6 @@
         },
         "serverThreshold": {
           "name": "serverThreshold",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "userLogin": {
-          "name": "userLogin",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
@@ -9013,13 +8820,6 @@
           "notNull": true,
           "default": false
         },
-        "authMethodsConfig": {
-          "name": "authMethodsConfig",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{\"emailPassword\":true,\"github\":true,\"google\":true,\"passkey\":true}'::jsonb"
-        },
         "cleanupCacheApplications": {
           "name": "cleanupCacheApplications",
           "type": "boolean",
@@ -9166,15 +8966,6 @@
         "gitlab",
         "bitbucket",
         "gitea"
-      ]
-    },
-    "public.LogDrainType": {
-      "name": "LogDrainType",
-      "schema": "public",
-      "values": [
-        "loki",
-        "datadog",
-        "http"
       ]
     },
     "public.mountType": {
@@ -9337,7 +9128,8 @@
         "aws",
         "doppler",
         "azure",
-        "scaleway"
+        "scaleway",
+        "phase"
       ]
     }
   },

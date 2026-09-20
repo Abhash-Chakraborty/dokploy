@@ -1,6 +1,20 @@
 import { createTRPCRouter } from "../api/trpc";
+import { abhashAccessRouter } from "./routers/abhash/access";
+import { abhashAgentsRouter } from "./routers/abhash/agents";
+import { abhashAnsibleRouter } from "./routers/abhash/ansible";
 import { abhashAuditLogRouter } from "./routers/abhash/audit-log";
+import { abhashBackupsRouter } from "./routers/abhash/backups";
+import { abhashCustomRoleRouter } from "./routers/abhash/custom-role";
+import { abhashEnginesRouter } from "./routers/abhash/engines";
+import { abhashFirewallRouter } from "./routers/abhash/firewall";
+import { abhashFleetRouter } from "./routers/abhash/fleet";
+import { abhashForwardAuthRouter } from "./routers/abhash/forward-auth";
+import { abhashJobsRouter } from "./routers/abhash/jobs";
 import { abhashLicenseKeyRouter } from "./routers/abhash/license-key";
+import { abhashMeshRouter } from "./routers/abhash/mesh";
+import { abhashScimRouter } from "./routers/abhash/scim";
+import { abhashSsoRouter } from "./routers/abhash/sso";
+import { abhashVaultRouter } from "./routers/abhash/vault";
 import { abhashWhitelabelingRouter } from "./routers/abhash/whitelabeling";
 import { adminRouter } from "./routers/admin";
 import { aiRouter } from "./routers/ai";
@@ -39,7 +53,6 @@ import { portRouter } from "./routers/port";
 import { postgresRouter } from "./routers/postgres";
 import { previewDeploymentRouter } from "./routers/preview-deployment";
 import { projectRouter } from "./routers/project";
-import { customRoleRouter } from "./routers/proprietary/custom-role";
 import { redirectsRouter } from "./routers/redirects";
 import { redisRouter } from "./routers/redis";
 import { registryRouter } from "./routers/registry";
@@ -52,6 +65,7 @@ import { sshRouter } from "./routers/ssh-key";
 import { stripeRouter } from "./routers/stripe";
 import { swarmRouter } from "./routers/swarm";
 import { tagRouter } from "./routers/tag";
+import { transferRouter } from "./routers/transfer";
 import { userRouter } from "./routers/user";
 import { vaultProviderRouter } from "./routers/vault-provider";
 import { volumeBackupsRouter } from "./routers/volume-backups";
@@ -113,8 +127,21 @@ export const appRouter = createTRPCRouter({
 	logDrain: logDrainRouter,
 	cloudflareTunnel: cloudflareTunnelRouter,
 	whitelabeling: abhashWhitelabelingRouter,
-	customRole: customRoleRouter,
+	customRole: abhashCustomRoleRouter,
+	access: abhashAccessRouter,
+	abhashSso: abhashSsoRouter,
+	abhashScim: abhashScimRouter,
+	forwardAuth: abhashForwardAuthRouter,
 	auditLog: abhashAuditLogRouter,
+	abhashJobs: abhashJobsRouter,
+	vault: abhashVaultRouter,
+	agents: abhashAgentsRouter,
+	ansible: abhashAnsibleRouter,
+	fleet: abhashFleetRouter,
+	mesh: abhashMeshRouter,
+	firewall: abhashFirewallRouter,
+	abhashBackups: abhashBackupsRouter,
+	engines: abhashEnginesRouter,
 	schedule: scheduleRouter,
 	rollback: rollbackRouter,
 	volumeBackups: volumeBackupsRouter,
@@ -122,6 +149,7 @@ export const appRouter = createTRPCRouter({
 	tag: tagRouter,
 	patch: patchRouter,
 	overview: overviewRouter,
+	transfer: transferRouter,
 });
 
 // export type definition of API

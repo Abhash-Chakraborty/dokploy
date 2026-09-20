@@ -10,6 +10,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { credentialText } from "./abhash-credential";
 import { backups } from "./backups";
 import { environments } from "./environment";
 import { mounts } from "./mount";
@@ -53,7 +54,7 @@ export const libsql = pgTable("libsql", {
 		.unique(),
 	description: text("description"),
 	databaseUser: text("databaseUser").notNull(),
-	databasePassword: text("databasePassword").notNull(),
+	databasePassword: credentialText("databasePassword").notNull(),
 	sqldNode: sqldNode("sqldNode").notNull().default("primary"),
 	sqldPrimaryUrl: text("sqldPrimaryUrl"),
 	enableNamespaces: boolean("enableNamespaces").notNull().default(false),

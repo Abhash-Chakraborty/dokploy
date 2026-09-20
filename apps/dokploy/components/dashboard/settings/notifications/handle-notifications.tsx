@@ -452,6 +452,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 					serverUrl: notification.gotify?.serverUrl,
 					name: notification.name,
 					dockerCleanup: notification.dockerCleanup,
+					serverThreshold: notification.serverThreshold,
 				});
 			} else if (notification.notificationType === "ntfy") {
 				form.reset({
@@ -699,6 +700,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 				name: data.name,
 				dockerCleanup: dockerCleanup,
 				decoration: data.decoration,
+				serverThreshold: serverThreshold,
 				notificationId: notificationId || "",
 				gotifyId: notification?.gotifyId || "",
 			});
@@ -716,6 +718,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 				priority: data.priority,
 				name: data.name,
 				dockerCleanup: dockerCleanup,
+				serverThreshold: serverThreshold,
 				notificationId: notificationId || "",
 				ntfyId: notification?.ntfyId || "",
 			});

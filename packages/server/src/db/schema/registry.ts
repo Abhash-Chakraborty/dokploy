@@ -3,6 +3,7 @@ import { pgEnum, pgTable, text } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { credentialText } from "./abhash-credential";
 import { organization } from "./account";
 import { applications } from "./application";
 /**
@@ -21,7 +22,7 @@ export const registry = pgTable("registry", {
 	registryName: text("registryName").notNull(),
 	imagePrefix: text("imagePrefix"),
 	username: text("username").notNull(),
-	password: text("password").notNull(),
+	password: credentialText("password").notNull(),
 	registryUrl: text("registryUrl").notNull().default(""),
 	createdAt: text("createdAt")
 		.notNull()

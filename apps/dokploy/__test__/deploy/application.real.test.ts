@@ -5,7 +5,9 @@ import { paths } from "@dokploy/server/constants";
 import { execAsync } from "@dokploy/server/utils/process/execAsync";
 import { format } from "date-fns";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { hasRealDeployToolchain } from "../utils/environment";
+import { hasNixpacks, hasRealDeployToolchain } from "../utils/environment";
+
+const nixpacks = hasNixpacks();
 
 const REAL_TEST_TIMEOUT = 180000; // 3 minutes
 
@@ -239,7 +241,7 @@ describe.skipIf(!hasRealDeployToolchain())(
 			console.log("✅ Cleanup completed\n");
 		});
 
-		it(
+		it.skipIf(!nixpacks)(
 			"should REALLY clone git repo and build with nixpacks",
 			async () => {
 				console.log(`\n🚀 Testing real deployment with app: ${currentAppName}`);
@@ -367,7 +369,7 @@ describe.skipIf(!hasRealDeployToolchain())(
 			REAL_TEST_TIMEOUT,
 		);
 
-		it(
+		it.skipIf(!nixpacks)(
 			"should REALLY clone with submodules when enabled",
 			async () => {
 				const submodulesAppName = `real-submodules-${Date.now()}`;
@@ -412,7 +414,7 @@ describe.skipIf(!hasRealDeployToolchain())(
 			REAL_TEST_TIMEOUT,
 		);
 
-		it(
+		it.skipIf(!nixpacks)(
 			"should verify REAL commit info extraction",
 			async () => {
 				console.log(`\n🚀 Testing real commit info: ${currentAppName}`);

@@ -29,7 +29,7 @@ import { ChangeRole } from "./change-role";
 export const ShowUsers = () => {
 	const { data: isCloud } = api.settings.isCloud.useQuery();
 	const { data, isPending, refetch } = api.user.all.useQuery();
-	const { mutateAsync } = api.user.remove.useMutation();
+	const { mutateAsync, isPending: isRemoving } = api.user.remove.useMutation();
 	const { data: permissions } = api.user.getPermissions.useQuery();
 	const { data: hasValidLicense } =
 		api.licenseKey.haveValidLicenseKey.useQuery();
@@ -204,6 +204,7 @@ export const ShowUsers = () => {
 																			title="Delete User"
 																			description="Are you sure you want to delete this user?"
 																			type="destructive"
+																			disabled={isRemoving}
 																			onClick={async () => {
 																				await mutateAsync({
 																					userId: member.user.id,
@@ -236,6 +237,7 @@ export const ShowUsers = () => {
 																			title="Unlink User"
 																			description="Are you sure you want to unlink this user?"
 																			type="destructive"
+																			disabled={isRemoving}
 																			onClick={async () => {
 																				if (!isCloud) {
 																					const orgCount =

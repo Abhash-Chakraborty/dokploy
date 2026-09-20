@@ -1,4 +1,8 @@
+import Head from "next/head";
+import { useRouter } from "next/router";
+import { useEffect } from "react";
 import { api } from "@/utils/api";
+import { useWhitelabeling } from "@/utils/hooks/use-whitelabeling";
 import { ImpersonationBar } from "../dashboard/impersonation/impersonation-bar";
 import { AiSidebar } from "../shared/ai-sidebar";
 import { HubSpotWidget } from "../shared/HubSpotWidget";
@@ -10,9 +14,12 @@ interface Props {
 	metaName?: string;
 }
 
-export const DashboardLayout = ({ children }: Props) => {
+export const DashboardLayout = ({ children, metaName }: Props) => {
+	const router = useRouter();
 	const { data: haveRootAccess } = api.user.haveRootAccess.useQuery();
 	const { data: isCloud } = api.settings.isCloud.useQuery();
+	const { config: whitelabeling } = useWhitelabeling();
+	const appName = whitelabeling?.appName || "Dokploy";
 	const { data: currentPlan } = api.stripe.getCurrentPlan.useQuery(undefined, {
 		enabled: isCloud === true,
 		refetchOnWindowFocus: false,
@@ -22,8 +29,30 @@ export const DashboardLayout = ({ children }: Props) => {
 
 	const isChatEnabled = isCloud === true && currentPlan === "startup";
 
+	const { data: onboardingStatus } = api.project.onboardingStatus.useQuery();
+	const shouldRedirectToOnboarding =
+		router.pathname !== "/dashboard/home" &&
+		onboardingStatus?.shouldShowOnboarding === true;
+
+	useEffect(() => {
+		if (shouldRedirectToOnboarding) {
+			router.replace("/dashboard/home");
+		}
+	}, [shouldRedirectToOnboarding, router]);
+
+	if (shouldRedirectToOnboarding) {
+		return null;
+	}
+
 	return (
 		<>
+			{metaName && (
+				<Head>
+					<title>
+						{metaName} | {appName}
+					</title>
+				</Head>
+			)}
 			<Page>
 				<RouteErrorBoundary>{children}</RouteErrorBoundary>
 			</Page>

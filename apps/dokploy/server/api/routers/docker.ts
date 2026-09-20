@@ -19,6 +19,7 @@ import {
 	uploadFileToContainer,
 	writeContainerFile,
 } from "@dokploy/server";
+import { assertAppNameAccess } from "@dokploy/server/services/abhash/app-access";
 import { checkPermission } from "@dokploy/server/services/permission";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -242,6 +243,7 @@ export const dockerRouter = createTRPCRouter({
 					throw new TRPCError({ code: "UNAUTHORIZED" });
 				}
 			}
+			await assertAppNameAccess(ctx, input.appName, { service: ["read"] });
 			return await getContainersByAppNameMatch(
 				input.appName,
 				input.appType,

@@ -3,6 +3,7 @@ import { boolean, pgTable, text } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { credentialText } from "./abhash-credential";
 import { organization } from "./account";
 export const ai = pgTable("ai", {
 	aiId: text("aiId")
@@ -11,7 +12,7 @@ export const ai = pgTable("ai", {
 		.$defaultFn(() => nanoid()),
 	name: text("name").notNull(),
 	apiUrl: text("apiUrl").notNull(),
-	apiKey: text("apiKey").notNull(),
+	apiKey: credentialText("apiKey").notNull(),
 	model: text("model").notNull(),
 	isEnabled: boolean("isEnabled").notNull().default(true),
 	organizationId: text("organizationId")

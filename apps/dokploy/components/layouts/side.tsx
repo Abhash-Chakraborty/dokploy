@@ -7,8 +7,10 @@ import {
 	Bell,
 	BlocksIcon,
 	BookIcon,
+	Bot,
 	BotIcon,
 	Boxes,
+	Building2,
 	CalendarClock,
 	ChartLine,
 	ChevronRight,
@@ -19,6 +21,8 @@ import {
 	Cloud,
 	CreditCard,
 	Database,
+	DatabaseBackup,
+	FileLock,
 	Folder,
 	Forward,
 	GalleryVerticalEnd,
@@ -31,11 +35,16 @@ import {
 	KeyRound,
 	LayoutGrid,
 	Loader2,
+	Lock,
+	LockKeyhole,
 	type LucideIcon,
+	Network,
 	Package,
 	Palette,
 	Rocket,
+	ScrollText,
 	Server,
+	ServerCog,
 	Settings,
 	ShieldCheck,
 	SquareTerminal,
@@ -44,13 +53,13 @@ import {
 	Trash2,
 	User,
 	Users,
-	Vault,
 	Waypoints,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { TruncateTooltip } from "@/components/shared/truncate-tooltip";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -107,6 +116,8 @@ import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import type { AppRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
+import { ActivityButton } from "../abhash/jobs/activity";
+import { TrialBanner } from "../dashboard/billing/trial-banner";
 import { AddOrganization } from "../dashboard/organization/handle-organization";
 import { DialogAction } from "../shared/dialog-action";
 import { Logo } from "../shared/logo";
@@ -232,7 +243,7 @@ const MENU: Menu = {
 					isEnabled: ({ permissions }) => !!permissions?.deployment.read,
 				},
 				{
-					title: "Automation",
+					title: "Schedules",
 					url: "/dashboard/schedules",
 					icon: CalendarClock,
 					// Matches the schedule.read gate the page and router enforce; the
@@ -273,8 +284,8 @@ const MENU: Menu = {
 					title: "Terminals",
 					url: "/dashboard/terminals",
 					icon: SquareTerminal,
-					// Master console -- gated behind docker/server access
-					isEnabled: ({ permissions }) => !!permissions?.docker.read,
+					// Same permission the terminal WebSocket enforces.
+					isEnabled: ({ permissions }) => !!permissions?.server.terminal,
 				},
 			],
 		},
@@ -293,21 +304,88 @@ const MENU: Menu = {
 			items: [
 				{ title: "Profile", url: "/dashboard/settings/profile", icon: User },
 				{
-					title: "Security & Devices",
+					title: "Security",
 					url: "/dashboard/settings/devices",
 					icon: ShieldCheck,
 				},
+			],
+		},
+		{
+			isSingle: false,
+			title: "Organization",
+			icon: Building2,
+			items: [
 				{
-					title: "Users",
+					title: "Members & access",
 					url: "/dashboard/settings/users",
 					icon: Users,
 					isEnabled: ({ permissions }) => !!permissions?.member.read,
 				},
 				{
-					title: "Audit Logs",
+					title: "Authentication",
+					url: "/dashboard/settings/authentication",
+					icon: LockKeyhole,
+					isEnabled: ({ auth, isCloud }) =>
+						!!(auth?.role === "owner" || auth?.role === "admin") && !isCloud,
+				},
+				{
+					title: "Command centre",
+					url: "/dashboard/command-center",
+					icon: ServerCog,
+					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
+				},
+				{
+					title: "Ansible",
+					url: "/dashboard/settings/ansible",
+					icon: ScrollText,
+					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
+				},
+				{
+					title: "Agents",
+					url: "/dashboard/settings/agents",
+					icon: Bot,
+					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
+				},
+				{
+					title: "Audit log",
 					url: "/dashboard/settings/audit-logs",
 					icon: ClipboardList,
 					isEnabled: ({ permissions }) => !!permissions?.auditLog.read,
+				},
+				{
+					title: "Whitelabeling",
+					url: "/dashboard/settings/whitelabeling",
+					icon: Palette,
+					isEnabled: ({ auth, isCloud }) =>
+						!!(auth?.role === "owner" && !isCloud),
+				},
+				{
+					title: "Billing",
+					url: "/dashboard/settings/billing",
+					icon: CreditCard,
+					isEnabled: ({ auth, isCloud }) =>
+						!!(auth?.role === "owner" && isCloud),
+				},
+			],
+		},
+		{
+			isSingle: false,
+			title: "Web Server",
+			icon: Activity,
+			items: [
+				{
+					title: "Overview",
+					url: "/dashboard/settings/server",
+					icon: Activity,
+					isEnabled: ({ permissions, isCloud }) =>
+						!!(permissions?.organization.update && !isCloud),
+				},
+				{
+					title: "Builds",
+					url: "/dashboard/settings/deployments",
+					icon: Boxes,
+					isEnabled: ({ permissions, isCloud }) =>
+						!!(permissions?.server.read && !isCloud),
 				},
 			],
 		},
@@ -317,30 +395,10 @@ const MENU: Menu = {
 			icon: Server,
 			items: [
 				{
-					title: "Web Server",
-					url: "/dashboard/settings/server",
-					icon: Activity,
-					isEnabled: ({ permissions, isCloud }) =>
-						!!(permissions?.organization.update && !isCloud),
-				},
-				{
-					title: "Remote Servers",
+					title: "Remote servers",
 					url: "/dashboard/settings/servers",
 					icon: Server,
 					isEnabled: ({ permissions }) => !!permissions?.server.read,
-				},
-				{
-					title: "Deployments",
-					url: "/dashboard/settings/deployments",
-					icon: Boxes,
-					isEnabled: ({ permissions, isCloud }) =>
-						!!(permissions?.server.read && !isCloud),
-				},
-				{
-					title: "Cluster",
-					url: "/dashboard/docker?tab=swarm&subtab=nodes",
-					icon: Boxes,
-					isEnabled: ({ permissions }) => !!permissions?.organization.update,
 				},
 				{
 					title: "Tunnels",
@@ -349,62 +407,111 @@ const MENU: Menu = {
 					isEnabled: ({ auth }) =>
 						auth?.role === "owner" || auth?.role === "admin",
 				},
-			],
-		},
-		{
-			isSingle: false,
-			title: "Access & Sources",
-			icon: KeyRound,
-			items: [
 				{
-					title: "SSH Keys",
-					url: "/dashboard/settings/ssh-keys",
-					icon: KeyRound,
-					isEnabled: ({ permissions }) => !!permissions?.sshKeys.read,
+					title: "Certificates",
+					url: "/dashboard/settings/certificates",
+					icon: FileLock,
+					isEnabled: ({ permissions }) => !!permissions?.certificate.read,
 				},
 				{
-					title: "Git",
-					url: "/dashboard/settings/git-providers",
-					icon: GitBranch,
-					isEnabled: ({ permissions }) => !!permissions?.gitProviders.read,
-				},
-				{
-					title: "Registry",
-					url: "/dashboard/settings/registry",
-					icon: Package,
-					isEnabled: ({ permissions }) => !!permissions?.registry.read,
-				},
-				{
-					title: "Secrets",
-					url: "/dashboard/settings/secrets",
-					icon: Vault,
-					isEnabled: ({ permissions }) => !!permissions?.vaultProvider.read,
-				},
-				{
-					title: "DNS Providers",
+					title: "DNS providers",
 					url: "/dashboard/settings/dns",
 					icon: Globe,
 					isEnabled: ({ permissions }) => !!permissions?.dnsProvider.read,
 				},
 				{
-					title: "S3 Destinations",
-					url: "/dashboard/settings/destinations",
-					icon: HardDrive,
-					isEnabled: ({ permissions }) => !!permissions?.destination.read,
+					title: "Firewall",
+					url: "/dashboard/settings/firewall",
+					icon: ShieldCheck,
+					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
 				},
 				{
-					title: "Certificates",
-					url: "/dashboard/settings/certificates",
-					icon: ShieldCheck,
-					isEnabled: ({ permissions }) => !!permissions?.certificate.read,
+					title: "Secure network",
+					url: "/dashboard/settings/secure-network",
+					icon: Network,
+					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
+				},
+				{
+					title: "Registries",
+					url: "/dashboard/settings/registry",
+					icon: Package,
+					isEnabled: ({ permissions }) => !!permissions?.registry.read,
 				},
 			],
 		},
 		{
 			isSingle: false,
-			title: "Automation",
-			icon: BotIcon,
+			title: "Sources & Secrets",
+			icon: KeyRound,
 			items: [
+				{
+					title: "Git providers",
+					url: "/dashboard/settings/git-providers",
+					icon: GitBranch,
+					isEnabled: ({ permissions }) => !!permissions?.gitProviders.read,
+				},
+				{
+					title: "SSH keys",
+					url: "/dashboard/settings/ssh-keys",
+					icon: KeyRound,
+					isEnabled: ({ permissions }) => !!permissions?.sshKeys.read,
+				},
+				{
+					title: "Vault",
+					url: "/dashboard/settings/vault",
+					icon: Lock,
+					isEnabled: ({ isCloud }) => !isCloud,
+				},
+				{
+					title: "Secret providers",
+					url: "/dashboard/settings/secrets",
+					icon: Cloud,
+					isEnabled: ({ permissions }) => !!permissions?.vaultProvider.read,
+				},
+				{
+					title: "S3 destinations",
+					url: "/dashboard/settings/destinations",
+					icon: HardDrive,
+					isEnabled: ({ permissions }) => !!permissions?.destination.read,
+				},
+			],
+		},
+		{
+			isSingle: false,
+			title: "Integrations",
+			icon: Waypoints,
+			items: [
+				{
+					title: "Databases and services",
+					url: "/dashboard/settings/engines",
+					icon: Boxes,
+					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
+				},
+				{
+					title: "Backups and drills",
+					url: "/dashboard/settings/backup-health",
+					icon: DatabaseBackup,
+					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
+				},
+				{
+					title: "Backups (legacy)",
+					url: "/dashboard/settings/backups",
+					icon: Database,
+					isEnabled: ({ permissions }) => !!permissions?.backup?.read,
+				},
+				{
+					title: "Notifications",
+					url: "/dashboard/settings/notifications",
+					icon: Bell,
+					isEnabled: ({ permissions }) => !!permissions?.notification.read,
+				},
+				{
+					title: "Log drains",
+					url: "/dashboard/settings/log-drains",
+					icon: Waypoints,
+					isEnabled: ({ auth }) =>
+						auth?.role === "owner" || auth?.role === "admin",
+				},
 				{
 					title: "AI",
 					url: "/dashboard/settings/ai",
@@ -416,52 +523,6 @@ const MENU: Menu = {
 					url: "/dashboard/settings/tags",
 					icon: Tags,
 					isEnabled: ({ permissions }) => !!permissions?.tag.read,
-				},
-				{
-					title: "Notifications",
-					url: "/dashboard/settings/notifications",
-					icon: Bell,
-					isEnabled: ({ permissions }) => !!permissions?.notification.read,
-				},
-				{
-					title: "Log Drains",
-					url: "/dashboard/settings/log-drains",
-					icon: Waypoints,
-					isEnabled: ({ auth }) =>
-						auth?.role === "owner" || auth?.role === "admin",
-				},
-				{
-					title: "Backups",
-					url: "/dashboard/settings/backups",
-					icon: Database,
-					isEnabled: ({ permissions }) => !!permissions?.backup?.read,
-				},
-			],
-		},
-		{
-			isSingle: false,
-			title: "Organization",
-			icon: Palette,
-			items: [
-				{
-					title: "Billing",
-					url: "/dashboard/settings/billing",
-					icon: CreditCard,
-					isEnabled: ({ auth, isCloud }) =>
-						!!(auth?.role === "owner" && isCloud),
-				},
-				{
-					title: "License",
-					url: "/dashboard/settings/license",
-					icon: Key,
-					isEnabled: ({ auth }) => !!(auth?.role === "owner"),
-				},
-				{
-					title: "Whitelabeling",
-					url: "/dashboard/settings/whitelabeling",
-					icon: Palette,
-					isEnabled: ({ auth, isCloud }) =>
-						!!(auth?.role === "owner" && !isCloud),
 				},
 			],
 		},
@@ -709,7 +770,7 @@ function SidebarLogo() {
 					)}
 				>
 					{/* Organization Logo and Selector */}
-					<SidebarMenuItem className={"w-full"}>
+					<SidebarMenuItem className={"w-full min-w-0"}>
 						<Popover
 							open={organizationSelectorOpen}
 							onOpenChange={setOrganizationSelectorOpen}
@@ -725,7 +786,7 @@ function SidebarLogo() {
 								>
 									<div
 										className={cn(
-											"flex items-center gap-2",
+											"flex min-w-0 flex-1 items-center gap-2",
 											isCollapsed && "justify-center",
 										)}
 									>
@@ -741,17 +802,22 @@ function SidebarLogo() {
 										</div>
 										<div
 											className={cn(
-												"flex flex-col items-start",
+												"flex flex-col items-start min-w-0 flex-1",
 												isCollapsed && "hidden",
 											)}
 										>
-											<p className="text-sm font-medium leading-none">
-												{activeOrganization?.name ?? "Select Organization"}
-											</p>
+											<div className="flex items-center gap-1.5 min-w-0 w-full">
+												<TruncateTooltip
+													text={
+														activeOrganization?.name ?? "Select Organization"
+													}
+													className="text-sm font-medium"
+												/>
+											</div>
 										</div>
 									</div>
 									<ChevronsUpDown
-										className={cn("ml-auto", isCollapsed && "hidden")}
+										className={cn("ml-auto shrink-0", isCollapsed && "hidden")}
 									/>
 								</SidebarMenuButton>
 							</PopoverTrigger>
@@ -1043,16 +1109,13 @@ export default function Page({ children }: Props) {
 		: [];
 	const { data: isCloud } = api.settings.isCloud.useQuery();
 
-	const {
-		home: filteredHome,
-		settings: filteredSettings,
-		help,
-	} = createMenuForAuthUser({
-		auth,
-		permissions,
-		isCloud: !!isCloud,
-		whitelabeling,
-	});
+	const { home: filteredHome, settings: filteredSettings } =
+		createMenuForAuthUser({
+			auth,
+			permissions,
+			isCloud: !!isCloud,
+			whitelabeling,
+		});
 
 	const activeItem = findActiveNavItem(
 		[...filteredHome, ...filteredSettings],
@@ -1224,12 +1287,17 @@ export default function Page({ children }: Props) {
 								<UpdateServerButton />
 							</SidebarMenuItem>
 						)}
+						{!isCloud && (
+							<SidebarMenuItem>
+								<ActivityButton />
+							</SidebarMenuItem>
+						)}
 						<SidebarMenuItem>
 							<UserNav />
 						</SidebarMenuItem>
 						{whitelabeling?.footerText && (
 							<div className="px-3 text-center text-xs text-foreground truncate group-data-[collapsible=icon]:hidden">
-								{whitelabeling?.footerText || "Made with ♥ by Abhash"}
+								{whitelabeling.footerText}
 							</div>
 						)}
 					</SidebarMenu>
@@ -1237,6 +1305,7 @@ export default function Page({ children }: Props) {
 				<SidebarRail />
 			</Sidebar>
 			<SidebarInset>
+				{isCloud === true && <TrialBanner />}
 				{!includesProjects && (
 					<header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
 						<div className="flex items-center justify-between w-full px-4">

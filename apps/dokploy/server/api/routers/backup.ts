@@ -47,8 +47,8 @@ import {
 	restoreMongoBackup,
 	restoreMySqlBackup,
 	restorePostgresBackup,
-	runRestoreDrill,
 	restoreWebServerBackup,
+	runRestoreDrill,
 } from "@dokploy/server/utils/restore";
 import { TRPCError } from "@trpc/server";
 import { quote } from "shell-quote";
@@ -577,7 +577,14 @@ export const backupRouter = createTRPCRouter({
 	 * production data on finding out.
 	 */
 	restoreDrill: protectedProcedure
-		.meta({ openapi: { enabled: false, path: "/restore-drill", method: "POST", override: true } })
+		.meta({
+			openapi: {
+				enabled: false,
+				path: "/restore-drill",
+				method: "POST",
+				override: true,
+			},
+		})
 		.input(
 			z.object({
 				databaseId: z.string().min(1),

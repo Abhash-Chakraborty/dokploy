@@ -10,9 +10,13 @@ import { type ReactElement, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { SocialSignInButton } from "@/components/abhash/auth/social-sign-in";
+import {
+	EmergencySignIn,
+	SsoLogin,
+	useSsoLoginConfig,
+} from "@/components/abhash/auth/sso-login";
 import { OnboardingLayout } from "@/components/layouts/onboarding-layout";
-import { SignInWithGithub } from "@/components/proprietary/auth/sign-in-with-github";
-import { SignInWithGoogle } from "@/components/proprietary/auth/sign-in-with-google";
 import { AlertBlock } from "@/components/shared/alert-block";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
@@ -42,7 +46,9 @@ import {
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth-client";
+import { appRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
+import { generateServerSideHelper } from "@/utils/create-server-helpers";
 import { useWhitelabelingPublic } from "@/utils/hooks/use-whitelabeling";
 
 const LoginSchema = z.object({
@@ -67,6 +73,7 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 	const { config: whitelabeling } = useWhitelabelingPublic();
 	const router = useRouter();
 	const { data: authMethods } = api.settings.getAuthMethods.useQuery();
+	const sso = useSsoLoginConfig();
 	// Default to enabled while loading so the form is never wrongly hidden.
 	const methodEnabled = (key: keyof NonNullable<typeof authMethods>) =>
 		authMethods ? authMethods[key] : true;
@@ -95,15 +102,22 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 		if (!raw) return;
 		const normalized = raw.replace(/[+_]/g, " ").toLowerCase();
 
+		const description = router.query.error_description;
 		setError(
-			normalized.includes("account not linked")
-				? "This account already exists but isn't linked to that sign-in provider yet. Contact your administrator to link it."
-				: normalized.includes("access denied")
-					? "Access was denied by the identity provider."
-					: "We couldn't complete sign-in. Please try again or contact your administrator.",
+			typeof description === "string" && description
+				? description
+				: normalized.includes("account not linked")
+					? "This account already exists but isn't linked to that sign-in provider yet. Contact your administrator to link it."
+					: normalized.includes("access denied")
+						? "Access was denied by the identity provider."
+						: "We couldn't complete sign-in. Please try again or contact your administrator.",
 		);
 
-		const { error: _removed, ...rest } = router.query;
+		const {
+			error: _removed,
+			error_description: _description,
+			...rest
+		} = router.query;
 		router.replace({ pathname: router.pathname, query: rest }, undefined, {
 			shallow: true,
 		});
@@ -134,8 +148,7 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 				return;
 			}
 
-			// @ts-expect-error
-			if (data?.twoFactorRedirect as boolean) {
+			if (data && "twoFactorRedirect" in data && data.twoFactorRedirect) {
 				setTwoFactorCode("");
 				setIsTwoFactor(true);
 				toast.info("Please enter your 2FA code");
@@ -238,18 +251,21 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 		}
 	};
 
-	const showGithub = socialProviders.github && methodEnabled("github");
-	const showGoogle = socialProviders.google && methodEnabled("google");
-	const showPasskey = methodEnabled("passkey");
+	const showGithub =
+		socialProviders.github && methodEnabled("github") && !sso.enforced;
+	const showGoogle =
+		socialProviders.google && methodEnabled("google") && !sso.enforced;
+	const showPasskey = methodEnabled("passkey") && sso.allowPasskey;
 	const showEmailPassword = methodEnabled("emailPassword");
 	const hasAlternativeMethod = showGithub || showGoogle || showPasskey;
 
 	const loginContent = (
 		<div className="flex flex-col gap-6">
+			<SsoLogin />
 			{hasAlternativeMethod && (
 				<div className="flex flex-col gap-2">
-					{showGithub && <SignInWithGithub />}
-					{showGoogle && <SignInWithGoogle />}
+					{showGithub && <SocialSignInButton provider="github" />}
+					{showGoogle && <SocialSignInButton provider="google" />}
 					{showPasskey && (
 						<Button
 							type="button"
@@ -274,47 +290,53 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 				</div>
 			)}
 			{showEmailPassword && (
-				<Form {...loginForm}>
-					<form
-						onSubmit={loginForm.handleSubmit(onSubmit)}
-						className="space-y-4"
-						id="login-form"
-					>
-						<FormField
-							control={loginForm.control}
-							name="email"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Email</FormLabel>
-									<FormControl>
-										<Input placeholder="john@example.com" {...field} />
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={loginForm.control}
-							name="password"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Password</FormLabel>
-									<FormControl>
-										<Input
-											type="password"
-											placeholder="Enter your password"
-											{...field}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<Button className="w-full" type="submit" isLoading={isLoginLoading}>
-							Login
-						</Button>
-					</form>
-				</Form>
+				<EmergencySignIn enforced={sso.enforced}>
+					<Form {...loginForm}>
+						<form
+							onSubmit={loginForm.handleSubmit(onSubmit)}
+							className="space-y-4"
+							id="login-form"
+						>
+							<FormField
+								control={loginForm.control}
+								name="email"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Email</FormLabel>
+										<FormControl>
+											<Input placeholder="john@example.com" {...field} />
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={loginForm.control}
+								name="password"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Password</FormLabel>
+										<FormControl>
+											<Input
+												type="password"
+												placeholder="Enter your password"
+												{...field}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<Button
+								className="w-full"
+								type="submit"
+								isLoading={isLoginLoading}
+							>
+								Login
+							</Button>
+						</form>
+					</Form>
+				</EmergencySignIn>
 			)}
 		</div>
 	);
@@ -336,7 +358,9 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 					</div>
 				</h1>
 				<p className="text-sm text-muted-foreground">
-					Enter your email and password to sign in
+					{sso.providers.length > 0
+						? "Sign in to continue"
+						: "Enter your email and password to sign in"}
 				</p>
 			</div>
 			{error && (
@@ -508,6 +532,11 @@ Home.getLayout = (page: ReactElement) => {
 	return <OnboardingLayout>{page}</OnboardingLayout>;
 };
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+	const helpers = generateServerSideHelper(appRouter, context);
+	// Prefetch the public branding so the login/onboarding logo and app name
+	// render correctly on the server (no flash of default branding).
+	await helpers.whitelabeling.getPublic.prefetch();
+
 	if (IS_CLOUD) {
 		try {
 			const { user } = await validateRequest(context.req);
@@ -523,6 +552,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
 		return {
 			props: {
+				trpcState: helpers.dehydrate(),
 				IS_CLOUD: IS_CLOUD,
 				socialProviders: {
 					github: !!(
@@ -559,6 +589,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
 	return {
 		props: {
+			trpcState: helpers.dehydrate(),
 			hasAdmin,
 			socialProviders: {
 				github: !!(

@@ -4,6 +4,7 @@ import { createAuditLog } from "@dokploy/server/services/abhash/audit-log";
 interface AuditCtx {
 	user: { id: string; email: string; role: string };
 	session: { activeOrganizationId: string };
+	actor?: { type: string; id?: string; name?: string; keyId?: string };
 	req?: {
 		headers: {
 			[key: string]: string | string[] | undefined;
@@ -29,6 +30,16 @@ const headerValue = (
 	}
 	return value;
 };
+
+const actorMetadata = (ctx: AuditCtx) =>
+	!ctx.actor || ctx.actor.type === "user"
+		? {}
+		: {
+				actorType: ctx.actor.type,
+				actorId: ctx.actor.id,
+				actorName: ctx.actor.name,
+				apiKeyId: ctx.actor.keyId,
+			};
 
 const requestMetadata = (ctx: AuditCtx) => ({
 	ipAddress:
@@ -56,6 +67,7 @@ export const audit = (ctx: AuditCtx, event: AuditEvent) =>
 		...event,
 		metadata: {
 			...requestMetadata(ctx),
+			...actorMetadata(ctx),
 			...(event.metadata ?? {}),
 		},
 	});

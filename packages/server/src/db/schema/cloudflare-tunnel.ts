@@ -3,6 +3,7 @@ import { pgTable, text } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { credentialText } from "./abhash-credential";
 import { organization } from "./account";
 import { server } from "./server";
 
@@ -19,7 +20,7 @@ export const cloudflareTunnel = pgTable("cloudflare_tunnel", {
 		.$defaultFn(() => nanoid()),
 	name: text("name").notNull(),
 	/** The connector token from Cloudflare Zero Trust. Write-only over the API. */
-	token: text("token").notNull(),
+	token: credentialText("token").notNull(),
 	/** Null means the Dokploy host itself. */
 	serverId: text("serverId").references(() => server.serverId, {
 		onDelete: "cascade",

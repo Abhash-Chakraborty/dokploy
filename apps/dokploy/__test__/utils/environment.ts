@@ -80,3 +80,6 @@ export const hasPosixDefaultShell = (): boolean => {
  */
 export const hasRealDeployToolchain = (): boolean =>
 	hasPosixDefaultShell() && which("git") !== null && hasDocker();
+
+/** The nixpacks builder, which production images ship but dev hosts often lack. */
+export const hasNixpacks = (): boolean => which("nixpacks") !== null;

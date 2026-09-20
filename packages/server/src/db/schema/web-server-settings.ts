@@ -10,6 +10,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { credentialText } from "./abhash-credential";
 import { certificateType } from "./shared";
 
 export const webServerSettings = pgTable("webServerSettings", {
@@ -23,7 +24,7 @@ export const webServerSettings = pgTable("webServerSettings", {
 	https: boolean("https").notNull().default(false),
 	host: text("host"),
 	letsEncryptEmail: text("letsEncryptEmail"),
-	sshPrivateKey: text("sshPrivateKey"),
+	sshPrivateKey: credentialText("sshPrivateKey"),
 	enableDockerCleanup: boolean("enableDockerCleanup").notNull().default(true),
 	logCleanupCron: text("logCleanupCron").default("0 0 * * *"),
 	// Metrics Configuration
@@ -86,8 +87,8 @@ export const webServerSettings = pgTable("webServerSettings", {
 			docsUrl: string | null;
 			errorPageTitle: string | null;
 			errorPageDescription: string | null;
-			metaTitle: string | null;
 			footerText: string | null;
+			ogImageUrl: string | null;
 		}>()
 		.default({
 			appName: null,
@@ -100,8 +101,8 @@ export const webServerSettings = pgTable("webServerSettings", {
 			docsUrl: null,
 			errorPageTitle: null,
 			errorPageDescription: null,
-			metaTitle: null,
 			footerText: null,
+			ogImageUrl: null,
 		}),
 	// Deployment Configuration (self-hosted only)
 	remoteServersOnly: boolean("remoteServersOnly").notNull().default(false),
@@ -253,8 +254,8 @@ export const whitelabelingConfigSchema = z.object({
 	docsUrl: safeUrl,
 	errorPageTitle: z.string().nullable(),
 	errorPageDescription: z.string().nullable(),
-	metaTitle: z.string().nullable(),
 	footerText: z.string().nullable(),
+	ogImageUrl: safeUrl,
 });
 
 export const apiUpdateWhitelabeling = z.object({

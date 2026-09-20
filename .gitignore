@@ -47,3 +47,5 @@ yarn-error.log*
 
 .playwright-*
 .credentials
+# Sandbox harness state (scripts/sandbox)
+.sandbox/

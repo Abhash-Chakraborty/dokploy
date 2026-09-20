@@ -86,6 +86,7 @@ export const serverSetup = async (
 						...server.metricsConfig.server,
 						token: token,
 						urlCallback: urlCallback,
+						cronJob: server.metricsConfig.server.cronJob || "0 0 * * *",
 					},
 					containers: server.metricsConfig.containers,
 				},
@@ -175,6 +176,17 @@ if [ "$OS_TYPE" = "arch" ] || [ "$OS_TYPE" = "archarm" ]; then
 	OS_VERSION="rolling"
 else
 	OS_VERSION=$(grep -w "VERSION_ID" /etc/os-release | cut -d "=" -f 2 | tr -d '"')
+fi
+
+# Ubuntu 26.04 (resolute) ships a docker-ce repo that has no 28.5.0, so the
+# default pin is absent from apt-cache madison and get.docker.com aborts before
+# installing Docker. Repin to a version present on every architecture Docker
+# ships resolute for: amd64/arm64/armhf start at 29.3.1, but s390x only carries
+# 29.4.0-29.4.2, so 29.4.2 is the newest version common to all of them. This
+# must run after OS_VERSION is resolved and before the banner so the reported
+# Docker version stays accurate.
+if [ "$OS_TYPE" = "ubuntu" ] && [ "$OS_VERSION" = "26.04" ]; then
+	DOCKER_VERSION=29.4.2
 fi
 
 if [ "$OS_TYPE" = 'amzn' ]; then
@@ -405,48 +417,48 @@ export const setupSwarm = () => `
 
 				# Try IPv4 with multiple services
 				# First attempt: ifconfig.io
-				ip=\$(curl -4s --connect-timeout 5 https://ifconfig.io 2>/dev/null)
+				ip=$(curl -4s --connect-timeout 5 https://ifconfig.io 2>/dev/null)
 
 				# Second attempt: icanhazip.com
-				if [ -z "\$ip" ]; then
-					ip=\$(curl -4s --connect-timeout 5 https://icanhazip.com 2>/dev/null)
+				if [ -z "$ip" ]; then
+					ip=$(curl -4s --connect-timeout 5 https://icanhazip.com 2>/dev/null)
 				fi
 
 				# Third attempt: ipecho.net
-				if [ -z "\$ip" ]; then
-					ip=\$(curl -4s --connect-timeout 5 https://ipecho.net/plain 2>/dev/null)
+				if [ -z "$ip" ]; then
+					ip=$(curl -4s --connect-timeout 5 https://ipecho.net/plain 2>/dev/null)
 				fi
 
 				# If no IPv4, try IPv6 with multiple services
-				if [ -z "\$ip" ]; then
+				if [ -z "$ip" ]; then
 					# Try IPv6 with ifconfig.io
-					ip=\$(curl -6s --connect-timeout 5 https://ifconfig.io 2>/dev/null)
+					ip=$(curl -6s --connect-timeout 5 https://ifconfig.io 2>/dev/null)
 
 					# Try IPv6 with icanhazip.com
-					if [ -z "\$ip" ]; then
-						ip=\$(curl -6s --connect-timeout 5 https://icanhazip.com 2>/dev/null)
+					if [ -z "$ip" ]; then
+						ip=$(curl -6s --connect-timeout 5 https://icanhazip.com 2>/dev/null)
 					fi
 
 					# Try IPv6 with ipecho.net
-					if [ -z "\$ip" ]; then
-						ip=\$(curl -6s --connect-timeout 5 https://ipecho.net/plain 2>/dev/null)
+					if [ -z "$ip" ]; then
+						ip=$(curl -6s --connect-timeout 5 https://ipecho.net/plain 2>/dev/null)
 					fi
 				fi
 
-				if [ -z "\$ip" ]; then
+				if [ -z "$ip" ]; then
 					echo "Error: Could not determine server IP address automatically (neither IPv4 nor IPv6)." >&2
 					echo "Please set the ADVERTISE_ADDR environment variable manually." >&2
 					echo "Example: export ADVERTISE_ADDR=<your-server-ip>" >&2
 					exit 1
 				fi
 
-				echo "\$ip"
+				echo "$ip"
 			}
-			advertise_addr=\$(get_ip)
-			echo "Advertise address: \$advertise_addr"
+			advertise_addr=$(get_ip)
+			echo "Advertise address: $advertise_addr"
 
 			# Initialize Docker Swarm
-			$SUDO_CMD docker swarm init --advertise-addr \$advertise_addr
+			$SUDO_CMD docker swarm init --advertise-addr $advertise_addr
 			echo "Swarm initialized ✅"
 		fi
 	`;
@@ -485,7 +497,7 @@ const installUtilities = () => `
 		$SUDO_CMD pacman -Sy --noconfirm --needed unzip curl wget git git-lfs jq openssl >/dev/null || true
 		;;
 	alpine)
-		$SUDO_CMD sed -i '/^#.*\/community/s/^#//' /etc/apk/repositories
+		$SUDO_CMD sed -i '/^#.*/community/s/^#//' /etc/apk/repositories
 		$SUDO_CMD apk update >/dev/null
 		$SUDO_CMD apk add curl wget git git-lfs jq openssl sudo unzip tar >/dev/null
 		;;

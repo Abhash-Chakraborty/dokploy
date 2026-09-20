@@ -6,6 +6,7 @@ on:
     - cron: "17 3 * * *"
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -108,6 +109,10 @@ jobs:
           # Force-push is safe here: SYNC_BRANCH is recreated from main above and
           # exists only to carry this PR.
           git push --force origin "HEAD:refs/heads/$SYNC_BRANCH"
+
+          # Pushes and PRs made with GITHUB_TOKEN do not start other workflows,
+          # so CI would never run on the sync PR. workflow_dispatch is exempt.
+          gh workflow run ci.yml --ref "$SYNC_BRANCH"
 
           existing=$(gh pr list \
             --head "$SYNC_BRANCH" \

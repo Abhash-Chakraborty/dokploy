@@ -1,6 +1,6 @@
 {
 	"name": "dokploy",
-	"version": "v0.30.4",
+	"version": "v0.30.7",
 	"private": true,
 	"license": "Apache-2.0",
 	"type": "module",
@@ -14,6 +14,7 @@
 		"wait-for-postgres-dev": "tsx -r dotenv/config wait-for-postgres.ts",
 		"reset-password": "node -r dotenv/config dist/reset-password.mjs",
 		"reset-2fa": "node -r dotenv/config dist/reset-2fa.mjs",
+		"reset-sso": "node -r dotenv/config dist/reset-sso.mjs",
 		"migrate-auth-secret": "node -r dotenv/config dist/migrate-auth-secret.mjs",
 		"dev": "tsx -r dotenv/config ./server/server.ts  --project tsconfig.server.json ",
 		"studio": "drizzle-kit studio --config ./server/db/drizzle.config.ts",
@@ -37,7 +38,9 @@
 		"docker:push:canary": "./docker/push.sh canary",
 		"version": "echo $(node -p \"require('./package.json').version\")",
 		"test": "vitest --config __test__/vitest.config.ts",
-		"generate:openapi": "tsx -r dotenv/config scripts/generate-openapi.ts"
+		"test:integration": "vitest --config __test__/vitest.integration.config.ts --run",
+		"generate:openapi": "tsx -r dotenv/config scripts/generate-openapi.ts",
+		"reset-onboarding": "tsx -r dotenv/config scripts/reset-onboarding.ts"
 	},
 	"dependencies": {
 		"@ai-sdk/anthropic": "^3.0.44",
@@ -49,6 +52,7 @@
 		"@ai-sdk/openai-compatible": "^2.0.30",
 		"@aws-sdk/client-route-53": "^3.1108.0",
 		"@aws-sdk/client-secrets-manager": "^3.1108.0",
+		"@aws-sdk/client-ssm": "3.1108.0",
 		"@better-auth/api-key": "1.6.23",
 		"@better-auth/passkey": "1.6.23",
 		"@better-auth/scim": "1.6.23",
@@ -67,6 +71,7 @@
 		"@hookform/resolvers": "^5.2.2",
 		"@octokit/auth-app": "^6.1.3",
 		"@octokit/webhooks": "^13.9.0",
+		"@openpanel/nextjs": "^1.5.1",
 		"@react-email/components": "^1.0.12",
 		"@stepperize/react": "4.0.1",
 		"@stripe/stripe-js": "4.8.0",
@@ -89,6 +94,7 @@
 		"better-auth": "1.6.23",
 		"bl": "6.0.11",
 		"boxen": "^7.1.1",
+		"bullmq": "5.67.3",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"cmdk": "^0.2.1",
@@ -106,7 +112,7 @@
 		"lucide-react": "^0.469.0",
 		"micromatch": "4.0.8",
 		"nanoid": "3.3.11",
-		"next": "16.3.0",
+		"next": "16.3.4",
 		"next-themes": "^0.2.1",
 		"nextjs-toploader": "^3.9.17",
 		"node-os-utils": "2.0.1",
@@ -131,7 +137,7 @@
 		"resend": "^6.0.2",
 		"semver": "7.7.3",
 		"shadcn": "^4.11.0",
-		"shell-quote": "^1.8.1",
+		"shell-quote": "^1.8.4",
 		"slugify": "^1.6.6",
 		"sonner": "^1.7.4",
 		"ssh2": "~1.16.0",
@@ -178,7 +184,7 @@
 		"tsx": "^4.22.4",
 		"typescript": "^7.0.2",
 		"vite-tsconfig-paths": "4.3.2",
-		"vitest": "^4.0.18"
+		"vitest": "^4.1.0"
 	},
 	"ct3aMetadata": {
 		"initVersion": "7.25.2"

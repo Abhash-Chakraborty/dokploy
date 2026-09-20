@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { api } from "@/utils/api";
 import { ShowModalLogs } from "../../web-server/show-modal-logs";
-import { TerminalModal } from "../../web-server/terminal-modal";
 import { GPUSupportModal } from "../gpu-support-modal";
 
 export const ShowDokployActions = () => {
@@ -47,9 +46,6 @@ export const ShowDokployActions = () => {
 					>
 						<span>Reload</span>
 					</DropdownMenuItem>
-					<TerminalModal serverId="local">
-						<span>Terminal</span>
-					</TerminalModal>
 					<ShowModalLogs appName="dokploy">
 						<DropdownMenuItem
 							className="cursor-pointer"

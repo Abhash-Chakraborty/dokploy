@@ -10,6 +10,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { credentialText } from "./abhash-credential";
 import { backups } from "./backups";
 import { environments } from "./environment";
 import { mounts } from "./mount";
@@ -57,8 +58,8 @@ export const mariadb = pgTable("mariadb", {
 	description: text("description"),
 	databaseName: text("databaseName").notNull(),
 	databaseUser: text("databaseUser").notNull(),
-	databasePassword: text("databasePassword").notNull(),
-	databaseRootPassword: text("rootPassword").notNull(),
+	databasePassword: credentialText("databasePassword").notNull(),
+	databaseRootPassword: credentialText("rootPassword").notNull(),
 	dockerImage: text("dockerImage").notNull(),
 	command: text("command"),
 	args: text("args").array(),

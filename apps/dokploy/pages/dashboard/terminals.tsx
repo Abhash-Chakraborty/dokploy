@@ -54,7 +54,7 @@ export async function getServerSideProps(
 	if (!user) {
 		return {
 			redirect: {
-				permanent: true,
+				permanent: false,
 				destination: "/",
 			},
 		};
@@ -75,10 +75,10 @@ export async function getServerSideProps(
 	try {
 		const userPermissions = await helpers.user.getPermissions.fetch();
 
-		if (!userPermissions?.docker.read) {
+		if (!userPermissions?.server.terminal) {
 			return {
 				redirect: {
-					permanent: true,
+					permanent: false,
 					destination: "/",
 				},
 			};

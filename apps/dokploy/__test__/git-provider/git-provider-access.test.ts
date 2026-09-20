@@ -19,9 +19,13 @@ const mockDb = vi.hoisted(() => ({
 vi.mock("@dokploy/server/db", () => ({ db: mockDb }));
 
 const mockHasValidLicense = vi.hoisted(() => vi.fn());
-vi.mock("@dokploy/server/services/proprietary/license-key", () => ({
-	hasValidLicense: mockHasValidLicense,
-}));
+vi.mock(
+	"@dokploy/server/services/abhash/entitlements",
+	async (importOriginal) => ({
+		...(await importOriginal<object>()),
+		isEntitled: mockHasValidLicense,
+	}),
+);
 
 const ORG_ID = "org-1";
 const USER_OWNER = "user-owner";
