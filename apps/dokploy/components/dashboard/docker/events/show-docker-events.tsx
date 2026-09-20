@@ -245,8 +245,8 @@ export const ShowDockerEvents = ({ serverId }: Props) => {
 
 	return (
 		<div className="w-full">
-			<Card className="h-full bg-sidebar p-2.5 rounded-xl">
-				<div className="rounded-xl bg-background shadow-md">
+			<Card className=" border-none bg-transparent p-0 shadow-none">
+				<div className="w-full">
 					<CardHeader>
 						<div className="flex flex-wrap items-center justify-between gap-2">
 							<div>

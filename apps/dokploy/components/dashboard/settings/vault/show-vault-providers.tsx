@@ -33,8 +33,8 @@ export const ShowVaultProviders = () => {
 
 	return (
 		<div className="w-full">
-			<Card className="h-full bg-sidebar p-2.5 rounded-xl w-full">
-				<div className="rounded-xl bg-background shadow-md">
+			<Card className="w-full border-none bg-transparent p-0 shadow-none">
+				<div className="w-full">
 					<CardHeader>
 						<CardTitle className="text-xl flex flex-row gap-2">
 							<Vault className="size-6 text-muted-foreground self-center" />
