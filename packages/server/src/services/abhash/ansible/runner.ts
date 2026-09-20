@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { nanoid } from "nanoid";
+import { normalizePrivateKey } from "../../../utils/filesystem/ssh";
 import { type InventoryHost, renderInventory, scanHostKey } from "./inventory";
 
 export const RUNNER_IMAGE = () =>
@@ -95,9 +96,11 @@ const writeWorkDir = async (dir: string, options: RunOptions) => {
 		{ mode: 0o600 },
 	);
 	for (const host of options.hosts) {
-		await fs.writeFile(path.join(dir, "keys", host.name), host.privateKey, {
-			mode: 0o600,
-		});
+		await fs.writeFile(
+			path.join(dir, "keys", host.name),
+			normalizePrivateKey(host.privateKey),
+			{ mode: 0o600 },
+		);
 	}
 	await fs.writeFile(
 		path.join(dir, "extra_vars.json"),

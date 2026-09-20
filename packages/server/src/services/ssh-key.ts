@@ -6,6 +6,7 @@ import {
 	type apiUpdateSshKey,
 	sshKeys,
 } from "@dokploy/server/db/schema";
+import { normalizePrivateKey } from "@dokploy/server/utils/filesystem/ssh";
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import type { z } from "zod";
@@ -14,7 +15,10 @@ export const createSshKey = async (input: z.infer<typeof apiCreateSshKey>) => {
 	await db.transaction(async (tx) => {
 		const sshKey = await tx
 			.insert(sshKeys)
-			.values(input)
+			.values({
+				...input,
+				privateKey: normalizePrivateKey(input.privateKey),
+			})
 			.returning()
 			.then((response) => response[0])
 			.catch((e) => console.error(e));
