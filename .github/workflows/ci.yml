@@ -44,7 +44,9 @@ jobs:
             echo "::error::Schema and migrations disagree; run pnpm migration:generate and commit the result."
             exit 1
           fi
-          dupes=$(ls drizzle/*.sql | xargs -n1 basename | cut -c1-4 | sort | uniq -d)
+          # Read the journal, not the directory: upstream ships an orphaned
+          # 0130 file that no journal entry runs.
+          dupes=$(node -p "require('./drizzle/meta/_journal.json').entries.map(e => e.tag.slice(0, 4)).join('\n')" | sort | uniq -d)
           if [ -n "$dupes" ]; then
             echo "::error::Duplicate migration indices: $dupes"
             exit 1
