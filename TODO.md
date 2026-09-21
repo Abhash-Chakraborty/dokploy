@@ -51,8 +51,30 @@ repo or in the production database; the rest still need investigation.
   Command centre, which is where patching and baselines are run (2.7).
 - Baseline repairs a half-configured package state before installing.
 
-Still open: firewall adoption, SCIM, members and roles, and running baseline
-against a repaired host.
+### Fourth batch (v0.30.9)
+
+- **The firewall had never been applied on any server.** Every apply failed
+  with "iptables-save: Permission denied" because the scripts ran as the
+  `ubuntu` SSH user, and every failure was reported as a success. Apply,
+  confirm and the drift inspection now run as root through passwordless sudo,
+  and a run where any server fails is a failed run. The hourly "all four
+  servers drifted" reports were the same bug: `ufw status` refused without root.
+- Members and roles: nothing was disabled. Role-based access v2 is on; there is
+  one member (the owner), no custom roles and no pending invitations.
+- SCIM is enabled with no connection yet. Setup is explained in the session
+  notes: base URL `https://dokploy.abhashchakraborty.tech/api/auth/scim/v2`,
+  token from Authentication, Provisioning.
+
+### Still open
+
+- **Firewall adoption** (importing hand-written ufw rules into a Dokploy
+  policy). Deferred on purpose: applying now works, keeps hand-written rules,
+  and rolls back within two minutes if it cuts SSH, so adoption is a nicety
+  rather than a blocker. Preview, then apply one server first.
+- `fleet.ssh` is the one fork flag still off. It routes every remote deploy
+  through the pooled SSH layer (connection reuse, pinned host keys). Faster
+  deploys, but it changes the deploy path, so it is a deliberate switch.
+- Run baseline against `abhash-amd` after `dpkg --configure -a` on that host.
 
 ## 1. Bugs that block something today
 
