@@ -9,6 +9,7 @@ import {
 import { tryAcquire } from "../jobs/locks";
 import { defineJob } from "../jobs/registry";
 import { closeConnection, execPooled } from "../ssh/pool";
+import { asRoot } from "../ssh/root";
 import { emitEvent } from "../webhooks";
 import {
 	type CompileContext,
@@ -112,16 +113,24 @@ export const applyFirewall = async (
 	);
 	const applied = await execPooled(
 		serverId,
-		`sh -s <<'DOKPLOY_APPLY'\n${applyScript(plan.rendered, {
-			rollbackSeconds: ROLLBACK_SECONDS,
-			defaultIncoming: "deny",
-		})}\nDOKPLOY_APPLY`,
+		asRoot(
+			applyScript(plan.rendered, {
+				rollbackSeconds: ROLLBACK_SECONDS,
+				defaultIncoming: "deny",
+			}),
+			"DOKPLOY_APPLY",
+		),
 		{ timeoutMs: 120_000 },
 	);
 	if (applied.exitCode !== 0 || !applied.stdout.includes("APPLIED")) {
-		throw new Error(
-			`Applying failed: ${applied.stderr.slice(0, 400) || applied.stdout.slice(0, 400)}`,
-		);
+		const reason = `Applying failed: ${applied.stderr.slice(0, 400) || applied.stdout.slice(0, 400)}`;
+		// Without this the firewall page shows a server in enforce mode with no
+		// rules and no reason, which reads as protected.
+		await db
+			.update(abhashServerFirewall)
+			.set({ lastError: reason, updatedAt: new Date() })
+			.where(eq(abhashServerFirewall.serverId, serverId));
+		throw new Error(reason);
 	}
 
 	// A brand-new connection: if the rules broke SSH, this fails and the
@@ -130,7 +139,7 @@ export const applyFirewall = async (
 	try {
 		const confirmed = await execPooled(
 			serverId,
-			`sh -s <<'DOKPLOY_CONFIRM'\n${confirmScript()}\nDOKPLOY_CONFIRM`,
+			asRoot(confirmScript(), "DOKPLOY_CONFIRM"),
 			{ timeoutMs: 30_000 },
 		);
 		if (!confirmed.stdout.includes("CONFIRMED")) {
@@ -169,7 +178,7 @@ export const checkDrift = async (serverId: string, organizationId: string) => {
 	const plan = await planFirewall(serverId, organizationId);
 	const result = await execPooled(
 		serverId,
-		`sh -s <<'DOKPLOY_INSPECT'\n${inspectScript()}\nDOKPLOY_INSPECT`,
+		asRoot(inspectScript(), "DOKPLOY_INSPECT"),
 		{ timeoutMs: 30_000 },
 	);
 	const live = Object.fromEntries(
@@ -221,6 +230,24 @@ const withServerLock = async <T>(
 	}
 };
 
+/**
+ * Every server is still attempted, but a run where any of them failed is a
+ * failed run. Returning normally marked it succeeded, so Activity reported a
+ * firewall in place on servers that had none.
+ */
+export const summarizeApplyFailures = (
+	results: Record<string, string>,
+): string | null => {
+	const failed = Object.entries(results).filter(([, outcome]) =>
+		outcome.startsWith("failed:"),
+	);
+	if (failed.length === 0) return null;
+	return `${failed.length} of ${Object.keys(results).length} server(s) failed: ${failed
+		.map(([id, outcome]) => `${id} ${outcome.slice("failed: ".length).trim()}`)
+		.join("; ")
+		.slice(0, 800)}`;
+};
+
 export const firewallApplyJob = defineJob({
 	type: "firewall.apply",
 	queue: "abhash-infra",
@@ -250,6 +277,8 @@ export const firewallApplyJob = defineJob({
 			done++;
 			await progress((done / input.serverIds.length) * 100);
 		}
+		const failure = summarizeApplyFailures(results);
+		if (failure) throw new Error(failure);
 		return results;
 	},
 });

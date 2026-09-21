@@ -179,6 +179,6 @@ export const inspectScript = () => `set -eu
 DIR=${RULES_DIR}
 echo "HASH=$(cat "$DIR/applied.hash" 2>/dev/null || echo none)"
 echo "UFW=$(ufw status 2>/dev/null | head -1 | awk '{print $2}' || echo missing)"
-echo "RULES=$(ufw status 2>/dev/null | grep -c 'dokploy:' || echo 0)"
+echo "RULES=$(ufw status 2>/dev/null | grep -c 'dokploy:' || true)"
 echo "CHAIN=$(iptables -S ${MANAGED_CHAIN} 2>/dev/null | wc -l)"
 `;
