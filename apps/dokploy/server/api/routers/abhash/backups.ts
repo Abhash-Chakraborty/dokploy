@@ -356,6 +356,7 @@ export const abhashBackupsRouter = createTRPCRouter({
 						}),
 					)
 					.default([]),
+				compareLive: z.boolean().default(false),
 				enabled: z.boolean().default(true),
 			}),
 		)

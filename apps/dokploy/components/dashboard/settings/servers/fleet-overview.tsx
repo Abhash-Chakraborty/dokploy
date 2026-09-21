@@ -1,4 +1,5 @@
 import { Loader2, RotateCcw, ServerIcon, TriangleAlert } from "lucide-react";
+import Link from "next/link";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,34 @@ const Usage = ({ percent }: { percent?: number }) =>
  * is comparison: version drift and headroom are invisible when you can only
  * look at one server page at a time.
  */
+/**
+ * A warning that says what is wrong and goes to the page that fixes it.
+ * Command centre is where patching and baselines are actually run from.
+ */
+const DriftWarning = ({
+	what,
+	versions,
+}: {
+	what: string;
+	versions: string[];
+}) => (
+	<Tooltip>
+		<TooltipTrigger asChild>
+			<Link
+				href="/dashboard/command-center"
+				aria-label={`${what} versions differ across the fleet; open Command centre`}
+				onClick={(event) => event.stopPropagation()}
+			>
+				<TriangleAlert className="size-3.5 text-amber-500 transition-colors hover:text-amber-400" />
+			</Link>
+		</TooltipTrigger>
+		<TooltipContent>
+			<p>Fleet runs {versions.join(", ")}</p>
+			<p className="text-muted-foreground">Patch from Command centre</p>
+		</TooltipContent>
+	</Tooltip>
+);
+
 export const FleetOverview = () => {
 	const { data, isPending, isFetching, refetch } =
 		api.server.fleetOverview.useQuery(undefined, {
@@ -161,17 +190,10 @@ export const FleetOverview = () => {
 													<span className="flex items-center gap-1.5 font-mono text-xs">
 														{server.dockerVersion ?? "—"}
 														{driftedDocker && (
-															<Tooltip>
-																<TooltipTrigger asChild>
-																	<TriangleAlert className="size-3.5 text-amber-500" />
-																</TooltipTrigger>
-																<TooltipContent>
-																	<p>
-																		Fleet runs{" "}
-																		{data?.drift.dockerVersions.join(", ")}
-																	</p>
-																</TooltipContent>
-															</Tooltip>
+															<DriftWarning
+																what="Docker"
+																versions={data?.drift.dockerVersions ?? []}
+															/>
 														)}
 													</span>
 												</TableCell>
@@ -180,6 +202,22 @@ export const FleetOverview = () => {
 														<Badge variant="green" className="text-[10px]">
 															{server.swarmRole ?? "active"}
 														</Badge>
+													) : server.reachable ? (
+														// Reachable but not in the swarm is something to act on,
+														// so it links to where the baseline is applied.
+														<Tooltip>
+															<TooltipTrigger asChild>
+																<Link
+																	href="/dashboard/command-center"
+																	className="text-xs text-amber-500 underline underline-offset-2"
+																>
+																	{server.swarmState || "not in the swarm"}
+																</Link>
+															</TooltipTrigger>
+															<TooltipContent>
+																Apply the baseline from Command centre
+															</TooltipContent>
+														</Tooltip>
 													) : (
 														<span className="text-xs text-muted-foreground">
 															{server.swarmState || "—"}
@@ -190,17 +228,10 @@ export const FleetOverview = () => {
 													<span className="flex items-center gap-1.5 font-mono text-xs">
 														{server.traefikVersion ?? "—"}
 														{driftedTraefik && (
-															<Tooltip>
-																<TooltipTrigger asChild>
-																	<TriangleAlert className="size-3.5 text-amber-500" />
-																</TooltipTrigger>
-																<TooltipContent>
-																	<p>
-																		Fleet runs{" "}
-																		{data?.drift.traefikVersions.join(", ")}
-																	</p>
-																</TooltipContent>
-															</Tooltip>
+															<DriftWarning
+																what="Traefik"
+																versions={data?.drift.traefikVersions ?? []}
+															/>
 														)}
 													</span>
 												</TableCell>

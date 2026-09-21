@@ -219,6 +219,12 @@ export const abhashDrillPolicy = pgTable("abhash_drill_policy", {
 		.$type<{ name: string; sql: string; expect?: string }[]>()
 		.notNull()
 		.default([]),
+	/**
+	 * Also read the live database and compare it with the restore. Proves the
+	 * snapshot is a faithful copy of what is running, rather than only
+	 * self-consistent with the numbers written when it was taken.
+	 */
+	compareLive: boolean("compare_live").notNull().default(false),
 	enabled: boolean("enabled").notNull().default(true),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 });
