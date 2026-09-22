@@ -518,4 +518,6 @@ server metadata), `0209` (mesh providers and server peers), `0210` (firewall pol
 and per-server state), `0211` (backup repositories, policies, runs and
 drills), `0212` (event webhooks), `0213` (managed services), `0214` (WAL
 archiving on backup policies), `0215` (switches off firewall rules whose
-source was stored unreadably).
+source was stored unreadably), `0216` (drills that compare against the live
+database), `0217` (the crash-loop notification event, on for channels that
+already alert on build errors).

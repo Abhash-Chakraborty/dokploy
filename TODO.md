@@ -65,6 +65,31 @@ repo or in the production database; the rest still need investigation.
   notes: base URL `https://dokploy.abhashchakraborty.tech/api/auth/scim/v2`,
   token from Authentication, Provisioning.
 
+### Fifth batch
+
+- **Crash-loop alerts.** A job every two minutes probes every server (the
+  Dokploy host locally, remote servers over the pooled SSH connection) and
+  reports compose/plain containers whose restart count climbs by three inside
+  fifteen minutes, and swarm services with three `failed`/`rejected` tasks in
+  the same window (a deploy's `shutdown` tasks never count). One alert per
+  service per hour, named after the Dokploy service with a link to it. New
+  notification event "Container Crash Loop" (migration `0217`), switched on for
+  every channel that already alerted on build errors.
+- **Server cron.** Schedules, Server cron lists every user crontab,
+  `/etc/crontab`, `/etc/cron.d`, the `cron.*` directories and systemd timers on
+  a server, read-only. Jobs added from Dokploy go to `/etc/cron.d/dokploy`
+  behind id markers, written atomically, and only those can be removed.
+- **Replicas across nodes.** Cluster settings gain "Spread across nodes" and
+  "Max per node" (placement preference `spread=node.id`, `MaxReplicas`);
+  compose stacks get the same on the Containers tab.
+- **The assistant is agentic.** It looks things up with the MCP tool registry
+  through the user's own tRPC caller, and in Write/Debug mode turns changes
+  into proposals the user runs from the panel (`ai.runAction`, audited).
+- UI: one-line logs toolbar with an icon pill, quiet alerts, circle-i hints
+  (triangle for warnings) instead of banners, tabs and server picker on one
+  line (Docker, Schedules, Traefik), wider breadcrumbs, compact service cards,
+  new update dialog, sign-in page branding, regrouped navigation.
+
 ### Still open
 
 - **Firewall adoption** (importing hand-written ufw rules into a Dokploy
@@ -230,3 +255,63 @@ against a sandbox host, not production. Blocked on 1.2.
 - **SCIM**: `scim_provider` has zero rows. Write up what it does and how to point
   Authentik at it.
 - **Remote server**: deferred by request.
+
+## 7. Planned: larger features
+
+Answers and designs from the 2026-09-22 review. Each is its own PR.
+
+### 7.1 Scaling, load balancing and autoscaling
+Today: a service's replicas run on the nodes of one swarm (the Dokploy host's,
+or one remote server's) and the swarm routing mesh balances across them; add
+nodes under Docker, Swarm, Nodes, and turn on "Spread across nodes". Separate
+remote servers are separate swarms, so one service does not span them.
+Autoscaling does not exist in Swarm. Plan: an `autoscale` job reading the
+monitoring agent's per-service CPU/memory, scaling between a min and max with
+a cooldown, configured per service next to Replicas.
+
+### 7.2 When the Dokploy server fails
+Running services keep running: containers, Traefik and swarm tasks live on the
+servers, not in Dokploy. What stops is the control plane (deploys, webhooks,
+schedules, backups, alerts) and anything hosted on the Dokploy host itself.
+Plan: back up the Dokploy database on a schedule with the restic engine and
+drill the restore; then a documented standby (second manager, restore, point
+DNS), and alert on the Dokploy host from another server.
+
+### 7.3 Framework auto-detection without a Dockerfile
+Railpack (and Nixpacks) already detect Next.js, Vite, Angular, Express and
+friends and build without a Dockerfile; the result still runs as a container,
+which is what Dokploy schedules. Missing is the Vercel feel: on the source step,
+read `package.json`/lockfiles through the git provider, show "Detected Next.js
+(pnpm)", prefill build/start commands and port, and default new apps to
+Railpack.
+
+### 7.4 Unmanaged containers and zero-downtime adoption
+The crash-loop probe already lists every container per server. Next: an
+"Unmanaged" view in Inventory (containers matching no Dokploy appName), then
+"Adopt": generate a compose service from `docker inspect` (image, env, mounts,
+ports, labels), start it next to the old one, move the Traefik route, stop the
+old container. Volumes are reused in place, so no copy.
+
+### 7.5 Blue/green and adding services without downtime
+Swarm settings already allow `start-first` updates with a health check: the new
+task must be healthy before the old one stops. That is the zero-downtime path
+for applications; blue/green as an explicit toggle (two services, route switch)
+is a follow-up. Adding Redis, a queue or another service never touches running
+ones; wiring it in is an env change plus a start-first redeploy.
+
+### 7.6 Arcane parity
+Already here: containers, images, volumes, networks, events, disk usage,
+compose stacks, templates, terminals, logs, remote hosts, image scans. Gaps:
+image update checks (compare running digests with the registry, notify),
+opt-in auto-update per service, a volume file browser, per-container live stats
+in the table, and bulk container actions.
+
+### 7.7 Logs to Grafana
+Supported: Settings, Integrations, Log drains, type Loki. Point it at Grafana
+Cloud Loki with basic auth, or at a self-hosted Loki, per server.
+
+### 7.8 Service accounts (agents) and the API
+Same API as everyone: an agent's API key authenticates the same tRPC endpoints
+and `/api/mcp`, through the same RBAC as a person. The key policy can narrow it
+further (read-only, allow list, IP allow list) and route destructive jobs
+through human approval.
