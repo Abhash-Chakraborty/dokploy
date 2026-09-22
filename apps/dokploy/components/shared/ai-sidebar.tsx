@@ -1,4 +1,4 @@
-import { Bot, Loader2, Send } from "lucide-react";
+import { Bot, Check, Loader2, Play, Send, Wrench } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -19,14 +19,21 @@ import {
 	SheetTrigger,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@/utils/api";
+import { api, type RouterOutputs } from "@/utils/api";
 
-type ChatMessage = { role: "user" | "assistant"; content: string };
+type ChatResult = RouterOutputs["ai"]["chat"];
+type ChatMessage = {
+	role: "user" | "assistant";
+	content: string;
+	tools?: ChatResult["tools"];
+	actions?: ChatResult["actions"];
+	durationMs?: number;
+};
 type Permission = "read" | "write" | "debug";
 
 const PERMISSION_LABELS: Record<Permission, string> = {
-	read: "Read-only",
-	write: "Write (advisory)",
+	read: "Read",
+	write: "Write",
 	debug: "Debug",
 };
 
@@ -39,6 +46,8 @@ export const AiSidebar = () => {
 	const pathname = usePathname();
 	const { data: providers } = api.ai.getEnabledProviders.useQuery();
 	const { mutateAsync, isPending } = api.ai.chat.useMutation();
+	const runAction = api.ai.runAction.useMutation();
+	const [ran, setRan] = useState<Record<string, "running" | "done">>({});
 
 	const [open, setOpen] = useState(false);
 	const [aiId, setAiId] = useState<string>("");
@@ -64,9 +73,20 @@ export const AiSidebar = () => {
 				message: text,
 				permission,
 				pageContext: `The user is currently on the page: ${pathname}`,
-				history: messages.slice(-10),
+				history: messages
+					.slice(-10)
+					.map(({ role, content }) => ({ role, content })),
 			});
-			setMessages([...next, { role: "assistant", content: res.reply }]);
+			setMessages([
+				...next,
+				{
+					role: "assistant",
+					content: res.reply,
+					tools: res.tools,
+					actions: res.actions,
+					durationMs: res.durationMs,
+				},
+			]);
 		} catch (error) {
 			setMessages([
 				...next,
@@ -103,7 +123,8 @@ export const AiSidebar = () => {
 						<Bot className="size-4" /> AI Assistant
 					</SheetTitle>
 					<SheetDescription>
-						Context-aware help. Advisory only — actions need your confirmation.
+						Looks things up with your permissions. Changes wait for you to
+						confirm.
 					</SheetDescription>
 				</SheetHeader>
 
@@ -113,7 +134,7 @@ export const AiSidebar = () => {
 						onValueChange={setAiId}
 						disabled={!providers || providers.length === 0}
 					>
-						<SelectTrigger className="flex-1">
+						<SelectTrigger className="min-w-0 flex-1">
 							<SelectValue placeholder="AI provider" />
 						</SelectTrigger>
 						<SelectContent>
@@ -128,7 +149,7 @@ export const AiSidebar = () => {
 						value={permission}
 						onValueChange={(v) => setPermission(v as Permission)}
 					>
-						<SelectTrigger className="w-36">
+						<SelectTrigger className="w-24 shrink-0" aria-label="Mode">
 							<SelectValue />
 						</SelectTrigger>
 						<SelectContent>
@@ -161,6 +182,76 @@ export const AiSidebar = () => {
 									{m.role === "user" ? "You" : "Assistant"}:
 								</span>{" "}
 								{m.content}
+								{!!m.tools?.length && (
+									<div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
+										<Wrench className="size-3" />
+										{m.tools.map((t, index) => (
+											<span
+												key={`${t.tool}-${index}`}
+												className={
+													t.ok
+														? "rounded bg-muted px-1.5 py-0.5"
+														: "rounded bg-red-500/10 px-1.5 py-0.5 text-red-500"
+												}
+											>
+												{t.tool}
+												{t.ms ? ` ${t.ms}ms` : ""}
+											</span>
+										))}
+										{m.durationMs !== undefined && (
+											<span>· {(m.durationMs / 1000).toFixed(1)}s</span>
+										)}
+									</div>
+								)}
+								{m.actions?.map((action, index) => {
+									const key = `${i}-${index}`;
+									return (
+										<div
+											key={key}
+											className="mt-2 flex items-center gap-2 rounded-md border px-2.5 py-2 text-xs text-foreground"
+										>
+											<span
+												className="min-w-0 flex-1 truncate font-mono"
+												title={action.summary}
+											>
+												{action.summary}
+											</span>
+											<Button
+												size="xs"
+												variant={action.destructive ? "destructive" : "default"}
+												disabled={!!ran[key]}
+												isLoading={ran[key] === "running"}
+												onClick={async () => {
+													setRan((state) => ({ ...state, [key]: "running" }));
+													try {
+														await runAction.mutateAsync({
+															tool: action.tool,
+															args: action.args,
+														});
+														setRan((state) => ({ ...state, [key]: "done" }));
+														toast.success(
+															`Ran ${action.tool.replaceAll("_", " ")}`,
+														);
+													} catch (error) {
+														setRan(({ [key]: _, ...state }) => state);
+														toast.error(
+															error instanceof Error
+																? error.message
+																: "The action failed",
+														);
+													}
+												}}
+											>
+												{ran[key] === "done" ? (
+													<Check className="size-3" />
+												) : (
+													<Play className="size-3" />
+												)}
+												{ran[key] === "done" ? "Done" : "Run"}
+											</Button>
+										</div>
+									);
+								})}
 							</div>
 						))
 					)}
