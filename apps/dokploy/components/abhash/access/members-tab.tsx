@@ -1,10 +1,11 @@
 import { format } from "date-fns";
 import {
 	Ban,
+	Crown,
 	KeyRound,
+	Lock,
+	LockOpen,
 	MoreHorizontal,
-	Pin,
-	PinOff,
 	RotateCcw,
 	ShieldCheck,
 	UserMinus,
@@ -32,7 +33,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { authClient } from "@/lib/auth-client";
 import { api } from "@/utils/api";
 import { MemberAccessSheet } from "./member-access-sheet";
 
@@ -58,8 +58,11 @@ export const MembersTab = () => {
 	const suspend = api.access.members.suspend.useMutation();
 	const reactivate = api.access.members.reactivate.useMutation();
 	const pin = api.access.members.setRolePinned.useMutation();
+	const removeMember = api.access.members.remove.useMutation();
+	const transferOwnership = api.access.members.transferOwnership.useMutation();
 
-	const isAdmin = me?.role === "owner" || me?.role === "admin";
+	const isOwnerMe = me?.role === "owner";
+	const isAdmin = isOwnerMe || me?.role === "admin";
 	const canChangeRole = !!permissions?.member.update;
 	const canRemove = !!permissions?.member.delete;
 
@@ -67,6 +70,7 @@ export const MembersTab = () => {
 		Promise.all([
 			utils.access.members.list.invalidate(),
 			utils.user.all.invalidate(),
+			utils.user.get.invalidate(),
 		]);
 
 	if (isLoading) {
@@ -134,9 +138,9 @@ export const MembersTab = () => {
 											{m.role}
 										</Badge>
 										{m.rolePinned && (
-											<Pin
+											<Lock
 												className="size-3 text-muted-foreground"
-												aria-label="Role pinned"
+												aria-label="Role locked: SSO sync will not change it"
 											/>
 										)}
 										{m.roleSource !== "manual" && (
@@ -213,7 +217,9 @@ export const MembersTab = () => {
 												</Button>
 											</DropdownMenuTrigger>
 											<DropdownMenuContent align="end" className="w-56">
-												<DropdownMenuLabel>{m.user.email}</DropdownMenuLabel>
+												<DropdownMenuLabel className="truncate font-normal normal-case text-muted-foreground">
+													{m.user.email}
+												</DropdownMenuLabel>
 												<MemberAccessSheet
 													userId={m.userId}
 													name={m.user.name}
@@ -253,14 +259,46 @@ export const MembersTab = () => {
 													}}
 												>
 													{m.rolePinned ? (
-														<PinOff className="size-4" />
+														<LockOpen className="size-4" />
 													) : (
-														<Pin className="size-4" />
+														<Lock className="size-4" />
 													)}
-													{m.rolePinned
-														? "Unpin role"
-														: "Pin role (ignore SSO groups)"}
+													<div className="flex flex-col">
+														<span>
+															{m.rolePinned ? "Unlock role" : "Lock role"}
+														</span>
+														<span className="text-xs text-muted-foreground">
+															{m.rolePinned
+																? "SSO groups can change it again"
+																: "SSO groups won't change it"}
+														</span>
+													</div>
 												</DropdownMenuItem>
+												{isOwnerMe && !suspended && (
+													<DialogAction
+														title={`Make ${m.user.email} the owner?`}
+														description="They get full control of this organization, including billing and deleting it. You stay on as an admin, and only the new owner can undo this."
+														type="destructive"
+														onClick={async () => {
+															await transferOwnership
+																.mutateAsync({ memberId: m.memberId })
+																.then(async () => {
+																	await refresh();
+																	toast.success("Ownership transferred");
+																})
+																.catch((error: Error) =>
+																	toast.error(error.message),
+																);
+														}}
+													>
+														<DropdownMenuItem
+															onSelect={(e) => e.preventDefault()}
+														>
+															<Crown className="size-4" />
+															Make owner
+														</DropdownMenuItem>
+													</DialogAction>
+												)}
 												<DropdownMenuSeparator />
 												{suspended ? (
 													<DropdownMenuItem
@@ -310,18 +348,15 @@ export const MembersTab = () => {
 														description="They lose access to this organization. Their account is kept if they belong to other organizations."
 														type="destructive"
 														onClick={async () => {
-															const { error } =
-																await authClient.organization.removeMember({
-																	memberIdOrEmail: m.memberId,
-																});
-															if (error) {
-																toast.error(
-																	error.message ?? "Could not remove member",
+															await removeMember
+																.mutateAsync({ memberId: m.memberId })
+																.then(async () => {
+																	await refresh();
+																	toast.success("Member removed");
+																})
+																.catch((error: Error) =>
+																	toast.error(error.message),
 																);
-																return;
-															}
-															await refresh();
-															toast.success("Member removed");
 														}}
 													>
 														<DropdownMenuItem

@@ -6,9 +6,11 @@ import {
 	abhashTeamMember,
 	gitProvider,
 	member,
+	organization,
 	organizationRole,
 	projects,
 	server,
+	session,
 } from "@dokploy/server/db/schema";
 import { setSetting } from "@dokploy/server/services/abhash/flags";
 import {
@@ -418,6 +420,47 @@ const bindingsRouter = createTRPCRouter({
 		}),
 });
 
+/**
+ * The member being acted on, checked against the caller: never the owner,
+ * never yourself, and only the owner may act on another admin.
+ */
+const targetMember = async (
+	ctx: {
+		session: { activeOrganizationId: string };
+		user: { id: string; role: string };
+	},
+	where: { memberId: string } | { userId: string },
+) => {
+	const row = await db.query.member.findFirst({
+		where: and(
+			"memberId" in where
+				? eq(member.id, where.memberId)
+				: eq(member.userId, where.userId),
+			eq(member.organizationId, ctx.session.activeOrganizationId),
+		),
+	});
+	if (!row) throw notFound("Member");
+	if (row.role === "owner") {
+		throw new TRPCError({
+			code: "FORBIDDEN",
+			message: "The owner cannot be changed this way; transfer ownership first",
+		});
+	}
+	if (row.userId === ctx.user.id) {
+		throw new TRPCError({
+			code: "FORBIDDEN",
+			message: "You cannot do this to yourself",
+		});
+	}
+	if (row.role === "admin" && ctx.user.role !== "owner") {
+		throw new TRPCError({
+			code: "FORBIDDEN",
+			message: "Only the owner can act on another admin",
+		});
+	}
+	return row;
+};
+
 const membersRouter = createTRPCRouter({
 	list: withPermission("member", "read").query(async ({ ctx }) => {
 		const orgId = ctx.session.activeOrganizationId;
@@ -477,6 +520,7 @@ const membersRouter = createTRPCRouter({
 			z.object({ userId: z.string(), reason: z.string().max(300).optional() }),
 		)
 		.mutation(async ({ ctx, input }) => {
+			await targetMember(ctx, { userId: input.userId });
 			await suspendUser({
 				userId: input.userId,
 				actorId: ctx.user.id,
@@ -495,6 +539,7 @@ const membersRouter = createTRPCRouter({
 	reactivate: adminProcedure
 		.input(z.object({ userId: z.string() }))
 		.mutation(async ({ ctx, input }) => {
+			await targetMember(ctx, { userId: input.userId });
 			await reactivateUser({ userId: input.userId, actorId: ctx.user.id });
 			await audit(ctx, {
 				action: "reactivate",
@@ -526,6 +571,116 @@ const membersRouter = createTRPCRouter({
 				resourceType: "user",
 				resourceId: row.userId,
 				metadata: { rolePinned: input.pinned },
+			});
+			return true;
+		}),
+
+	/**
+	 * Server-side so it always acts on the caller's active organization; the
+	 * Better Auth client call depended on the session carrying one and failed
+	 * with "No active organization" when it did not.
+	 */
+	remove: withPermission("member", "delete")
+		.input(z.object({ memberId: z.string() }))
+		.mutation(async ({ ctx, input }) => {
+			const row = await targetMember(ctx, { memberId: input.memberId });
+			const orgId = ctx.session.activeOrganizationId;
+			await db.transaction(async (tx) => {
+				const orgTeams = tx
+					.select({ id: abhashTeam.id })
+					.from(abhashTeam)
+					.where(eq(abhashTeam.organizationId, orgId));
+				await tx
+					.delete(abhashTeamMember)
+					.where(
+						and(
+							eq(abhashTeamMember.userId, row.userId),
+							inArray(abhashTeamMember.teamId, orgTeams),
+						),
+					);
+				await tx
+					.delete(abhashRoleBinding)
+					.where(
+						and(
+							eq(abhashRoleBinding.organizationId, orgId),
+							eq(abhashRoleBinding.subjectType, "user"),
+							eq(abhashRoleBinding.subjectId, row.userId),
+						),
+					);
+				await tx.delete(member).where(eq(member.id, row.id));
+				// Their open sessions must not keep this organization active.
+				await tx
+					.update(session)
+					.set({ activeOrganizationId: null })
+					.where(
+						and(
+							eq(session.userId, row.userId),
+							eq(session.activeOrganizationId, orgId),
+						),
+					);
+			});
+			await audit(ctx, {
+				action: "delete",
+				resourceType: "user",
+				resourceId: row.userId,
+				metadata: { removedFromOrganization: orgId },
+			});
+			return true;
+		}),
+
+	/** Hands the organization to another member; the old owner becomes an admin. */
+	transferOwnership: protectedProcedure
+		.input(z.object({ memberId: z.string() }))
+		.mutation(async ({ ctx, input }) => {
+			ownerOnly(ctx.user.role);
+			const orgId = ctx.session.activeOrganizationId;
+			const next = await db.query.member.findFirst({
+				where: and(
+					eq(member.id, input.memberId),
+					eq(member.organizationId, orgId),
+				),
+				with: { user: { columns: { banned: true } } },
+			});
+			if (!next) throw notFound("Member");
+			if (next.userId === ctx.user.id) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "You already own this organization",
+				});
+			}
+			const suspended = await db.query.abhashUserSuspension.findFirst({
+				where: (s, { eq }) => eq(s.userId, next.userId),
+			});
+			if (suspended || next.user.banned) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Reactivate this member before making them the owner",
+				});
+			}
+			await db.transaction(async (tx) => {
+				await tx
+					.update(member)
+					.set({ role: "admin" })
+					.where(
+						and(
+							eq(member.organizationId, orgId),
+							eq(member.userId, ctx.user.id),
+						),
+					);
+				await tx
+					.update(member)
+					.set({ role: "owner" })
+					.where(eq(member.id, next.id));
+				await tx
+					.update(organization)
+					.set({ ownerId: next.userId })
+					.where(eq(organization.id, orgId));
+			});
+			await audit(ctx, {
+				action: "update",
+				resourceType: "organization",
+				resourceId: orgId,
+				metadata: { ownerFrom: ctx.user.id, ownerTo: next.userId },
 			});
 			return true;
 		}),
