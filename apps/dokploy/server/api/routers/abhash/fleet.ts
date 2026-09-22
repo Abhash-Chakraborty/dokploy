@@ -5,6 +5,11 @@ import {
 	server,
 } from "@dokploy/server/db/schema";
 import { enqueueJobForActor } from "@dokploy/server/services/abhash/agents";
+import {
+	addHostCron,
+	listHostCron,
+	removeHostCron,
+} from "@dokploy/server/services/abhash/cron";
 import { enqueueJob } from "@dokploy/server/services/abhash/jobs";
 import {
 	closeConnection,
@@ -291,6 +296,80 @@ export const abhashFleetRouter = createTRPCRouter({
 					resourceType: "server",
 					resourceId: input.id,
 					resourceName: "server group",
+				});
+				return true;
+			}),
+	}),
+	cron: createTRPCRouter({
+		list: adminProcedure
+			.input(z.object({ serverId: z.string() }))
+			.query(async ({ ctx, input }) => {
+				await ownServer(ctx.session.activeOrganizationId, input.serverId);
+				try {
+					return await listHostCron(input.serverId);
+				} catch (error) {
+					throw new TRPCError({
+						code: "BAD_GATEWAY",
+						message: `Could not read the crontabs: ${error instanceof Error ? error.message : String(error)}`,
+					});
+				}
+			}),
+
+		add: adminProcedure
+			.input(
+				z.object({
+					serverId: z.string(),
+					name: z.string().trim().max(80).default(""),
+					schedule: z.string().trim().min(1).max(120),
+					user: z.string().trim().min(1).max(32).default("root"),
+					command: z.string().trim().min(1).max(1_000),
+				}),
+			)
+			.mutation(async ({ ctx, input }) => {
+				const target = await ownServer(
+					ctx.session.activeOrganizationId,
+					input.serverId,
+				);
+				const { serverId, ...entry } = input;
+				try {
+					const managedId = await addHostCron(serverId, entry);
+					await audit(ctx, {
+						action: "create",
+						resourceType: "server",
+						resourceId: serverId,
+						resourceName: `${target.name} cron`,
+						metadata: { managedId, ...entry },
+					});
+					return { managedId };
+				} catch (error) {
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message: error instanceof Error ? error.message : String(error),
+					});
+				}
+			}),
+
+		remove: adminProcedure
+			.input(z.object({ serverId: z.string(), managedId: z.string() }))
+			.mutation(async ({ ctx, input }) => {
+				const target = await ownServer(
+					ctx.session.activeOrganizationId,
+					input.serverId,
+				);
+				try {
+					await removeHostCron(input.serverId, input.managedId);
+				} catch (error) {
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message: error instanceof Error ? error.message : String(error),
+					});
+				}
+				await audit(ctx, {
+					action: "delete",
+					resourceType: "server",
+					resourceId: input.serverId,
+					resourceName: `${target.name} cron`,
+					metadata: { managedId: input.managedId },
 				});
 				return true;
 			}),
