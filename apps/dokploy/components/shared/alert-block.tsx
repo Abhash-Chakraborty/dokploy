@@ -6,23 +6,28 @@ interface Props extends React.ComponentPropsWithoutRef<"div"> {
 	type?: "info" | "success" | "warning" | "error";
 }
 
+// Quiet by design: a hairline border and a tinted icon carry the tone, so a
+// page with several notices does not turn into a wall of colour.
 const iconMap = {
 	info: {
-		className: "bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400",
+		className: "border-border bg-muted/30 text-muted-foreground",
+		iconClassName: "text-blue-500/80",
 		icon: Info,
 	},
 	success: {
 		className:
-			"bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400",
+			"border-green-500/20 bg-green-500/5 text-green-700 dark:text-green-400",
+		iconClassName: "text-green-500",
 		icon: CheckCircle2,
 	},
 	warning: {
-		className:
-			"bg-orange-50 dark:bg-orange-950 text-orange-600 dark:text-orange-400",
+		className: "border-amber-500/20 bg-amber-500/5 text-muted-foreground",
+		iconClassName: "text-amber-500",
 		icon: AlertCircle,
 	},
 	error: {
-		className: "bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400",
+		className: "border-red-500/25 bg-red-500/5 text-red-700 dark:text-red-400",
+		iconClassName: "text-red-500",
 		icon: AlertTriangle,
 	},
 };
@@ -34,18 +39,18 @@ export function AlertBlock({
 	className,
 	...props
 }: Props) {
-	const { className: iconClassName, icon: Icon } = iconMap[type];
+	const { className: toneClassName, iconClassName, icon: Icon } = iconMap[type];
 	return (
 		<div
 			{...props}
 			className={cn(
-				"flex items-start flex-row gap-4 rounded-lg p-2",
-				iconClassName,
+				"flex items-start flex-row gap-2.5 rounded-lg border px-3 py-2.5",
+				toneClassName,
 				className,
 			)}
 		>
-			<div className="shrink-0 mt-0.5">
-				{icon || <Icon className="text-current" />}
+			<div className={cn("shrink-0 mt-0.5", iconClassName)}>
+				{icon || <Icon className="size-4" />}
 			</div>
 			<div className="flex-1 min-w-0">
 				<span className="text-sm text-current wrap-break-word overflow-wrap-anywhere whitespace-pre-wrap">

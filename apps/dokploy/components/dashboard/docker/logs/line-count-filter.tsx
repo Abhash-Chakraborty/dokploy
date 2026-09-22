@@ -2,15 +2,13 @@ import { Command as CommandPrimitive } from "cmdk";
 import debounce from "lodash/debounce";
 import { CheckIcon, Hash } from "lucide-react";
 import React, { useCallback, useRef } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { LogFilterTrigger } from "./log-filter-trigger";
 
 const lineCountOptions = [
 	{ label: "100 lines", value: 100 },
@@ -29,7 +27,7 @@ interface LineCountFilterProps {
 export function LineCountFilter({
 	value,
 	onValueChange,
-	title = "Limit to",
+	title = "Lines",
 }: LineCountFilterProps) {
 	const [open, setOpen] = React.useState(false);
 	const [inputValue, setInputValue] = React.useState("");
@@ -53,7 +51,7 @@ export function LineCountFilter({
 		setInputValue(input);
 
 		// Extract numbers from input and convert
-		const numValue = Number.parseInt(input.replace(/[^0-9]/g, ""));
+		const numValue = Number.parseInt(input.replace(/[^0-9]/g, ""), 10);
 		if (!Number.isNaN(numValue)) {
 			pendingValueRef.current = numValue;
 			debouncedValueChange(numValue);
@@ -71,7 +69,7 @@ export function LineCountFilter({
 			return;
 		}
 
-		const numValue = Number.parseInt(selectedValue);
+		const numValue = Number.parseInt(selectedValue, 10);
 		if (
 			!Number.isNaN(numValue) &&
 			numValue > 0 &&
@@ -97,19 +95,9 @@ export function LineCountFilter({
 	return (
 		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTrigger asChild>
-				<Button
-					variant="outline"
-					size="sm"
-					className="h-9 bg-input text-sm placeholder-gray-400 w-full sm:w-auto"
-				>
-					{title}
-					<Separator orientation="vertical" className="mx-2 h-4" />
-					<div className="space-x-1 flex">
-						<Badge variant="blank" className="rounded-sm px-1 font-normal">
-							{displayValue}
-						</Badge>
-					</div>
-				</Button>
+				<LogFilterTrigger label={title}>
+					{displayValue?.replace(" lines", "")}
+				</LogFilterTrigger>
 			</PopoverTrigger>
 			<PopoverContent className="w-[200px] p-0" align="start">
 				<CommandPrimitive className="overflow-hidden rounded-md border border-none bg-popover text-popover-foreground">
@@ -125,6 +113,7 @@ export function LineCountFilter({
 									e.preventDefault();
 									const numValue = Number.parseInt(
 										inputValue.replace(/[^0-9]/g, ""),
+										10,
 									);
 									if (
 										!Number.isNaN(numValue) &&

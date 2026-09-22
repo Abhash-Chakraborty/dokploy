@@ -35,7 +35,7 @@ const Dashboard = () => {
 					<Loader2 className="h-4 w-4 animate-spin" />
 				</div>
 			) : toggleMonitoring ? (
-				<div className="rounded-xl border bg-background">
+				<div>
 					<ShowPaidMonitoring
 						BASE_URL={
 							process.env.NODE_ENV === "production"
@@ -50,9 +50,7 @@ const Dashboard = () => {
 					/>
 				</div>
 			) : (
-				<div className="rounded-xl border bg-background p-6">
-					<ContainerFreeMonitoring appName="dokploy" />
-				</div>
+				<ContainerFreeMonitoring appName="dokploy" hideHeader />
 			)}
 		</PageContainer>
 	);

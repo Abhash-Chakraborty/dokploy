@@ -16,7 +16,6 @@ import { ShowSwarmContainers } from "@/components/dashboard/swarm/containers/sho
 import SwarmMonitorCard from "@/components/dashboard/swarm/monitoring-card";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { ServerFilter } from "@/components/shared/server-filter";
-import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { appRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
@@ -66,10 +65,10 @@ const Dashboard = () => {
 	};
 
 	return (
-		<ServerFilter>
-			{(serverId) => (
-				<Tabs value={activeTab} onValueChange={setTab}>
-					<TabsList>
+		<Tabs value={activeTab} onValueChange={setTab}>
+			<ServerFilter
+				leading={
+					<TabsList variant="line">
 						<TabsTrigger value="containers">Containers</TabsTrigger>
 						<TabsTrigger value="swarm">Swarm</TabsTrigger>
 						<TabsTrigger value="images">Images</TabsTrigger>
@@ -79,54 +78,55 @@ const Dashboard = () => {
 						<TabsTrigger value="disk-usage">Disk Usage</TabsTrigger>
 						{canSeeHealth && <TabsTrigger value="health">Health</TabsTrigger>}
 					</TabsList>
-					<TabsContent value="containers">
-						<ShowContainers serverId={serverId} />
-					</TabsContent>
-					<TabsContent value="swarm">
-						<Tabs value={activeSwarmTab} onValueChange={setSwarmTab}>
-							<TabsList>
-								<TabsTrigger value="overview">Overview</TabsTrigger>
-								<TabsTrigger value="containers">Containers</TabsTrigger>
-								<TabsTrigger value="nodes">Nodes</TabsTrigger>
-							</TabsList>
-							<TabsContent value="overview">
-								<SwarmMonitorCard serverId={serverId} />
-							</TabsContent>
-							<TabsContent value="containers">
-								<Card className="mx-auto w-full border-none bg-transparent p-0 shadow-none">
-									<div className="rounded-xl bg-background shadow-md p-6">
-										<ShowSwarmContainers serverId={serverId} />
-									</div>
-								</Card>
-							</TabsContent>
-							<TabsContent value="nodes">
-								<ShowNodes serverId={serverId} />
-							</TabsContent>
-						</Tabs>
-					</TabsContent>
-					<TabsContent value="images">
-						<ShowImages serverId={serverId} />
-					</TabsContent>
-					<TabsContent value="volumes">
-						<ShowVolumes serverId={serverId} />
-					</TabsContent>
-					<TabsContent value="networks">
-						<ShowNetworks serverId={serverId} />
-					</TabsContent>
-					<TabsContent value="events">
-						<ShowDockerEvents serverId={serverId} />
-					</TabsContent>
-					<TabsContent value="disk-usage">
-						<ShowDiskUsage serverId={serverId} />
-					</TabsContent>
-					{canSeeHealth && (
-						<TabsContent value="health">
-							<ShowHealth serverId={serverId} />
+				}
+			>
+				{(serverId) => (
+					<>
+						<TabsContent value="containers">
+							<ShowContainers serverId={serverId} />
 						</TabsContent>
-					)}
-				</Tabs>
-			)}
-		</ServerFilter>
+						<TabsContent value="swarm">
+							<Tabs value={activeSwarmTab} onValueChange={setSwarmTab}>
+								<TabsList variant="line">
+									<TabsTrigger value="overview">Overview</TabsTrigger>
+									<TabsTrigger value="containers">Containers</TabsTrigger>
+									<TabsTrigger value="nodes">Nodes</TabsTrigger>
+								</TabsList>
+								<TabsContent value="overview">
+									<SwarmMonitorCard serverId={serverId} />
+								</TabsContent>
+								<TabsContent value="containers">
+									<ShowSwarmContainers serverId={serverId} />
+								</TabsContent>
+								<TabsContent value="nodes">
+									<ShowNodes serverId={serverId} />
+								</TabsContent>
+							</Tabs>
+						</TabsContent>
+						<TabsContent value="images">
+							<ShowImages serverId={serverId} />
+						</TabsContent>
+						<TabsContent value="volumes">
+							<ShowVolumes serverId={serverId} />
+						</TabsContent>
+						<TabsContent value="networks">
+							<ShowNetworks serverId={serverId} />
+						</TabsContent>
+						<TabsContent value="events">
+							<ShowDockerEvents serverId={serverId} />
+						</TabsContent>
+						<TabsContent value="disk-usage">
+							<ShowDiskUsage serverId={serverId} />
+						</TabsContent>
+						{canSeeHealth && (
+							<TabsContent value="health">
+								<ShowHealth serverId={serverId} />
+							</TabsContent>
+						)}
+					</>
+				)}
+			</ServerFilter>
+		</Tabs>
 	);
 };
 

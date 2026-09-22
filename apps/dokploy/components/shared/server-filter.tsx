@@ -19,14 +19,28 @@ import { api } from "@/utils/api";
 const DOKPLOY_SERVER = "dokploy-server";
 
 interface Props {
-	children: (serverId?: string) => ReactNode;
+	/**
+	 * With `inlinePicker` the selector is handed to the page as the second
+	 * argument, so it can sit in the page's own header row.
+	 */
+	children: (serverId?: string, picker?: ReactNode) => ReactNode;
 	/** Optional actions rendered inline with the server selector (top-right),
 	 * e.g. an "Add node" button on the cluster page. Receives the selected
 	 * serverId so the action can target the current server. */
 	actions?: (serverId?: string) => ReactNode;
+	/** Rendered on the left of the selector's row, e.g. the page's tabs. */
+	leading?: ReactNode;
+	inlinePicker?: boolean;
+	hidePicker?: boolean;
 }
 
-export const ServerFilter = ({ children, actions }: Props) => {
+export const ServerFilter = ({
+	children,
+	actions,
+	leading,
+	inlinePicker = false,
+	hidePicker = false,
+}: Props) => {
 	const router = useRouter();
 	const { data: servers, isLoading: isLoadingServers } =
 		api.server.withSSHKey.useQuery();
@@ -102,55 +116,69 @@ export const ServerFilter = ({ children, actions }: Props) => {
 		);
 	}
 
+	const picker =
+		!hidePicker && servers?.length ? (
+			<Select value={serverId ?? DOKPLOY_SERVER} onValueChange={setServerId}>
+				<SelectTrigger
+					id="server-filter"
+					size="sm"
+					className="w-fit min-w-[200px]"
+				>
+					<div className="flex items-center gap-2">
+						<ServerIcon className="size-4 text-muted-foreground" />
+						<SelectValue placeholder="Select a server" />
+					</div>
+				</SelectTrigger>
+				<SelectContent>
+					<SelectGroup>
+						<SelectLabel>Servers</SelectLabel>
+						{!isCloud && (
+							<SelectItem value={DOKPLOY_SERVER}>
+								<div className="flex items-center gap-2">
+									<span>Dokploy Server</span>
+									<Badge
+										variant="secondary"
+										className="text-[10px] px-1.5 py-0"
+									>
+										Local
+									</Badge>
+								</div>
+							</SelectItem>
+						)}
+						{servers?.map((server) => (
+							<SelectItem key={server.serverId} value={server.serverId}>
+								<div className="flex items-center gap-2">
+									<span>{server.name}</span>
+									<span className="text-xs text-muted-foreground">
+										{server.ipAddress}
+									</span>
+								</div>
+							</SelectItem>
+						))}
+					</SelectGroup>
+				</SelectContent>
+			</Select>
+		) : null;
+
+	const controls =
+		picker || actions ? (
+			<div className="flex shrink-0 items-center gap-2">
+				{picker}
+				{actions?.(serverId)}
+			</div>
+		) : null;
+
 	return (
 		<div className="flex flex-col gap-4 w-full">
-			{(!!servers?.length || actions) && (
-				<div className="flex w-full items-center justify-end gap-3">
-					{!!servers?.length && (
-						<Select
-							value={serverId ?? DOKPLOY_SERVER}
-							onValueChange={setServerId}
-						>
-							<SelectTrigger id="server-filter" className="w-fit min-w-[220px]">
-								<div className="flex items-center gap-2">
-									<ServerIcon className="size-4 text-muted-foreground" />
-									<SelectValue placeholder="Select a server" />
-								</div>
-							</SelectTrigger>
-							<SelectContent>
-								<SelectGroup>
-									<SelectLabel>Servers</SelectLabel>
-									{!isCloud && (
-										<SelectItem value={DOKPLOY_SERVER}>
-											<div className="flex items-center gap-2">
-												<span>Dokploy Server</span>
-												<Badge
-													variant="secondary"
-													className="text-[10px] px-1.5 py-0"
-												>
-													Local
-												</Badge>
-											</div>
-										</SelectItem>
-									)}
-									{servers?.map((server) => (
-										<SelectItem key={server.serverId} value={server.serverId}>
-											<div className="flex items-center gap-2">
-												<span>{server.name}</span>
-												<span className="text-xs text-muted-foreground">
-													{server.ipAddress}
-												</span>
-											</div>
-										</SelectItem>
-									))}
-								</SelectGroup>
-							</SelectContent>
-						</Select>
-					)}
-					{actions?.(serverId)}
+			{!inlinePicker && (leading || controls) && (
+				<div className="flex w-full items-center justify-between gap-3">
+					<div className="min-w-0 flex-1 overflow-x-auto">{leading}</div>
+					{controls}
 				</div>
 			)}
-			<Fragment key={serverId ?? DOKPLOY_SERVER}>{children(serverId)}</Fragment>
+			<Fragment key={serverId ?? DOKPLOY_SERVER}>
+				{children(serverId, inlinePicker ? controls : undefined)}
+			</Fragment>
 		</div>
 	);
 };

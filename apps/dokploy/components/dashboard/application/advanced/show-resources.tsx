@@ -1,10 +1,10 @@
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
-import { InfoIcon, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useEffect } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { AlertBlock } from "@/components/shared/alert-block";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -33,12 +33,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { api } from "@/utils/api";
 
 const CPU_STEP = 0.25;
@@ -193,17 +187,15 @@ export const ShowResources = ({ id, type }: Props) => {
 	return (
 		<Card className="bg-background">
 			<CardHeader>
-				<CardTitle className="text-xl">Resources</CardTitle>
+				<CardTitle className="flex items-center gap-2 text-xl">
+					Resources
+					<InfoTooltip content="Redeploy after changing the resources to apply them." />
+				</CardTitle>
 				<CardDescription>
-					If you want to decrease or increase the resources to a specific.
-					application or database
+					Limit or reserve CPU and memory for this service.
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="flex flex-col gap-4">
-				<AlertBlock type="info">
-					Please remember to click Redeploy after modify the resources to apply
-					the changes.
-				</AlertBlock>
 				<Form {...form}>
 					<form
 						id="hook-form"
@@ -222,20 +214,15 @@ export const ShowResources = ({ id, type }: Props) => {
 												onClick={(e) => e.preventDefault()}
 											>
 												<FormLabel>Memory Limit</FormLabel>
-												<TooltipProvider>
-													<Tooltip delayDuration={0}>
-														<TooltipTrigger type="button">
-															<InfoIcon className="h-4 w-4 text-muted-foreground" />
-														</TooltipTrigger>
-														<TooltipContent>
-															<p>
-																Memory hard limit in bytes. Example: 1GB =
-																1073741824 bytes. Use +/- buttons to adjust by
-																256 MB.
-															</p>
-														</TooltipContent>
-													</Tooltip>
-												</TooltipProvider>
+												<InfoTooltip
+													content={
+														<>
+															Memory hard limit in bytes. Example: 1GB =
+															1073741824 bytes. Use +/- buttons to adjust by 256
+															MB.
+														</>
+													}
+												/>
 											</div>
 											<FormControl>
 												<NumberInputWithSteps
@@ -261,20 +248,15 @@ export const ShowResources = ({ id, type }: Props) => {
 											onClick={(e) => e.preventDefault()}
 										>
 											<FormLabel>Memory Reservation</FormLabel>
-											<TooltipProvider>
-												<Tooltip delayDuration={0}>
-													<TooltipTrigger type="button">
-														<InfoIcon className="h-4 w-4 text-muted-foreground" />
-													</TooltipTrigger>
-													<TooltipContent>
-														<p>
-															Memory soft limit in bytes. Example: 256MB =
-															268435456 bytes. Use +/- buttons to adjust by 256
-															MB.
-														</p>
-													</TooltipContent>
-												</Tooltip>
-											</TooltipProvider>
+											<InfoTooltip
+												content={
+													<>
+														Memory soft limit in bytes. Example: 256MB =
+														268435456 bytes. Use +/- buttons to adjust by 256
+														MB.
+													</>
+												}
+											/>
 										</div>
 										<FormControl>
 											<NumberInputWithSteps
@@ -301,20 +283,15 @@ export const ShowResources = ({ id, type }: Props) => {
 												onClick={(e) => e.preventDefault()}
 											>
 												<FormLabel>CPU Limit</FormLabel>
-												<TooltipProvider>
-													<Tooltip delayDuration={0}>
-														<TooltipTrigger type="button">
-															<InfoIcon className="h-4 w-4 text-muted-foreground" />
-														</TooltipTrigger>
-														<TooltipContent>
-															<p>
-																CPU quota in units of 10^-9 CPUs. Example: 2
-																CPUs = 2000000000. Use +/- buttons to adjust by
-																0.25 CPU.
-															</p>
-														</TooltipContent>
-													</Tooltip>
-												</TooltipProvider>
+												<InfoTooltip
+													content={
+														<>
+															CPU quota in units of 10^-9 CPUs. Example: 2 CPUs
+															= 2000000000. Use +/- buttons to adjust by 0.25
+															CPU.
+														</>
+													}
+												/>
 											</div>
 											<FormControl>
 												<NumberInputWithSteps
@@ -341,20 +318,14 @@ export const ShowResources = ({ id, type }: Props) => {
 												onClick={(e) => e.preventDefault()}
 											>
 												<FormLabel>CPU Reservation</FormLabel>
-												<TooltipProvider>
-													<Tooltip delayDuration={0}>
-														<TooltipTrigger type="button">
-															<InfoIcon className="h-4 w-4 text-muted-foreground" />
-														</TooltipTrigger>
-														<TooltipContent>
-															<p>
-																CPU shares (relative weight). Example: 1 CPU =
-																1000000000. Use +/- buttons to adjust by 0.25
-																CPU.
-															</p>
-														</TooltipContent>
-													</Tooltip>
-												</TooltipProvider>
+												<InfoTooltip
+													content={
+														<>
+															CPU shares (relative weight). Example: 1 CPU =
+															1000000000. Use +/- buttons to adjust by 0.25 CPU.
+														</>
+													}
+												/>
 											</div>
 											<FormControl>
 												<NumberInputWithSteps
@@ -377,20 +348,15 @@ export const ShowResources = ({ id, type }: Props) => {
 							<div className="flex items-center justify-between">
 								<div className="flex items-center gap-2">
 									<FormLabel className="text-base">Ulimits</FormLabel>
-									<TooltipProvider>
-										<Tooltip delayDuration={0}>
-											<TooltipTrigger type="button">
-												<InfoIcon className="h-4 w-4 text-muted-foreground" />
-											</TooltipTrigger>
-											<TooltipContent className="max-w-xs">
-												<p>
-													Set resource limits for the container. Each ulimit has
-													a soft limit (warning threshold) and hard limit
-													(maximum allowed). Use -1 for unlimited.
-												</p>
-											</TooltipContent>
-										</Tooltip>
-									</TooltipProvider>
+									<InfoTooltip
+										content={
+											<>
+												Set resource limits for the container. Each ulimit has a
+												soft limit (warning threshold) and hard limit (maximum
+												allowed). Use -1 for unlimited.
+											</>
+										}
+									/>
 								</div>
 								<Button
 									type="button"

@@ -6,7 +6,7 @@ LABEL com.abhash.sandbox=$SANDBOX_ID
 
 RUN apt-get update \
 	&& DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-		openssh-server python3 python3-apt sudo iproute2 iptables ufw curl ca-certificates \
+		openssh-server python3 python3-apt sudo iproute2 iptables ufw curl ca-certificates cron \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& update-alternatives --set iptables /usr/sbin/iptables-nft \
 	&& update-alternatives --set ip6tables /usr/sbin/ip6tables-nft \

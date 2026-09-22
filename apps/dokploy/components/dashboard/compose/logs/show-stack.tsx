@@ -1,27 +1,8 @@
-import { Loader2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { badgeStateColor } from "@/components/dashboard/application/logs/show";
+import { ContainerPicker } from "@/components/dashboard/application/logs/show";
 import { resolveContainerSelection } from "@/components/dashboard/docker/logs/utils";
-import { Badge } from "@/components/ui/badge";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import {
-	Select,
-	SelectContent,
-	SelectGroup,
-	SelectItem,
-	SelectLabel,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import { AlertBlock } from "@/components/shared/alert-block";
 import { api } from "@/utils/api";
 export const DockerLogs = dynamic(
 	() =>
@@ -82,100 +63,35 @@ export const ShowDockerLogsStack = ({
 	}, [availableContainers]);
 
 	const isLoading = option === "native" ? containersLoading : servicesLoading;
-	const containersLength =
-		option === "native" ? containers?.length : services?.length;
+
+	const swarmError =
+		option === "swarm"
+			? services?.find((c) => c.containerId === containerId)?.error
+			: undefined;
 
 	return (
-		<Card className="bg-background">
-			<CardHeader>
-				<CardTitle className="text-xl">Logs</CardTitle>
-				<CardDescription>
-					Watch the logs of the application in real time
-				</CardDescription>
-			</CardHeader>
-
-			<CardContent className="flex flex-col gap-4">
-				<div className="flex flex-row justify-between items-center gap-2">
-					<Label>Select a container to view logs</Label>
-					<div className="flex flex-row gap-2 items-center">
-						<span className="text-sm text-muted-foreground">
-							{option === "native" ? "Native" : "Swarm"}
-						</span>
-						<Switch
-							checked={option === "native"}
-							onCheckedChange={(checked) => {
-								setContainerId(undefined);
-								setOption(checked ? "native" : "swarm");
-							}}
-						/>
-					</div>
-				</div>
-				<Select onValueChange={setContainerId} value={containerId}>
-					<SelectTrigger>
-						{isLoading ? (
-							<div className="flex flex-row gap-2 items-center justify-center text-sm text-muted-foreground">
-								<span>Loading...</span>
-								<Loader2 className="animate-spin size-4" />
-							</div>
-						) : (
-							<SelectValue placeholder="Select a container" />
-						)}
-					</SelectTrigger>
-					<SelectContent>
-						<SelectGroup>
-							{option === "native" ? (
-								<div>
-									{containers?.map((container) => (
-										<SelectItem
-											key={container.containerId}
-											value={container.containerId}
-										>
-											{container.name} ({container.containerId}){" "}
-											<Badge variant={badgeStateColor(container.state)}>
-												{container.state}
-											</Badge>
-											{container.status ? ` ${container.status}` : ""}
-										</SelectItem>
-									))}
-								</div>
-							) : (
-								<>
-									{services?.map((container) => (
-										<SelectItem
-											key={container.containerId}
-											value={container.containerId}
-										>
-											{container.name} ({container.containerId}@{container.node}
-											)
-											<Badge variant={badgeStateColor(container.state)}>
-												{container.state}
-											</Badge>
-											{container.currentState
-												? ` ${container.currentState}`
-												: ""}
-										</SelectItem>
-									))}
-								</>
-							)}
-
-							<SelectLabel>Containers ({containersLength})</SelectLabel>
-						</SelectGroup>
-					</SelectContent>
-				</Select>
-				{option === "swarm" &&
-					services?.find((c) => c.containerId === containerId)?.error && (
-						<div className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-sm text-destructive">
-							<span className="font-medium">Error: </span>
-							{services.find((c) => c.containerId === containerId)?.error}
-						</div>
-					)}
-				<DockerLogs
-					serverId={serverId || ""}
-					containerId={containerId || "select-a-container"}
-					runType={option}
-					serviceId={serviceId}
-				/>
-			</CardContent>
-		</Card>
+		<div className="flex flex-col gap-3">
+			{swarmError && <AlertBlock type="error">{swarmError}</AlertBlock>}
+			<DockerLogs
+				serverId={serverId || ""}
+				containerId={containerId || "select-a-container"}
+				runType={option}
+				serviceId={serviceId}
+				toolbarStart={
+					<ContainerPicker
+						option={option}
+						onOptionChange={(next) => {
+							setContainerId(undefined);
+							setOption(next);
+						}}
+						containerId={containerId}
+						onContainerChange={setContainerId}
+						isLoading={isLoading}
+						containers={containers}
+						services={services}
+					/>
+				}
+			/>
+		</div>
 	);
 };

@@ -1,13 +1,8 @@
-import {
-	Boxes,
-	HelpCircle,
-	Loader2,
-	LockIcon,
-	MoreHorizontal,
-} from "lucide-react";
+import { Boxes, Loader2, LockIcon, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { DateTooltip } from "@/components/shared/date-tooltip";
 import { DialogAction } from "@/components/shared/dialog-action";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,12 +22,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { api } from "@/utils/api";
 import { AddNode } from "./add-node";
 import { ShowNodeData } from "./show-node-data";
@@ -170,16 +159,9 @@ export const ShowNodes = ({ serverId }: Props) => {
 								To add nodes to your cluster, you need to configure at least one
 								registry.
 							</span>
-							<TooltipProvider delayDuration={0}>
-								<Tooltip>
-									<TooltipTrigger className="self-center">
-										<HelpCircle className="size-5 text-muted-foreground " />
-									</TooltipTrigger>
-									<TooltipContent>
-										Nodes need a registry to pull images from.
-									</TooltipContent>
-								</Tooltip>
-							</TooltipProvider>
+							<InfoTooltip
+								content={<>Nodes need a registry to pull images from.</>}
+							/>
 						</div>
 
 						<ul className="list-disc list-inside text-sm text-muted-foreground border p-4 rounded-lg flex flex-col gap-1.5 mt-2.5">

@@ -3,13 +3,13 @@ import {
 	AlertCircle,
 	ArrowDownUp,
 	Calendar as CalendarIcon,
-	InfoIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AlertBlock } from "@/components/shared/alert-block";
 import { DialogAction } from "@/components/shared/dialog-action";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -25,12 +25,6 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { api, type RouterOutputs } from "@/utils/api";
 import { RequestDistributionChart } from "./request-distribution-chart";
 import { RequestsTable } from "./requests-table";
@@ -122,21 +116,16 @@ export const ShowRequests = () => {
 									<Label htmlFor="cron" className="min-w-32">
 										Log Cleanup Schedule
 									</Label>
-									<TooltipProvider>
-										<Tooltip>
-											<TooltipTrigger>
-												<InfoIcon className="size-4 text-muted-foreground" />
-											</TooltipTrigger>
-											<TooltipContent>
-												<p className="max-w-80">
-													At the scheduled time, the cleanup job will keep only
-													the last 1000 entries in the access log file and
-													signal Traefik to reopen its log files. The default
-													schedule is daily at midnight (0 0 * * *).
-												</p>
-											</TooltipContent>
-										</Tooltip>
-									</TooltipProvider>
+									<InfoTooltip
+										content={
+											<>
+												At the scheduled time, the cleanup job will keep only
+												the last 1000 entries in the access log file and signal
+												Traefik to reopen its log files. The default schedule is
+												daily at midnight (0 0 * * *).
+											</>
+										}
+									/>
 								</div>
 								<div className="flex-1 flex gap-4">
 									<Input

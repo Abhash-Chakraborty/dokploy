@@ -3,7 +3,6 @@ import {
 	CheckIcon,
 	ChevronsUpDown,
 	DatabaseZap,
-	Info,
 	PenBoxIcon,
 	PlusCircle,
 	RefreshCw,
@@ -14,6 +13,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { AlertBlock } from "@/components/shared/alert-block";
 import { CodeEditor } from "@/components/shared/code-editor";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Button } from "@/components/ui/button";
 import {
 	Command,
@@ -152,17 +152,14 @@ export const ScheduleFormField = ({
 				<FormItem>
 					<FormLabel className="flex items-center gap-2">
 						Schedule
-						<TooltipProvider>
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Info className="w-4 h-4 text-muted-foreground cursor-help" />
-								</TooltipTrigger>
-								<TooltipContent>
+						<InfoTooltip
+							content={
+								<>
 									<p>Cron expression format: minute hour day month weekday</p>
 									<p>Example: 0 0 * * * (daily at midnight)</p>
-								</TooltipContent>
-							</Tooltip>
-						</TooltipProvider>
+								</>
+							}
+						/>
 					</FormLabel>
 					<div className="flex flex-col gap-2">
 						<Select
@@ -515,19 +512,14 @@ export const HandleSchedules = ({ id, scheduleId, scheduleType }: Props) => {
 								<FormItem>
 									<FormLabel className="flex items-center gap-2">
 										Timezone
-										<TooltipProvider>
-											<Tooltip>
-												<TooltipTrigger asChild>
-													<Info className="w-4 h-4 text-muted-foreground cursor-help" />
-												</TooltipTrigger>
-												<TooltipContent>
-													<p>
-														Select a timezone for the schedule. Defaults to your
-														local timezone.
-													</p>
-												</TooltipContent>
-											</Tooltip>
-										</TooltipProvider>
+										<InfoTooltip
+											content={
+												<>
+													Select a timezone for the schedule. Defaults to your
+													local timezone.
+												</>
+											}
+										/>
 									</FormLabel>
 									<Popover>
 										<PopoverTrigger asChild>

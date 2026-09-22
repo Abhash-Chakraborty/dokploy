@@ -1,5 +1,5 @@
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
-import { CircuitBoard, HelpCircle } from "lucide-react";
+import { CircuitBoard, Info } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -187,7 +187,7 @@ export const AddCompose = ({ environmentId, projectName }: Props) => {
 													<FormLabel className="break-all w-fit flex flex-row gap-1 items-center">
 														Select a Server{" "}
 														{showLocalOption ? "(Optional)" : ""}
-														<HelpCircle className="size-4 text-muted-foreground" />
+														<Info className="size-4 text-muted-foreground" />
 													</FormLabel>
 												</TooltipTrigger>
 												<TooltipContent

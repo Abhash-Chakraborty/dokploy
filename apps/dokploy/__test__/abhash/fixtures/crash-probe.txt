@@ -1,0 +1,9 @@
+SVC|ygnhbad96iug1qr2oxk1r9apy|crashy
+TASK|ygnhbad96iug1qr2oxk1r9apy|failed|1790056287|7|task: non-zero exit (7)
+TASK|ygnhbad96iug1qr2oxk1r9apy|failed|1790056279|7|task: non-zero exit (7)
+TASK|ygnhbad96iug1qr2oxk1r9apy|failed|1790056270|7|task: non-zero exit (7)
+TASK|ygnhbad96iug1qr2oxk1r9apy|failed|1790056262|7|task: non-zero exit (7)
+CTR|1b76a5b2aacd59f983203cb6e79efdbb0e8b1797eb31d25c0621fff3d5a154a4|/crashy.1.ucys5kyabbndguoujf37mkkzo|running|0|0|crashy|<no value>|<no value>
+CTR|8ae4f7b8706db482d330df3a6eb9c2bdab68c000768bd7facab9fcd7591eb7f7|/crashy.1.ki6d94u5c3ay97cpqrbj337ha|exited|0|7|crashy|<no value>|<no value>
+CTR|3df9a1e585539ccb1b8e41a1dba5dab74374196f3f02ddcb6ebd38dcb8141189|/crashy.1.brzrrkntkqpr7q3cjx4dblvrq|exited|0|7|crashy|<no value>|<no value>
+CTR|e1b95b9b127029b29e92850c39d0a4d62bab025e87f4f2b570adef0139d19c83|/loopy|restarting|10|3|<no value>|<no value>|<no value>

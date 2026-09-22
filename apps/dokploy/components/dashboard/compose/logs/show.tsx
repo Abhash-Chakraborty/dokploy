@@ -5,14 +5,6 @@ import { badgeStateColor } from "@/components/dashboard/application/logs/show";
 import { resolveContainerSelection } from "@/components/dashboard/docker/logs/utils";
 import { Badge } from "@/components/ui/badge";
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import {
 	Select,
 	SelectContent,
 	SelectGroup,
@@ -65,22 +57,22 @@ export const ShowDockerLogsCompose = ({
 	}, [data]);
 
 	return (
-		<Card className="bg-background">
-			<CardHeader>
-				<CardTitle className="text-xl">Logs</CardTitle>
-				<CardDescription>
-					Watch the logs of the application in real time
-				</CardDescription>
-			</CardHeader>
-
-			<CardContent className="flex flex-col gap-4">
-				<Label>Select a container to view logs</Label>
+		<DockerLogs
+			serverId={serverId || ""}
+			containerId={containerId || "select-a-container"}
+			runType="native"
+			serviceId={serviceId}
+			toolbarStart={
 				<Select onValueChange={setContainerId} value={containerId}>
-					<SelectTrigger>
+					<SelectTrigger
+						size="sm"
+						className="h-8 w-full min-w-0 text-xs sm:w-72 [&>span]:truncate"
+						aria-label="Container"
+					>
 						{isPending ? (
-							<div className="flex flex-row gap-2 items-center justify-center text-sm text-muted-foreground">
+							<div className="flex flex-row gap-2 items-center text-muted-foreground">
+								<Loader2 className="animate-spin size-3.5" />
 								<span>Loading...</span>
-								<Loader2 className="animate-spin size-4" />
 							</div>
 						) : (
 							<SelectValue placeholder="Select a container" />
@@ -88,6 +80,7 @@ export const ShowDockerLogsCompose = ({
 					</SelectTrigger>
 					<SelectContent>
 						<SelectGroup>
+							<SelectLabel>Containers ({data?.length ?? 0})</SelectLabel>
 							{data?.map((container) => (
 								<SelectItem
 									key={container.containerId}
@@ -100,17 +93,10 @@ export const ShowDockerLogsCompose = ({
 									{container.status ? ` ${container.status}` : ""}
 								</SelectItem>
 							))}
-							<SelectLabel>Containers ({data?.length})</SelectLabel>
 						</SelectGroup>
 					</SelectContent>
 				</Select>
-				<DockerLogs
-					serverId={serverId || ""}
-					containerId={containerId || "select-a-container"}
-					runType="native"
-					serviceId={serviceId}
-				/>
-			</CardContent>
-		</Card>
+			}
+		/>
 	);
 };

@@ -1,7 +1,7 @@
 import { Package, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { AlertBlock } from "@/components/shared/alert-block";
 import { DialogAction } from "@/components/shared/dialog-action";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -52,7 +52,10 @@ export const ShowVolumes = ({ id, type }: Props) => {
 		<Card className="bg-background">
 			<CardHeader className="flex flex-row justify-between flex-wrap gap-4">
 				<div>
-					<CardTitle className="text-xl">Volumes</CardTitle>
+					<CardTitle className="flex items-center gap-2 text-xl">
+						Volumes
+						<InfoTooltip content="Redeploy after adding, editing or deleting a mount to apply it." />
+					</CardTitle>
 					<CardDescription>
 						If you want to persist data in this service use the following config
 						to setup the volumes
@@ -80,10 +83,6 @@ export const ShowVolumes = ({ id, type }: Props) => {
 					</div>
 				) : (
 					<div className="flex flex-col pt-2 gap-4">
-						<AlertBlock type="warning">
-							Please remember to click Redeploy after adding, editing, or
-							deleting a mount to apply the changes.
-						</AlertBlock>
 						<div className="flex flex-col gap-6">
 							{data?.mounts.map((mount) => (
 								<div key={mount.mountId}>

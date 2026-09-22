@@ -1,6 +1,6 @@
 import { Settings } from "lucide-react";
 import { useState } from "react";
-import { AlertBlock } from "@/components/shared/alert-block";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -142,18 +142,17 @@ export const AddSwarmSettings = ({ id, type }: Props) => {
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-6xl max-h-[85vh]">
 				<DialogHeader>
-					<DialogTitle>Swarm Settings</DialogTitle>
+					<DialogTitle className="flex items-center gap-2">
+						Swarm Settings
+						<InfoTooltip
+							variant="warning"
+							content="Some settings, placement constraints in particular, can leave logs, monitoring and backups unable to find the service."
+						/>
+					</DialogTitle>
 					<DialogDescription>
 						Configure swarm settings for your service.
 					</DialogDescription>
 				</DialogHeader>
-				<div>
-					<AlertBlock type="info">
-						Changing settings such as placements may cause the logs/monitoring,
-						backups and other features to be unavailable.
-					</AlertBlock>
-				</div>
-
 				<div className="flex gap-4 h-[60vh] py-4">
 					{/* Left Column - Menu */}
 					<div className="w-64 shrink-0 border-r pr-4 overflow-y-auto">

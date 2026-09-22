@@ -1,4 +1,4 @@
-import { HelpCircle } from "lucide-react";
+import { Info } from "lucide-react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -36,7 +36,7 @@ export const ToggleRemoteServersOnly = () => {
 					<TooltipTrigger asChild>
 						<Label className="text-primary flex items-center gap-1.5 cursor-pointer">
 							Remote Servers Only
-							<HelpCircle className="size-4 text-muted-foreground" />
+							<Info className="size-4 text-muted-foreground" />
 						</Label>
 					</TooltipTrigger>
 					<TooltipContent side="top" className="max-w-sm">

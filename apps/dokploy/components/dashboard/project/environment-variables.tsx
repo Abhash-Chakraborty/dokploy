@@ -139,7 +139,9 @@ export const EnvironmentVariables = ({ environmentId, children }: Props) => {
 								<span>
 									<strong>Environment-level</strong> variables are shared across
 									all services in this environment. Reference them from a
-									service with <code>{"{{environment.NAME}}"}</code>.
+									service with <code>API_URL=${"{{environment.API_URL}}"}</code>
+									, and a vault secret with{" "}
+									<code>DB_URL=${"{{vault.<provider>.<secret>}}"}</code>.
 									Service-level (project) variables, set on each service,
 									override these for that service only.
 								</span>
@@ -152,13 +154,6 @@ export const EnvironmentVariables = ({ environmentId, children }: Props) => {
 					</DialogDescription>
 				</DialogHeader>
 				{isError && <AlertBlock type="error">{error?.message}</AlertBlock>}
-				<AlertBlock type="info">
-					Use this syntax to reference environment-level variables in your
-					service environments:{" "}
-					<code>API_URL=${"{{environment.API_URL}}"}</code>. You can also
-					reference secrets from a configured vault provider:{" "}
-					<code>DB_URL=${"{{vault.<provider>.<secret>}}"}</code>
-				</AlertBlock>
 				<div className="grid gap-4">
 					<div className="grid items-center gap-4">
 						<Form {...form}>

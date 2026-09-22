@@ -1,8 +1,8 @@
 import { CheckCircle2, Cpu, Loader2, RefreshCw, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { AlertBlock } from "@/components/shared/alert-block";
 import { DialogAction } from "@/components/shared/dialog-action";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -88,7 +88,25 @@ export function GPUSupport({ serverId }: GPUSupportProps) {
 							<div className="flex flex-col gap-1">
 								<div className="flex items-center gap-2">
 									<Cpu className="size-5" />
-									<CardTitle className="text-xl">GPU Configuration</CardTitle>
+									<CardTitle className="flex items-center gap-2 text-xl">
+										GPU Configuration
+										<InfoTooltip
+											content={
+												<div>
+													<p className="mb-1 font-medium">Requirements</p>
+													<ul className="list-inside list-disc space-y-0.5">
+														<li>An NVIDIA GPU in the machine</li>
+														<li>
+															NVIDIA drivers running (check with nvidia-smi)
+														</li>
+														<li>nvidia-container-runtime installed</li>
+														<li>sudo on the server</li>
+														<li>CUDA support</li>
+													</ul>
+												</div>
+											}
+										/>
+									</CardTitle>
 								</div>
 								<CardDescription>
 									Configure and monitor GPU support
@@ -125,23 +143,6 @@ export function GPUSupport({ serverId }: GPUSupportProps) {
 					</CardHeader>
 
 					<CardContent className="flex flex-col gap-4">
-						<AlertBlock type="info">
-							<div className="font-medium mb-2">System Requirements:</div>
-							<ul className="list-disc list-inside text-sm space-y-1">
-								<li>NVIDIA GPU hardware must be physically installed</li>
-								<li>
-									NVIDIA drivers must be installed and running (check with
-									nvidia-smi)
-								</li>
-								<li>
-									NVIDIA Container Runtime must be installed
-									(nvidia-container-runtime)
-								</li>
-								<li>User must have sudo/administrative privileges</li>
-								<li>System must support CUDA for GPU acceleration</li>
-							</ul>
-						</AlertBlock>
-
 						{isChecking ? (
 							<div className="flex items-center justify-center text-muted-foreground py-4">
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" />

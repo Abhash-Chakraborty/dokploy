@@ -47,7 +47,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { api } from "@/utils/api";
-import { COMPOSE_REDEPLOY_TOAST, ComposeRedeployAlert } from "./redeploy-hint";
+import { COMPOSE_REDEPLOY_TOAST, ComposeRedeployHint } from "./redeploy-hint";
 
 export type CacheType = "fetch" | "cache";
 
@@ -344,12 +344,13 @@ export const AddDomain = ({ id, type, domainId = "", children }: Props) => {
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-2xl">
 				<DialogHeader>
-					<DialogTitle>Domain</DialogTitle>
+					<DialogTitle className="flex items-center gap-2">
+						Domain
+						{type === "compose" && <ComposeRedeployHint />}
+					</DialogTitle>
 					<DialogDescription>{dictionary.dialogDescription}</DialogDescription>
 				</DialogHeader>
 				{isError && <AlertBlock type="error">{error?.message}</AlertBlock>}
-
-				{type === "compose" && <ComposeRedeployAlert className="mb-4" />}
 
 				<Form {...form}>
 					<form

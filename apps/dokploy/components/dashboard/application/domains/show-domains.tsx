@@ -14,7 +14,7 @@ import {
 	ChevronDown,
 	ExternalLink,
 	GlobeIcon,
-	InfoIcon,
+	Info,
 	LayoutGrid,
 	LayoutList,
 	Loader2,
@@ -64,7 +64,7 @@ import { api } from "@/utils/api";
 import { createColumns } from "./columns";
 import { DnsHelperModal } from "./dns-helper-modal";
 import { AddDomain } from "./handle-domain";
-import { COMPOSE_REDEPLOY_TOAST, ComposeRedeployAlert } from "./redeploy-hint";
+import { COMPOSE_REDEPLOY_TOAST, ComposeRedeployHint } from "./redeploy-hint";
 
 export type ValidationState = {
 	isLoading: boolean;
@@ -261,7 +261,8 @@ export const ShowDomains = ({ id, type }: Props) => {
 						</CardDescription>
 					</div>
 
-					<div className="flex flex-row gap-2 flex-wrap">
+					<div className="flex flex-row items-center gap-2 flex-wrap">
+						{type === "compose" && <ComposeRedeployHint />}
 						{data && data?.length > 0 && (
 							<>
 								<Button
@@ -290,11 +291,6 @@ export const ShowDomains = ({ id, type }: Props) => {
 						)}
 					</div>
 				</CardHeader>
-				{type === "compose" && data && data.length > 0 && (
-					<div className="px-6 pb-4">
-						<ComposeRedeployAlert />
-					</div>
-				)}
 				<CardContent className="flex w-full flex-row gap-4">
 					{isLoadingDomains ? (
 						<div className="flex w-full flex-row gap-4 min-h-[40vh] justify-center items-center">
@@ -551,7 +547,7 @@ export const ShowDomains = ({ id, type }: Props) => {
 														<Tooltip>
 															<TooltipTrigger asChild>
 																<Badge variant="secondary">
-																	<InfoIcon className="size-3 mr-1" />
+																	<Info className="size-3 mr-1" />
 																	Path: {item.path || "/"}
 																</Badge>
 															</TooltipTrigger>
@@ -565,7 +561,7 @@ export const ShowDomains = ({ id, type }: Props) => {
 														<Tooltip>
 															<TooltipTrigger asChild>
 																<Badge variant="secondary">
-																	<InfoIcon className="size-3 mr-1" />
+																	<Info className="size-3 mr-1" />
 																	Port: {item.port}
 																</Badge>
 															</TooltipTrigger>
@@ -614,7 +610,7 @@ export const ShowDomains = ({ id, type }: Props) => {
 															<Tooltip>
 																<TooltipTrigger asChild>
 																	<Badge variant="secondary">
-																		<InfoIcon className="size-3 mr-1" />
+																		<Info className="size-3 mr-1" />
 																		Middleware: {middleware}
 																	</Badge>
 																</TooltipTrigger>

@@ -7,6 +7,7 @@ import { z } from "zod";
 import { AlertBlock } from "@/components/shared/alert-block";
 import { CodeEditor } from "@/components/shared/code-editor";
 import { useEnvCompletionSource } from "@/components/shared/env-autocomplete";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { VaultImportDialog } from "@/components/shared/vault-import-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -130,17 +131,23 @@ export const ProjectEnvironment = ({ projectId, children }: Props) => {
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-6xl">
 				<DialogHeader>
-					<DialogTitle>Project Environment</DialogTitle>
+					<DialogTitle className="flex items-center gap-2">
+						Project Environment
+						<InfoTooltip
+							content={
+								<span>
+									Reference these from a service as{" "}
+									<code>DATABASE_URL=${"{{project.DATABASE_URL}}"}</code>
+								</span>
+							}
+						/>
+					</DialogTitle>
 					<DialogDescription>
 						Update the env Environment variables that are accessible to all
 						services of this project.
 					</DialogDescription>
 				</DialogHeader>
 				{isError && <AlertBlock type="error">{error?.message}</AlertBlock>}
-				<AlertBlock type="info">
-					Use this syntax to reference project-level variables in your service
-					environments: <code>DATABASE_URL=${"{{project.DATABASE_URL}}"}</code>
-				</AlertBlock>
 				<div className="grid gap-4">
 					<div className="grid items-center gap-4">
 						<Form {...form}>

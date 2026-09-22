@@ -1,10 +1,11 @@
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
-import { Folder, HelpCircle } from "lucide-react";
+import { Folder, Info } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { AlertBlock } from "@/components/shared/alert-block";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -176,7 +177,7 @@ export const AddApplication = ({ environmentId, projectName }: Props) => {
 													<FormLabel className="break-all w-fit flex flex-row gap-1 items-center">
 														Select a Server{" "}
 														{showLocalOption ? "(Optional)" : ""}
-														<HelpCircle className="size-4 text-muted-foreground" />
+														<Info className="size-4 text-muted-foreground" />
 													</FormLabel>
 												</TooltipTrigger>
 												<TooltipContent
@@ -249,18 +250,12 @@ export const AddApplication = ({ environmentId, projectName }: Props) => {
 								<FormItem>
 									<FormLabel className="flex items-center gap-2">
 										App Name
-										<TooltipProvider delayDuration={0}>
-											<Tooltip>
-												<TooltipTrigger asChild>
-													<HelpCircle className="size-4 text-muted-foreground" />
-												</TooltipTrigger>
-												<TooltipContent side="right">
-													<p>
-														This will be the name of the Docker Swarm service
-													</p>
-												</TooltipContent>
-											</Tooltip>
-										</TooltipProvider>
+										<InfoTooltip
+											side="right"
+											content={
+												<>This will be the name of the Docker Swarm service</>
+											}
+										/>
 									</FormLabel>
 									<FormControl>
 										<Input placeholder="my-app" {...field} />

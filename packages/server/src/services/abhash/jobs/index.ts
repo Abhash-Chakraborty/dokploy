@@ -2,6 +2,7 @@ import "../ansible/service";
 import "../backups/jobs";
 import "../webhooks";
 import "../firewall/apply";
+import "../fleet/crash-watch";
 import "../fleet/jobs";
 import "../mesh/jobs";
 import "../ssh/facts";
@@ -37,6 +38,13 @@ const startEngine = async () => {
 		// Every five minutes meant an SSH round to every server 288 times a day
 		// to feed a dashboard nobody watches that closely.
 		cron: "*/15 * * * *",
+		organizationId: null,
+	});
+	await upsertSchedule({
+		id: "containers.watch-crashes",
+		type: "containers.watch-crashes",
+		input: {},
+		cron: "*/2 * * * *",
 		organizationId: null,
 	});
 	await upsertSchedule({

@@ -1,7 +1,7 @@
 import { Rss, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { AlertBlock } from "@/components/shared/alert-block";
 import { DialogAction } from "@/components/shared/dialog-action";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -32,9 +32,12 @@ export const ShowPorts = ({ applicationId }: Props) => {
 		<Card className="bg-background">
 			<CardHeader className="flex flex-row justify-between flex-wrap gap-4">
 				<div>
-					<CardTitle className="text-xl">Ports</CardTitle>
+					<CardTitle className="flex items-center gap-2 text-xl">
+						Ports
+						<InfoTooltip content="Redeploy after adding, editing or deleting a port to apply it." />
+					</CardTitle>
 					<CardDescription>
-						the ports allows you to expose your application to the internet
+						Publish container ports directly on the host.
 					</CardDescription>
 				</div>
 
@@ -53,10 +56,6 @@ export const ShowPorts = ({ applicationId }: Props) => {
 					</div>
 				) : (
 					<div className="flex flex-col pt-2 gap-4">
-						<AlertBlock type="info">
-							Please remember to click Redeploy after adding, editing, or
-							deleting the ports to apply the changes.
-						</AlertBlock>
 						<div className="flex flex-col gap-6">
 							{data?.ports.map((port) => (
 								<div key={port.portId}>

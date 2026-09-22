@@ -1,3 +1,4 @@
+import { applySpread, readSpread } from "@dokploy/server/utils/cluster/spread";
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
 import { Server } from "lucide-react";
 import Link from "next/link";
@@ -5,7 +6,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { AlertBlock } from "@/components/shared/alert-block";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -32,6 +33,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { api } from "@/utils/api";
 import { AddSwarmSettings } from "./modify-swarm-settings";
 
@@ -43,6 +45,8 @@ interface Props {
 const AddRedirectSchema = z.object({
 	replicas: z.number().min(1, "Replicas must be at least 1"),
 	registryId: z.string().optional(),
+	spread: z.boolean(),
+	maxPerNode: z.number().int().min(0),
 });
 
 type AddCommand = z.infer<typeof AddRedirectSchema>;
@@ -63,6 +67,22 @@ export const ShowClusterSettings = ({ id, type }: Props) => {
 		? queryMap[type]()
 		: api.mongo.one.useQuery({ mongoId: id }, { enabled: !!id });
 	const { data: registries } = api.registry.all.useQuery();
+	const { data: nodes } = api.swarm.getNodes.useQuery(
+		{ serverId: data?.serverId ?? undefined },
+		{ enabled: !!data },
+	);
+	const hasMounts =
+		data && "mounts" in data && Array.isArray(data.mounts)
+			? data.mounts.length > 0
+			: false;
+
+	const formValues = (): AddCommand => ({
+		...(type === "application" && data && "registryId" in data
+			? { registryId: data?.registryId || "" }
+			: {}),
+		replicas: data?.replicas || 1,
+		...readSpread(data?.placementSwarm),
+	});
 
 	const mutationMap = {
 		application: () => api.application.update.useMutation(),
@@ -79,30 +99,17 @@ export const ShowClusterSettings = ({ id, type }: Props) => {
 		: api.mongo.update.useMutation();
 
 	const form = useForm<AddCommand>({
-		defaultValues: {
-			...(type === "application" && data && "registryId" in data
-				? {
-						registryId: data?.registryId || "",
-					}
-				: {}),
-			replicas: data?.replicas || 1,
-		},
+		defaultValues: formValues(),
 		resolver: zodResolver(AddRedirectSchema),
 	});
 
+	// Keyed on the loaded row, not on `command`: a service with no custom
+	// command never filled the form with its saved replicas.
 	useEffect(() => {
-		if (data?.command) {
-			form.reset({
-				...(type === "application" && data && "registryId" in data
-					? {
-							registryId: data?.registryId || "",
-						}
-					: {}),
-				replicas: data?.replicas || 1,
-			});
-		}
-	}, [form, form.reset, form.formState.isSubmitSuccessful, data?.command]);
+		if (data) form.reset(formValues());
+	}, [data]);
 
+	const current = data;
 	const onSubmit = async (data: AddCommand) => {
 		await mutateAsync({
 			applicationId: id || "",
@@ -120,13 +127,18 @@ export const ShowClusterSettings = ({ id, type }: Props) => {
 					}
 				: {}),
 			replicas: data?.replicas,
+			placementSwarm: applySpread(
+				current?.placementSwarm,
+				{ spread: data.spread, maxPerNode: data.maxPerNode },
+				hasMounts,
+			),
 		})
 			.then(async () => {
-				toast.success("Command Updated");
+				toast.success("Cluster settings saved");
 				await refetch();
 			})
 			.catch(() => {
-				toast.error("Error updating the command");
+				toast.error("Could not save the cluster settings");
 			});
 	};
 
@@ -134,7 +146,10 @@ export const ShowClusterSettings = ({ id, type }: Props) => {
 		<Card className="bg-background">
 			<CardHeader className="flex flex-row justify-between">
 				<div>
-					<CardTitle className="text-xl">Cluster Settings</CardTitle>
+					<CardTitle className="flex items-center gap-2 text-xl">
+						Cluster Settings
+						<InfoTooltip content="Redeploy after changing the cluster settings to apply them." />
+					</CardTitle>
 					<CardDescription>
 						Modify swarm settings for the service.
 					</CardDescription>
@@ -142,10 +157,6 @@ export const ShowClusterSettings = ({ id, type }: Props) => {
 				<AddSwarmSettings id={id} type={type} />
 			</CardHeader>
 			<CardContent className="flex flex-col gap-4">
-				<AlertBlock type="info">
-					Please remember to click Redeploy after modify the cluster settings to
-					apply the changes.
-				</AlertBlock>
 				<Form {...form}>
 					<form
 						onSubmit={form.handleSubmit(onSubmit)}
@@ -175,6 +186,73 @@ export const ShowClusterSettings = ({ id, type }: Props) => {
 									</FormItem>
 								)}
 							/>
+							<div className="flex flex-wrap items-end gap-4 rounded-lg border px-4 py-3">
+								<FormField
+									control={form.control}
+									name="spread"
+									render={({ field }) => (
+										<FormItem className="flex min-w-0 flex-1 items-center justify-between gap-4">
+											<div className="space-y-0.5">
+												<FormLabel className="flex items-center gap-2">
+													Spread across nodes
+													<InfoTooltip
+														content={
+															<span>
+																Places replicas evenly over the nodes of this
+																server's swarm, so losing one node keeps the
+																rest serving. Traffic is balanced across them by
+																the swarm routing mesh. Add nodes under Docker,
+																Swarm, Nodes. Separate remote servers are
+																separate swarms and do not share replicas.
+															</span>
+														}
+													/>
+												</FormLabel>
+												<p className="text-xs text-muted-foreground">
+													{nodes
+														? `${nodes.length} node${nodes.length === 1 ? "" : "s"} in this swarm`
+														: "Checking the swarm..."}
+													{hasMounts &&
+														" · has volumes, so it stays on manager nodes unless you change the constraints"}
+												</p>
+											</div>
+											<FormControl>
+												<Switch
+													checked={field.value}
+													onCheckedChange={field.onChange}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="maxPerNode"
+									render={({ field }) => (
+										<FormItem className="w-32">
+											<FormLabel className="text-xs text-muted-foreground">
+												Max per node
+											</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													min={0}
+													placeholder="No limit"
+													className="h-8"
+													value={field.value || ""}
+													onChange={(e) =>
+														field.onChange(
+															e.target.value === ""
+																? 0
+																: Number(e.target.value),
+														)
+													}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
+							</div>
 						</div>
 
 						{type === "application" && (

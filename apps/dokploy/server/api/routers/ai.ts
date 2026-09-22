@@ -32,7 +32,7 @@ import {
 	selectAIProvider,
 } from "@dokploy/server/utils/ai/select-ai-provider";
 import { TRPCError } from "@trpc/server";
-import { generateText } from "ai";
+import { generateText, stepCountIs } from "ai";
 import { z } from "zod";
 import { slugify } from "@/lib/slug";
 import {
@@ -40,6 +40,17 @@ import {
 	createTRPCRouter,
 	protectedProcedure,
 } from "@/server/api/trpc";
+import { audit } from "@/server/api/utils/audit";
+import {
+	type AssistantReply,
+	buildAssistantTools,
+	callerFor,
+	clip,
+	isReadOnly,
+	type ProposedAction,
+	type ToolTrace,
+} from "@/server/mcp/assistant";
+import { TOOLS_BY_NAME } from "@/server/mcp/tools";
 import { generatePassword } from "@/templates/utils";
 
 export const aiRouter = createTRPCRouter({
@@ -301,7 +312,7 @@ ${input.logs}`,
 					.optional(),
 			}),
 		)
-		.mutation(async ({ input, ctx }) => {
+		.mutation(async ({ input, ctx }): Promise<AssistantReply> => {
 			try {
 				const aiSettings = await getAiSettingById(input.aiId);
 				if (!aiSettings?.isEnabled) {
@@ -320,43 +331,87 @@ ${input.logs}`,
 				const provider = selectAIProvider(aiSettings);
 				const model = provider(aiSettings.model);
 
-				// Safeguard: the agent is advisory. It never executes actions — the
-				// permission level only shapes what it is allowed to suggest, and
-				// critical operations must be confirmed by the user in the UI.
-				const permissionGuidance =
+				const modeGuidance =
 					input.permission === "read"
-						? "You are in READ-ONLY mode. Only explain, summarize and answer questions. Do not propose mutating actions."
+						? "You are in READ mode: look things up with your tools and answer. You have no tools that change anything."
 						: input.permission === "write"
-							? "You are in WRITE-advisory mode. You may suggest configuration changes, but present them as steps for the user to confirm. You cannot execute anything yourself."
-							: "You are in DEBUG mode. Focus on diagnosing problems from logs and context. Suggest fixes as confirmable steps; never claim to have executed them.";
+							? "You are in WRITE mode: look things up with your tools, and when the user asks for a change, call the matching tool. Those calls are not executed; they appear to the user as proposals to confirm, so say what each will do."
+							: "You are in DEBUG mode: find the cause from deployments, containers and server state before suggesting anything. Fixes you call as tools are proposals the user confirms.";
 
-				const historyText = (input.history ?? [])
-					.map(
-						(m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`,
-					)
-					.join("\n");
+				const caller = await callerFor(ctx);
+				const proposals: ProposedAction[] = [];
+				const trace: ToolTrace[] = [];
+				const started = Date.now();
 
 				const result = await generateText({
 					model,
-					prompt: `You are Dokploy's in-app assistant, helping a developer operate their self-hosted PaaS (projects, services, deployments, backups, cron schedules, notifications).
+					system: `You are Dokploy's in-app assistant, operating a self-hosted PaaS (projects, services, deployments, servers, backups, schedules) on behalf of the signed-in user, with exactly their permissions.
 
-${permissionGuidance}
+${modeGuidance}
 
-Current page context:
-${input.pageContext || "(none provided)"}
+Use tools instead of guessing: never invent project, service or server names or ids. Start with list_projects when you need to find something. Keep answers short and practical.
 
-${historyText ? `Conversation so far:\n${historyText}\n` : ""}
-User: ${input.message}
-
-Answer concisely and practically. When proposing an action that changes state, list explicit numbered steps and remind the user to confirm. Never fabricate resource names or data you weren't given.`,
+Current page: ${input.pageContext || "(unknown)"}`,
+					messages: [
+						...(input.history ?? []).map((m) => ({
+							role: m.role,
+							content: m.content,
+						})),
+						{ role: "user" as const, content: input.message },
+					],
+					tools: buildAssistantTools(
+						caller,
+						input.permission,
+						proposals,
+						trace,
+					),
+					stopWhen: stepCountIs(8),
 				});
 
-				return { reply: result.text };
+				return {
+					reply: result.text,
+					actions: proposals,
+					tools: trace,
+					durationMs: Date.now() - started,
+				};
 			} catch (error) {
 				throw new TRPCError({
 					code: "BAD_REQUEST",
 					message:
 						error instanceof Error ? error.message : `Chat failed: ${error}`,
+				});
+			}
+		}),
+
+	/** Runs an action the assistant proposed, once the user has confirmed it. */
+	runAction: protectedProcedure
+		.input(
+			z.object({
+				tool: z.string().min(1),
+				args: z.record(z.string(), z.unknown()).default({}),
+			}),
+		)
+		.mutation(async ({ input, ctx }): Promise<{ result: string }> => {
+			const entry = TOOLS_BY_NAME.get(input.tool);
+			if (!entry || isReadOnly(entry)) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: `Not an action the assistant can run: ${input.tool}`,
+				});
+			}
+			try {
+				const result = await entry.run(await callerFor(ctx), input.args);
+				await audit(ctx, {
+					action: "run",
+					resourceType: "agent",
+					resourceName: `assistant: ${input.tool}`,
+					metadata: { args: input.args },
+				});
+				return { result: clip(result) };
+			} catch (error) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: error instanceof Error ? error.message : String(error),
 				});
 			}
 		}),

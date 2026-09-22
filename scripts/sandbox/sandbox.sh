@@ -33,7 +33,7 @@ compose() {
 }
 
 free_port() {
-	node -e 'const s=require("net").createServer();s.listen(0,"127.0.0.1",()=>{console.log(s.address().port);s.close()})'
+	node -e 'const s=require("net").createServer();s.listen(0,"127.0.0.1",()=>{process.stdout.write(s.address().port+"\n");s.close()})'
 }
 
 load_ports() {

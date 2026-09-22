@@ -203,8 +203,25 @@ const MENU: Menu = {
 			icon: Folder,
 		},
 		{
+			isSingle: true,
+			title: "Deployments",
+			url: "/dashboard/deployments",
+			icon: Rocket,
+			isEnabled: ({ permissions }) => !!permissions?.deployment.read,
+		},
+		{
+			isSingle: true,
+			title: "Schedules",
+			url: "/dashboard/schedules",
+			icon: CalendarClock,
+			// Matches the schedule.read gate the page and router enforce; the
+			// previous organization.update gate showed the entry to custom roles
+			// that the page then bounced.
+			isEnabled: ({ permissions }) => !!permissions?.schedule.read,
+		},
+		{
 			isSingle: false,
-			title: "Monitor",
+			title: "Observe",
 			icon: ChartLine,
 			items: [
 				{
@@ -212,12 +229,6 @@ const MENU: Menu = {
 					url: "/dashboard/overview",
 					icon: LayoutGrid,
 					// Only enabled for users with access to services
-					isEnabled: ({ permissions }) => !!permissions?.service.read,
-				},
-				{
-					title: "Analytics",
-					url: "/dashboard/analytics",
-					icon: ChartLine,
 					isEnabled: ({ permissions }) => !!permissions?.service.read,
 				},
 				{
@@ -229,34 +240,18 @@ const MENU: Menu = {
 						!isCloud && !!permissions?.monitoring.read,
 				},
 				{
+					title: "Analytics",
+					url: "/dashboard/analytics",
+					icon: ChartLine,
+					isEnabled: ({ permissions }) => !!permissions?.service.read,
+				},
+				{
 					title: "System Health",
 					url: "/dashboard/system-health",
 					icon: HeartPulse,
 					// Composes existing docker/server probes, so gate on the same reads
 					isEnabled: ({ isCloud, permissions }) =>
 						!isCloud && !!permissions?.docker.read,
-				},
-			],
-		},
-		{
-			isSingle: false,
-			title: "Operate",
-			icon: Rocket,
-			items: [
-				{
-					title: "Deployments",
-					url: "/dashboard/deployments",
-					icon: Rocket,
-					isEnabled: ({ permissions }) => !!permissions?.deployment.read,
-				},
-				{
-					title: "Schedules",
-					url: "/dashboard/schedules",
-					icon: CalendarClock,
-					// Matches the schedule.read gate the page and router enforce; the
-					// previous organization.update gate showed the entry to custom roles
-					// that the page then bounced.
-					isEnabled: ({ permissions }) => !!permissions?.schedule.read,
 				},
 				{
 					title: "Requests",
@@ -340,22 +335,7 @@ const MENU: Menu = {
 						!!(auth?.role === "owner" || auth?.role === "admin") && !isCloud,
 				},
 				{
-					title: "Command centre",
-					url: "/dashboard/command-center",
-					description:
-						"Run Docker, Traefik and Swarm operations across every server.",
-					icon: ServerCog,
-					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
-				},
-				{
-					title: "Ansible",
-					url: "/dashboard/settings/ansible",
-					description: "Playbooks that set up and patch your servers.",
-					icon: ScrollText,
-					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
-				},
-				{
-					title: "Agents",
+					title: "Service accounts",
 					url: "/dashboard/settings/agents",
 					description:
 						"Service accounts with scoped API keys. They never see secret values.",
@@ -389,17 +369,24 @@ const MENU: Menu = {
 		},
 		{
 			isSingle: false,
-			title: "Web Server",
-			icon: Activity,
+			title: "Servers",
+			icon: Server,
 			items: [
 				{
-					title: "Overview",
+					title: "Dokploy server",
 					url: "/dashboard/settings/server",
 					description:
 						"Health, disk and resource use of the machine running Dokploy.",
 					icon: Activity,
 					isEnabled: ({ permissions, isCloud }) =>
 						!!(permissions?.organization.update && !isCloud),
+				},
+				{
+					title: "Remote servers",
+					url: "/dashboard/settings/servers",
+					description: "The machines Dokploy deploys to, and their state.",
+					icon: Server,
+					isEnabled: ({ permissions }) => !!permissions?.server.read,
 				},
 				{
 					title: "Builds",
@@ -409,20 +396,42 @@ const MENU: Menu = {
 					isEnabled: ({ permissions, isCloud }) =>
 						!!(permissions?.server.read && !isCloud),
 				},
+				{
+					title: "Command centre",
+					url: "/dashboard/command-center",
+					description:
+						"Run Docker, Traefik and Swarm operations across every server.",
+					icon: ServerCog,
+					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
+				},
+				{
+					title: "Ansible",
+					url: "/dashboard/settings/ansible",
+					description: "Playbooks that set up and patch your servers.",
+					icon: ScrollText,
+					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
+				},
+				{
+					title: "Firewall",
+					url: "/dashboard/settings/firewall",
+					description: "Rules applied to your servers, and drift from them.",
+					icon: ShieldCheck,
+					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
+				},
+				{
+					title: "Secure network",
+					url: "/dashboard/settings/secure-network",
+					description: "One private mesh network across your servers.",
+					icon: Network,
+					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
+				},
 			],
 		},
 		{
 			isSingle: false,
-			title: "Infrastructure",
-			icon: Server,
+			title: "Networking",
+			icon: Globe,
 			items: [
-				{
-					title: "Remote servers",
-					url: "/dashboard/settings/servers",
-					description: "The machines Dokploy deploys to, and their state.",
-					icon: Server,
-					isEnabled: ({ permissions }) => !!permissions?.server.read,
-				},
 				{
 					title: "Tunnels",
 					url: "/dashboard/settings/tunnels",
@@ -447,27 +456,6 @@ const MENU: Menu = {
 					icon: Globe,
 					isEnabled: ({ permissions }) => !!permissions?.dnsProvider.read,
 				},
-				{
-					title: "Firewall",
-					url: "/dashboard/settings/firewall",
-					description: "Rules applied to your servers, and drift from them.",
-					icon: ShieldCheck,
-					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
-				},
-				{
-					title: "Secure network",
-					url: "/dashboard/settings/secure-network",
-					description: "One private mesh network across your servers.",
-					icon: Network,
-					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
-				},
-				{
-					title: "Registries",
-					url: "/dashboard/settings/registry",
-					description: "Container registries to pull from and push to.",
-					icon: Package,
-					isEnabled: ({ permissions }) => !!permissions?.registry.read,
-				},
 			],
 		},
 		{
@@ -481,6 +469,13 @@ const MENU: Menu = {
 					description: "GitHub, GitLab and others Dokploy deploys from.",
 					icon: GitBranch,
 					isEnabled: ({ permissions }) => !!permissions?.gitProviders.read,
+				},
+				{
+					title: "Registries",
+					url: "/dashboard/settings/registry",
+					description: "Container registries to pull from and push to.",
+					icon: Package,
+					isEnabled: ({ permissions }) => !!permissions?.registry.read,
 				},
 				{
 					title: "SSH keys",
@@ -544,7 +539,7 @@ const MENU: Menu = {
 						auth?.role === "owner" || auth?.role === "admin",
 				},
 				{
-					title: "AI",
+					title: "AI provider",
 					url: "/dashboard/settings/ai",
 					description: "The model provider and key used by the assistant.",
 					icon: BotIcon,

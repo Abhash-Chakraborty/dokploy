@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { quote } from "shell-quote";
 import { paths } from "../constants";
+import { type SpreadOptions, spreadUpdateFlags } from "../utils/cluster/spread";
 import { execAsync, execAsyncRemote } from "../utils/process/execAsync";
 import { findComposeById } from "./compose";
 
@@ -70,6 +71,7 @@ export const scaleComposeService = async (
 	composeId: string,
 	serviceName: string,
 	replicas: number,
+	spread?: SpreadOptions,
 ) => {
 	assertServiceName(serviceName);
 	if (!Number.isInteger(replicas) || replicas < 0 || replicas > 100) {
@@ -78,9 +80,18 @@ export const scaleComposeService = async (
 	const { compose, projectPath, composeFile } = await composeContext(composeId);
 
 	if (compose.composeType === "stack") {
-		const command = `docker service scale ${quote([`${compose.appName}_${serviceName}=${replicas}`])}`;
+		const name = `${compose.appName}_${serviceName}`;
+		const command = spread
+			? `docker service update --detach --replicas=${replicas} ${quote(spreadUpdateFlags(spread))} ${quote([name])}`
+			: `docker service scale ${quote([`${name}=${replicas}`])}`;
 		await run(compose.serverId, projectPath, command);
 		return;
+	}
+
+	if (spread?.spread || spread?.maxPerNode) {
+		throw new Error(
+			"Spreading replicas across nodes needs a Docker Stack; docker compose runs on a single host",
+		);
 	}
 
 	const command = `env -i PATH="$PATH" docker compose -p ${quote([compose.appName])} -f ${quote([composeFile])} up -d --no-recreate --no-deps --scale ${quote([`${serviceName}=${replicas}`])} ${quote([serviceName])}`;

@@ -26,6 +26,12 @@ const emptyWhitelabelingConfig = {
 	errorPageDescription: null,
 	ogImageUrl: null,
 	footerText: null,
+	loginHeading: null,
+	loginSubheading: null,
+	loginLinkLabel: null,
+	loginLinkUrl: null,
+	hideCommunityLinks: null,
+	hideLoginGradient: null,
 };
 
 /** Invalidate the SSR branding cache in _document.tsx so the next request picks up fresh settings. */

@@ -1,11 +1,12 @@
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
-import { CircleHelp, Pencil, PlusIcon } from "lucide-react";
+import { Pencil, PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { AlertBlock } from "@/components/shared/alert-block";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -36,12 +37,6 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { api } from "@/utils/api";
 
 const Schema = z.object({
@@ -237,22 +232,14 @@ export const HandleServers = ({ serverId, asButton = false }: Props) => {
 									<FormItem>
 										<FormLabel className="flex items-center gap-1.5">
 											Server Type
-											<TooltipProvider delayDuration={150}>
-												<Tooltip>
-													<TooltipTrigger asChild>
-														<button
-															type="button"
-															aria-label="About server types"
-														>
-															<CircleHelp className="size-3.5 text-muted-foreground" />
-														</button>
-													</TooltipTrigger>
-													<TooltipContent className="max-w-72">
+											<InfoTooltip
+												content={
+													<>
 														Deploy servers run workloads. Build servers only
 														compile images and are not deployment targets.
-													</TooltipContent>
-												</Tooltip>
-											</TooltipProvider>
+													</>
+												}
+											/>
 										</FormLabel>
 										<Select
 											onValueChange={field.onChange}

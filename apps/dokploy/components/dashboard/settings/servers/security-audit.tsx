@@ -1,6 +1,7 @@
 import { Loader2, LockKeyhole, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { AlertBlock } from "@/components/shared/alert-block";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -35,8 +36,9 @@ export const SecurityAudit = ({ serverId }: Props) => {
 							<div className="flex flex-col gap-1">
 								<div className="flex items-center gap-2">
 									<LockKeyhole className="size-5" />
-									<CardTitle className="text-xl">
+									<CardTitle className="flex items-center gap-2 text-xl">
 										Setup Security Suggestions
+										<InfoTooltip content="Experimental; Ubuntu and Debian only." />
 									</CardTitle>
 								</div>
 								<CardDescription>
@@ -65,9 +67,6 @@ export const SecurityAudit = ({ serverId }: Props) => {
 					</CardHeader>
 
 					<CardContent className="flex flex-col gap-4">
-						<AlertBlock type="info" className="w-full">
-							Ubuntu/Debian OS support is currently supported (Experimental)
-						</AlertBlock>
 						{isPending ? (
 							<div className="flex items-center justify-center text-muted-foreground py-4">
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
