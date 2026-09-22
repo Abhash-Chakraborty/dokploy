@@ -50,8 +50,11 @@ describe("baseline", () => {
 	it("never lets the repair step fail the run", () => {
 		const repair = (baseline[0]?.tasks ?? []).find((task) =>
 			task.name?.includes("half-configured"),
-		) as { failed_when?: unknown } | undefined;
-		expect(repair?.failed_when).toBe(false);
+		) as { block?: Array<{ failed_when?: unknown }> } | undefined;
+		const configure = (repair?.block ?? []).find(
+			(task) => (task as Task).name === "Configure whatever was left half done",
+		);
+		expect(configure?.failed_when).toBe(false);
 	});
 });
 
@@ -107,6 +110,72 @@ describe("production failures of 2026-09-22", () => {
 				"dokploy_docker.rc == 0",
 			);
 		}
+	});
+
+	// abhash-amd, 2026-09-23: a stale sshd held the port ssh.socket wanted, so
+	// the socket stayed failed, openssh-server's postinst could not restart it,
+	// dpkg stopped half way, and both baseline and patch then failed on an
+	// unrelated package.
+	it.each(["baseline.yml", "updates.yml"])(
+		"%s repairs dpkg even when a service refuses to start",
+		(file) => {
+			const repair = tasks(file).find((task) =>
+				task.name?.includes("half-configured"),
+			) as
+				| {
+						block?: Array<Record<string, unknown>>;
+						always?: Array<Record<string, unknown>>;
+				  }
+				| undefined;
+			const hold = (repair?.block ?? []).find((task) =>
+				JSON.stringify(task["ansible.builtin.copy"] ?? "").includes(
+					"policy-rc.d",
+				),
+			);
+			expect(hold, "restarts are held back for the repair").toBeTruthy();
+			// Left behind, it would stop every service on the host from starting.
+			const remove = (repair?.always ?? []).find(
+				(task) =>
+					(task["ansible.builtin.file"] as { path?: string; state?: string })
+						?.path === "/usr/sbin/policy-rc.d",
+			);
+			expect(
+				(remove?.["ansible.builtin.file"] as { state?: string })?.state,
+				"policy-rc.d is always removed",
+			).toBe("absent");
+			// Container images ship their own policy-rc.d; deleting it would
+			// change how the host behaves long after the repair.
+			const restore = (repair?.always ?? []).find((task) =>
+				JSON.stringify(task["ansible.builtin.command"] ?? "").includes(
+					"policy-rc.d.dokploy-kept /usr/sbin/policy-rc.d",
+				),
+			);
+			expect(restore, "the host's own policy-rc.d is put back").toBeTruthy();
+			expect(
+				tasks(file).some((task) =>
+					String(task["ansible.builtin.command"] ?? "").includes(
+						"reset-failed ssh.socket",
+					),
+				),
+				"a failed ssh.socket is cleared",
+			).toBe(true);
+		},
+	);
+
+	it("baseline creates the journald drop-in directory before writing to it", () => {
+		const list = tasks("baseline.yml");
+		const directory = list.findIndex(
+			(task) =>
+				(task["ansible.builtin.file"] as { path?: string })?.path ===
+				"/etc/systemd/journald.conf.d",
+		);
+		const cap = list.findIndex((task) =>
+			String(
+				(task["ansible.builtin.copy"] as { dest?: string })?.dest ?? "",
+			).startsWith("/etc/systemd/journald.conf.d/"),
+		);
+		expect(directory).toBeGreaterThanOrEqual(0);
+		expect(directory).toBeLessThan(cap);
 	});
 
 	it("never reloads an inactive socket-activated sshd", () => {

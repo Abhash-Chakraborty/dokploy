@@ -2,6 +2,7 @@ import { validateRequest } from "@dokploy/server/lib/auth";
 import { hasPermission } from "@dokploy/server/services/permission";
 import { CalendarClock } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import type { ReactElement } from "react";
 import { HostCrontab } from "@/components/abhash/fleet/host-crontab";
@@ -65,13 +66,21 @@ function SchedulesPage() {
 								{serverId ? (
 									<HostCrontab serverId={serverId} />
 								) : (
-									<div className="flex h-40 flex-col items-center justify-center gap-1 text-center text-sm text-muted-foreground">
-										<span>Pick a remote server to see its crontabs.</span>
-										<span className="text-xs">
-											Dokploy runs in a container here, so it cannot reach this
-											host's own crontab. Add the host as a remote server to
-											manage it too.
+									<div className="flex h-40 flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground">
+										<span>Pick a server to see its crontabs.</span>
+										<span className="max-w-md text-xs">
+											This Dokploy host is not in the list: Dokploy runs in a
+											container, so the crontab it can read is the container's,
+											not the machine's. Add the machine as a server — over SSH
+											to itself — and it appears here and in the command centre
+											like any other.
 										</span>
+										<Link
+											href="/dashboard/settings/servers"
+											className="text-xs underline"
+										>
+											Add this machine as a server
+										</Link>
 									</div>
 								)}
 							</TabsContent>

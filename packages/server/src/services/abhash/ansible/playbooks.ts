@@ -31,16 +31,62 @@ const BASELINE = `- name: Dokploy server baseline
         - dokploy_install_packages | bool
         - ansible_os_family == "Debian"
 
-    - name: Repair a half-configured package state
-      ansible.builtin.command: dpkg --configure -a
-      environment:
-        DEBIAN_FRONTEND: noninteractive
-      register: dokploy_dpkg_repair
-      changed_when: dokploy_dpkg_repair.stdout | trim | length > 0
+    # A unit that cannot start (ssh.socket losing its port to a stale sshd is
+    # the usual one) makes the package's postinst fail, and dpkg gives up
+    # half way. Clearing the failed state lets systemd try it again.
+    - name: Clear a failed ssh.socket
+      ansible.builtin.command: systemctl reset-failed ssh.socket
+      changed_when: false
       failed_when: false
       when:
         - dokploy_install_packages | bool
+        - ansible_service_mgr == "systemd"
+
+    # policy-rc.d holds service restarts back for the length of the repair
+    # only. Without it a service that refuses to start keeps dpkg broken, and
+    # every later apt run fails on a package that has nothing to do with it.
+    # Anything skipped here reads its config when it next starts anyway.
+    - name: Repair a half-configured package state
+      when:
+        - dokploy_install_packages | bool
         - ansible_os_family == "Debian"
+      block:
+        # Some hosts ship their own policy (container images all do), and it
+        # is theirs to keep: set it aside rather than overwrite it.
+        - name: Keep the host's own restart policy aside
+          ansible.builtin.command:
+            cmd: mv /usr/sbin/policy-rc.d /usr/sbin/policy-rc.d.dokploy-kept
+            removes: /usr/sbin/policy-rc.d
+            creates: /usr/sbin/policy-rc.d.dokploy-kept
+          changed_when: true
+
+        - name: Hold service restarts back for the repair
+          ansible.builtin.copy:
+            dest: /usr/sbin/policy-rc.d
+            mode: "0755"
+            content: |
+              #!/bin/sh
+              exit 101
+
+        - name: Configure whatever was left half done
+          ansible.builtin.command: dpkg --configure -a
+          environment:
+            DEBIAN_FRONTEND: noninteractive
+          register: dokploy_dpkg_repair
+          changed_when: dokploy_dpkg_repair.stdout | trim | length > 0
+          failed_when: false
+      always:
+        # Leaving ours behind would silently stop every service from starting.
+        - name: Let services start again
+          ansible.builtin.file:
+            path: /usr/sbin/policy-rc.d
+            state: absent
+
+        - name: Put the host's own restart policy back
+          ansible.builtin.command:
+            cmd: mv /usr/sbin/policy-rc.d.dokploy-kept /usr/sbin/policy-rc.d
+            removes: /usr/sbin/policy-rc.d.dokploy-kept
+          changed_when: true
 
     - name: Report what the repair fixed
       ansible.builtin.debug:
@@ -114,6 +160,15 @@ const BASELINE = `- name: Dokploy server baseline
       ansible.builtin.command: sysctl --system
       when: dokploy_sysctl is changed
       changed_when: true
+
+    # A host that has never had a drop-in has no directory for one, and copy
+    # does not create parent directories.
+    - name: Make room for the journal settings
+      ansible.builtin.file:
+        path: /etc/systemd/journald.conf.d
+        state: directory
+        mode: "0755"
+      when: ansible_service_mgr == "systemd"
 
     - name: Cap the journal so logs cannot fill the disk
       ansible.builtin.copy:
@@ -203,16 +258,51 @@ const UPDATES = `- name: Patch Dokploy servers
         mode: "0755"
       when: ansible_os_family == "Debian"
 
-    # Same repair as the baseline: one package left half-configured by an
-    # earlier run fails every upgrade after it.
-    - name: Repair a half-configured package state
-      ansible.builtin.command: dpkg --configure -a
-      environment:
-        DEBIAN_FRONTEND: noninteractive
-      register: dokploy_dpkg_repair
-      changed_when: dokploy_dpkg_repair.stdout | trim | length > 0
+    - name: Clear a failed ssh.socket
+      ansible.builtin.command: systemctl reset-failed ssh.socket
+      changed_when: false
       failed_when: false
+      when: ansible_service_mgr == "systemd"
+
+    # Same repair as the baseline: one package left half-configured by an
+    # earlier run fails every upgrade after it, and it stays that way while
+    # the service its postinst restarts cannot start.
+    - name: Repair a half-configured package state
       when: ansible_os_family == "Debian"
+      block:
+        - name: Keep the host's own restart policy aside
+          ansible.builtin.command:
+            cmd: mv /usr/sbin/policy-rc.d /usr/sbin/policy-rc.d.dokploy-kept
+            removes: /usr/sbin/policy-rc.d
+            creates: /usr/sbin/policy-rc.d.dokploy-kept
+          changed_when: true
+
+        - name: Hold service restarts back for the repair
+          ansible.builtin.copy:
+            dest: /usr/sbin/policy-rc.d
+            mode: "0755"
+            content: |
+              #!/bin/sh
+              exit 101
+
+        - name: Configure whatever was left half done
+          ansible.builtin.command: dpkg --configure -a
+          environment:
+            DEBIAN_FRONTEND: noninteractive
+          register: dokploy_dpkg_repair
+          changed_when: dokploy_dpkg_repair.stdout | trim | length > 0
+          failed_when: false
+      always:
+        - name: Let services start again
+          ansible.builtin.file:
+            path: /usr/sbin/policy-rc.d
+            state: absent
+
+        - name: Put the host's own restart policy back
+          ansible.builtin.command:
+            cmd: mv /usr/sbin/policy-rc.d.dokploy-kept /usr/sbin/policy-rc.d
+            removes: /usr/sbin/policy-rc.d.dokploy-kept
+          changed_when: true
 
     - name: Update the package lists and upgrade
       ansible.builtin.apt:
