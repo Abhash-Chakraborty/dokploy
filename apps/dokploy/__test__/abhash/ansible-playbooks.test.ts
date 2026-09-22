@@ -43,8 +43,8 @@ describe("baseline", () => {
 	it("installs apt-utils so debconf does not defer configuration", () => {
 		const install = (baseline[0]?.tasks ?? []).find(
 			(task) => task.name === "Install the basics",
-		) as { "ansible.builtin.package"?: { name?: string[] } } | undefined;
-		expect(install?.["ansible.builtin.package"]?.name).toContain("apt-utils");
+		) as { "ansible.builtin.apt"?: { name?: string[] } } | undefined;
+		expect(install?.["ansible.builtin.apt"]?.name).toContain("apt-utils");
 	});
 
 	it("never lets the repair step fail the run", () => {
@@ -52,5 +52,68 @@ describe("baseline", () => {
 			task.name?.includes("half-configured"),
 		) as { failed_when?: unknown } | undefined;
 		expect(repair?.failed_when).toBe(false);
+	});
+});
+
+describe("production failures of 2026-09-22", () => {
+	const play = (file: string) =>
+		(parse(PLATFORM_FILES[file] as string) as Play[])[0] as Play & {
+			gather_facts?: boolean;
+			gather_subset?: string[];
+		};
+	const tasks = (file: string) =>
+		(play(file).tasks ?? []) as Array<Task & Record<string, unknown>>;
+
+	it("baseline refreshes the package index before installing", () => {
+		const install = tasks("baseline.yml").find(
+			(t) => t.name === "Install the basics",
+		);
+		const apt = install?.["ansible.builtin.apt"] as
+			| { update_cache?: boolean }
+			| undefined;
+		expect(apt?.update_cache).toBe(true);
+	});
+
+	it("patching repairs dpkg and the sshd runtime dir before upgrading", () => {
+		const names = tasks("updates.yml").map((t) => t.name ?? "");
+		const sshd = names.findIndex((n) => n.includes("sshd can be restarted"));
+		const repair = names.findIndex((n) => n.includes("half-configured"));
+		const upgrade = names.findIndex((n) => n.includes("upgrade"));
+		expect(sshd).toBeGreaterThanOrEqual(0);
+		expect(sshd).toBeLessThan(repair);
+		expect(repair).toBeLessThan(upgrade);
+	});
+
+	it("cleanup gathers the facts its conditions use", () => {
+		const cleanup = play("cleanup.yml");
+		const usesServiceMgr = PLATFORM_FILES["cleanup.yml"]?.includes(
+			"ansible_service_mgr",
+		);
+		if (usesServiceMgr) {
+			expect(cleanup.gather_facts).toBe(true);
+			expect(cleanup.gather_subset).toContain("min");
+		}
+	});
+
+	it("cleanup only runs docker commands where Docker exists", () => {
+		const tasks = (
+			play("cleanup.yml") as { tasks: Array<Record<string, unknown>> }
+		).tasks;
+		for (const task of tasks) {
+			const command = JSON.stringify(task["ansible.builtin.command"] ?? "");
+			if (!command.includes("docker ") || command.includes("command -v"))
+				continue;
+			expect(JSON.stringify(task.when), String(task.name)).toContain(
+				"dokploy_docker.rc == 0",
+			);
+		}
+	});
+
+	it("never reloads an inactive socket-activated sshd", () => {
+		const handler = (
+			(play("baseline.yml") as { handlers?: Array<Record<string, unknown>> })
+				.handlers ?? []
+		).find((h) => h.name === "reload sshd");
+		expect(String(handler?.["ansible.builtin.shell"])).toContain("is-active");
 	});
 });

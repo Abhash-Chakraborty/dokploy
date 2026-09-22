@@ -10,6 +10,7 @@ import { isFlagEnabled } from "../flags";
 import { assertServerInOrganization } from "../ownership";
 import { createSecret } from "../vault/secrets";
 import { engineById } from "./catalog";
+import { attachToDokployNetwork } from "./network";
 import type { EngineConfig } from "./types";
 
 export type ManagedServiceRow = typeof abhashManagedService.$inferSelect;
@@ -76,7 +77,7 @@ export const createManagedService = async (input: {
 			environmentId: input.environmentId,
 			composeType: "docker-compose",
 			sourceType: "raw",
-			composeFile: rendered.compose,
+			composeFile: attachToDokployNetwork(rendered.compose, input.name),
 			env: envFile(rendered.env),
 			serverId: input.serverId ?? null,
 			description: `${engine.label} ${version}, managed by Dokploy`,
@@ -164,7 +165,7 @@ export const updateManagedService = async (
 	await db
 		.update(compose)
 		.set({
-			composeFile: rendered.compose,
+			composeFile: attachToDokployNetwork(rendered.compose, stack.name),
 			env: envFile({ ...rendered.env, ...existing }),
 		})
 		.where(eq(compose.composeId, stack.composeId));

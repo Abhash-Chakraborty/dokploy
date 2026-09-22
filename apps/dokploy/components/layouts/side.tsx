@@ -33,6 +33,7 @@ import {
 	House,
 	Key,
 	KeyRound,
+	Layers,
 	LayoutGrid,
 	Loader2,
 	Lock,
@@ -455,6 +456,15 @@ const MENU: Menu = {
 						"Let Dokploy create a domain's DNS record instead of you.",
 					icon: Globe,
 					isEnabled: ({ permissions }) => !!permissions?.dnsProvider.read,
+				},
+				{
+					title: "Middlewares",
+					url: "/dashboard/settings/middlewares",
+					description:
+						"Rate limits, allowlists and passwords in front of your domains, per project or everywhere.",
+					icon: Layers,
+					isEnabled: ({ auth }) =>
+						auth?.role === "owner" || auth?.role === "admin",
 				},
 			],
 		},

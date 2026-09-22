@@ -13,6 +13,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { DialogAction } from "@/components/shared/dialog-action";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -392,7 +393,32 @@ export const ShowLogDrains = () => {
 	return (
 		<PageContainer>
 			<PageHeader
-				title="Log drains"
+				title={
+					<span className="flex items-center gap-2">
+						Log drains
+						<InfoTooltip
+							content={
+								<div className="flex flex-col gap-1.5">
+									<p>
+										A small Vector container on the chosen server reads every
+										line each container there prints to stdout and stderr: your
+										apps, databases, Traefik and Dokploy itself.
+									</p>
+									<p>
+										Each line goes with its time, stream, container name, image
+										and labels, plus the server's hostname, the service and the
+										compose project.
+									</p>
+									<p>
+										Not sent: files written inside containers, deployment build
+										logs, the server's own system logs and metrics. Anything
+										your apps print, secrets included, is sent as printed.
+									</p>
+								</div>
+							}
+						/>
+					</span>
+				}
 				description="Ship container logs off the host to Loki, Datadog or any HTTP endpoint. Without one, logs live and die with the container."
 				icon={<Waypoints className="size-5" />}
 				actions={<AddLogDrain onDone={() => refetch()} />}
@@ -408,7 +434,9 @@ export const ShowLogDrains = () => {
 						<Waypoints className="size-8 text-muted-foreground" />
 						<span className="text-base font-medium">No log drains yet</span>
 						<span className="max-w-md text-sm text-muted-foreground">
-							Add one to forward every container's output to your logging stack.
+							Add one to search logs from every server in one place, keep them
+							after a container is replaced, and alert on errors in Grafana or
+							Datadog.
 						</span>
 					</div>
 				) : (

@@ -2,7 +2,8 @@ import fs, { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { paths } from "@dokploy/server/constants";
 import { db } from "@dokploy/server/db";
-import { network, patch } from "@dokploy/server/db/schema";
+import { environments, network, patch } from "@dokploy/server/db/schema";
+import { scopedMiddlewareRefs } from "@dokploy/server/services/abhash/middlewares/refs";
 import type { Compose } from "@dokploy/server/services/compose";
 import type { Domain } from "@dokploy/server/services/domain";
 import { eq, inArray } from "drizzle-orm";
@@ -250,6 +251,14 @@ export const addDomainToCompose = async (
 		}
 	}
 
+	const environment = await db.query.environments.findFirst({
+		where: eq(environments.environmentId, compose.environmentId),
+		with: { project: { columns: { projectId: true, organizationId: true } } },
+	});
+	const scopedMiddlewares = environment?.project
+		? await scopedMiddlewareRefs(environment.project)
+		: [];
+
 	for (const domain of domains.filter((d) => d.enabled)) {
 		const { serviceName, https } = domain;
 		if (!serviceName) {
@@ -265,9 +274,15 @@ export const addDomainToCompose = async (
 			appName,
 			domain,
 			domain.customEntrypoint || "web",
+			scopedMiddlewares,
 		);
 		if (!domain.customEntrypoint && https) {
-			const httpsLabels = createDomainLabels(appName, domain, "websecure");
+			const httpsLabels = createDomainLabels(
+				appName,
+				domain,
+				"websecure",
+				scopedMiddlewares,
+			);
 			httpLabels.push(...httpsLabels);
 		}
 
@@ -419,6 +434,7 @@ export const createDomainLabels = (
 	appName: string,
 	domain: Domain,
 	entrypoint: string,
+	scopedMiddlewares: string[] = [],
 ) => {
 	const {
 		host,
@@ -481,6 +497,11 @@ export const createDomainLabels = (
 	// Add custom middlewares (skip for redirect-only router)
 	if (!isRedirectRouter && domain.middlewares?.length) {
 		middlewares.push(...domain.middlewares);
+	}
+	if (!isRedirectRouter) {
+		for (const ref of scopedMiddlewares) {
+			if (!middlewares.includes(ref)) middlewares.push(ref);
+		}
 	}
 
 	// Apply middlewares to router if any exist

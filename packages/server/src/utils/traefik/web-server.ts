@@ -2,6 +2,10 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { paths } from "@dokploy/server/constants";
 import type { webServerSettings } from "@dokploy/server/db/schema/web-server-settings";
+import {
+	dashboardMiddlewareRefs,
+	isManagedRef,
+} from "@dokploy/server/services/abhash/middlewares/refs";
 import { parse, stringify } from "yaml";
 import {
 	loadOrCreateConfig,
@@ -51,6 +55,14 @@ export const updateServerTraefik = (
 		},
 	};
 
+	// Middlewares attached from the Middlewares page survive a settings save.
+	const managed = [
+		...(currentRouterConfig.middlewares ?? []),
+		...(config.http.routers[`${appName}-router-app-secure`]?.middlewares ?? []),
+	].filter(
+		(ref, index, all) => isManagedRef(ref) && all.indexOf(ref) === index,
+	);
+
 	if (https) {
 		currentRouterConfig.middlewares = ["redirect-to-https"];
 
@@ -60,17 +72,19 @@ export const updateServerTraefik = (
 				service: `${appName}-service-app`,
 				entryPoints: ["websecure"],
 				tls: { certResolver: "letsencrypt" },
+				...(managed.length ? { middlewares: managed } : {}),
 			};
 		} else {
 			config.http.routers[`${appName}-router-app-secure`] = {
 				rule: `Host(\`${newHost}\`)`,
 				service: `${appName}-service-app`,
 				entryPoints: ["websecure"],
+				...(managed.length ? { middlewares: managed } : {}),
 			};
 		}
 	} else {
 		delete config.http.routers[`${appName}-router-app-secure`];
-		currentRouterConfig.middlewares = [];
+		currentRouterConfig.middlewares = managed;
 	}
 
 	if (newHost) {
@@ -117,4 +131,27 @@ export const writeMainConfig = (traefikConfig: string) => {
 	} catch (e) {
 		console.error("Error saving the YAML config file:", e);
 	}
+};
+
+/**
+ * Puts the middlewares marked "Also the Dokploy dashboard" on the dashboard's
+ * routers. With HTTPS the plain router only redirects, so they go on the
+ * secure one; without it they go on the only router there is.
+ */
+export const applyDashboardMiddlewares = async () => {
+	const { DYNAMIC_TRAEFIK_PATH } = paths();
+	if (!existsSync(join(DYNAMIC_TRAEFIK_PATH, "dokploy.yml"))) return;
+	const refs = await dashboardMiddlewareRefs();
+	const config: FileConfig = loadOrCreateConfig("dokploy");
+	const routers = config.http?.routers ?? {};
+	const plain = routers["dokploy-router-app"];
+	const secure = routers["dokploy-router-app-secure"];
+	const keep = (list: string[] | undefined) =>
+		(list ?? []).filter((ref) => !isManagedRef(ref));
+	if (secure) {
+		secure.middlewares = [...keep(secure.middlewares), ...refs];
+	} else if (plain) {
+		plain.middlewares = [...keep(plain.middlewares), ...refs];
+	}
+	writeTraefikConfig(config, "dokploy");
 };

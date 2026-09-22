@@ -36,6 +36,7 @@ import { eq } from "drizzle-orm";
 import { quote } from "shell-quote";
 import type { z } from "zod";
 import { encodeBase64 } from "../utils/docker/utils";
+import { KEEP_DOCKER_ENV } from "../utils/process/docker-env";
 import { getDokployUrl } from "./admin";
 import {
 	createDeploymentCompose,
@@ -289,7 +290,7 @@ export const deployCompose = async ({
 		}
 
 		if (freshVolumes && compose.composeType === "docker-compose") {
-			const downCommand = `set -e; env -i PATH="$PATH" docker compose -p ${compose.appName} down --volumes 2>&1 || true;`;
+			const downCommand = `set -e; env -i PATH="$PATH" ${KEEP_DOCKER_ENV} docker compose -p ${compose.appName} down --volumes 2>&1 || true;`;
 			const downWithLog = `(${downCommand}) >> ${deployment.logPath} 2>&1`;
 			if (compose.serverId) {
 				await execAsyncRemote(compose.serverId, downWithLog);
@@ -415,7 +416,7 @@ export const rebuildCompose = async ({
 		}
 
 		if (freshVolumes && compose.composeType === "docker-compose") {
-			const downCommand = `set -e; env -i PATH="$PATH" docker compose -p ${compose.appName} down --volumes 2>&1 || true;`;
+			const downCommand = `set -e; env -i PATH="$PATH" ${KEEP_DOCKER_ENV} docker compose -p ${compose.appName} down --volumes 2>&1 || true;`;
 			const downWithLog = `(${downCommand}) >> ${deployment.logPath} 2>&1`;
 			if (compose.serverId) {
 				await execAsyncRemote(compose.serverId, downWithLog);
@@ -485,7 +486,7 @@ export const removeCompose = async (
 		} else {
 			const command = `
 			docker network disconnect ${compose.appName} dokploy-traefik;
-			env -i PATH="$PATH" docker compose -p ${compose.appName} down ${
+			env -i PATH="$PATH" ${KEEP_DOCKER_ENV} docker compose -p ${compose.appName} down ${
 				deleteVolumes ? "--volumes" : ""
 			};
 			rm -rf ${projectPath}`;
@@ -511,7 +512,7 @@ export const startCompose = async (composeId: string) => {
 		const projectPath = join(COMPOSE_PATH, compose.appName, "code");
 		const path =
 			compose.sourceType === "raw" ? "docker-compose.yml" : compose.composePath;
-		const baseCommand = `env -i PATH="$PATH" docker compose -p ${quote([compose.appName])} -f ${quote([path])} up -d`;
+		const baseCommand = `env -i PATH="$PATH" ${KEEP_DOCKER_ENV} docker compose -p ${quote([compose.appName])} -f ${quote([path])} up -d`;
 		if (compose.composeType === "docker-compose") {
 			if (compose.serverId) {
 				await execAsyncRemote(
@@ -546,13 +547,13 @@ export const stopCompose = async (composeId: string) => {
 			if (compose.serverId) {
 				await execAsyncRemote(
 					compose.serverId,
-					`cd ${join(COMPOSE_PATH, compose.appName)} && env -i PATH="$PATH" docker compose -p ${
+					`cd ${join(COMPOSE_PATH, compose.appName)} && env -i PATH="$PATH" ${KEEP_DOCKER_ENV} docker compose -p ${
 						compose.appName
 					} stop`,
 				);
 			} else {
 				await execAsync(
-					`env -i PATH="$PATH" docker compose -p ${compose.appName} stop`,
+					`env -i PATH="$PATH" ${KEEP_DOCKER_ENV} docker compose -p ${compose.appName} stop`,
 					{
 						cwd: join(COMPOSE_PATH, compose.appName),
 					},

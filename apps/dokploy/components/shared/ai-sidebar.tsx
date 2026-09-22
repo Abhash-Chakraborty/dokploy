@@ -2,6 +2,7 @@ import { Bot, Check, Loader2, Play, Send, Wrench } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { AssistantMarkdown } from "@/components/shared/assistant-markdown";
 import { Button } from "@/components/ui/button";
 import {
 	Select,
@@ -174,14 +175,15 @@ export const AiSidebar = () => {
 								key={`${m.role}-${i}`}
 								className={
 									m.role === "user"
-										? "text-foreground"
-										: "text-muted-foreground whitespace-pre-wrap"
+										? "whitespace-pre-wrap rounded-md bg-muted px-2.5 py-1.5 text-foreground"
+										: "text-foreground"
 								}
 							>
-								<span className="font-medium">
-									{m.role === "user" ? "You" : "Assistant"}:
-								</span>{" "}
-								{m.content}
+								{m.role === "user" ? (
+									m.content
+								) : (
+									<AssistantMarkdown>{m.content}</AssistantMarkdown>
+								)}
 								{!!m.tools?.length && (
 									<div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
 										<Wrench className="size-3" />
