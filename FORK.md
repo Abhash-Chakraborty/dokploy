@@ -104,23 +104,27 @@ excluded from typechecking and from the Docker build context, and CI
 
 ## Personal Installer
 
-After pushing this branch and enabling GitHub Pages or another static host, expose `install.sh` at your domain, for example:
+Run as root on a Linux server:
 
 ```bash
-curl -sSL https://abhashchakraborty.tech/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Abhash-Chakraborty/dokploy/main/install.sh | sudo bash
 ```
 
-The script defaults to:
+It installs Docker if needed, initialises Swarm, and provisions the attachable
+`dokploy-network`, `dokploy-postgres` and `dokploy-redis` services, Docker
+secrets for the database password and auth secret, the `dokploy` service and
+Traefik. Re-running it reuses existing secrets and volumes and repairs a
+half-finished install; `install.sh update` only rolls the image.
 
-```text
-ghcr.io/abhash-chakraborty/dokploy:latest
-```
-
-You can override it:
+Overrides, e.g. a canary image or a public URL:
 
 ```bash
-DOKPLOY_IMAGE=ghcr.io/abhash-chakraborty/dokploy:canary bash install.sh
+curl -fsSL .../install.sh | sudo DOKPLOY_IMAGE=ghcr.io/abhash-chakraborty/dokploy:canary DOKPLOY_URL=https://dokploy.example.com bash
 ```
+
+`scripts/sandbox/install-test.sh` runs the installer end to end in a
+throwaway Docker-in-Docker host, including repairing an install made by the
+previous installer (issue #20); CI runs it whenever the installer changes.
 
 ## Personal Feature Additions
 
