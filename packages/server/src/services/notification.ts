@@ -80,6 +80,7 @@ export const createSlackNotification = async (
 				notificationType: "slack",
 				organizationId: organizationId,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 			})
 			.returning()
@@ -113,6 +114,7 @@ export const updateSlackNotification = async (
 				dockerCleanup: input.dockerCleanup,
 				organizationId: input.organizationId,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 			})
 			.where(eq(notifications.notificationId, input.notificationId))
@@ -177,6 +179,7 @@ export const createTelegramNotification = async (
 				notificationType: "telegram",
 				organizationId: organizationId,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 			})
 			.returning()
@@ -210,6 +213,7 @@ export const updateTelegramNotification = async (
 				dockerCleanup: input.dockerCleanup,
 				organizationId: input.organizationId,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 			})
 			.where(eq(notifications.notificationId, input.notificationId))
@@ -274,6 +278,7 @@ export const createDiscordNotification = async (
 				notificationType: "discord",
 				organizationId: organizationId,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 			})
 			.returning()
@@ -307,6 +312,7 @@ export const updateDiscordNotification = async (
 				dockerCleanup: input.dockerCleanup,
 				organizationId: input.organizationId,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 			})
 			.where(eq(notifications.notificationId, input.notificationId))
@@ -374,6 +380,7 @@ export const createEmailNotification = async (
 				notificationType: "email",
 				organizationId: organizationId,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 			})
 			.returning()
@@ -407,6 +414,7 @@ export const updateEmailNotification = async (
 				dockerCleanup: input.dockerCleanup,
 				organizationId: input.organizationId,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 			})
 			.where(eq(notifications.notificationId, input.notificationId))
@@ -475,6 +483,7 @@ export const createResendNotification = async (
 				notificationType: "resend",
 				organizationId: organizationId,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 			})
 			.returning()
@@ -508,6 +517,7 @@ export const updateResendNotification = async (
 				dockerCleanup: input.dockerCleanup,
 				organizationId: input.organizationId,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 			})
 			.where(eq(notifications.notificationId, input.notificationId))
@@ -572,6 +582,7 @@ export const createGotifyNotification = async (
 				dokployRestart: input.dokployRestart,
 				dockerCleanup: input.dockerCleanup,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				notificationType: "gotify",
 				organizationId: organizationId,
 			})
@@ -605,6 +616,7 @@ export const updateGotifyNotification = async (
 				dokployRestart: input.dokployRestart,
 				dockerCleanup: input.dockerCleanup,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				organizationId: input.organizationId,
 			})
 			.where(eq(notifications.notificationId, input.notificationId))
@@ -668,6 +680,7 @@ export const createNtfyNotification = async (
 				dokployRestart: input.dokployRestart,
 				dockerCleanup: input.dockerCleanup,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				notificationType: "ntfy",
 				organizationId: organizationId,
 			})
@@ -701,6 +714,7 @@ export const updateNtfyNotification = async (
 				dokployRestart: input.dokployRestart,
 				dockerCleanup: input.dockerCleanup,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				organizationId: input.organizationId,
 			})
 			.where(eq(notifications.notificationId, input.notificationId))
@@ -764,6 +778,7 @@ export const createCustomNotification = async (
 				notificationType: "custom",
 				organizationId: organizationId,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 			})
 			.returning()
@@ -797,6 +812,7 @@ export const updateCustomNotification = async (
 				dockerCleanup: input.dockerCleanup,
 				organizationId: input.organizationId,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 			})
 			.where(eq(notifications.notificationId, input.notificationId))
@@ -893,6 +909,7 @@ export const createLarkNotification = async (
 				notificationType: "lark",
 				organizationId: organizationId,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 			})
 			.returning()
@@ -926,6 +943,7 @@ export const updateLarkNotification = async (
 				dockerCleanup: input.dockerCleanup,
 				organizationId: input.organizationId,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 			})
 			.where(eq(notifications.notificationId, input.notificationId))
@@ -987,6 +1005,7 @@ export const createTeamsNotification = async (
 				notificationType: "teams",
 				organizationId: organizationId,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 			})
 			.returning()
@@ -1020,6 +1039,7 @@ export const updateTeamsNotification = async (
 				dockerCleanup: input.dockerCleanup,
 				organizationId: input.organizationId,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 			})
 			.where(eq(notifications.notificationId, input.notificationId))
@@ -1098,6 +1118,7 @@ export const createMattermostNotification = async (
 				notificationType: "mattermost",
 				organizationId: organizationId,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 			})
 			.returning()
@@ -1131,6 +1152,7 @@ export const updateMattermostNotification = async (
 				dockerCleanup: input.dockerCleanup,
 				organizationId: input.organizationId,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 			})
 			.where(eq(notifications.notificationId, input.notificationId))
@@ -1196,6 +1218,7 @@ export const createPushoverNotification = async (
 				dokployRestart: input.dokployRestart,
 				dockerCleanup: input.dockerCleanup,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 				notificationType: "pushover",
 				organizationId: organizationId,
@@ -1231,6 +1254,7 @@ export const updatePushoverNotification = async (
 				dockerCleanup: input.dockerCleanup,
 				organizationId: input.organizationId,
 				serverThreshold: input.serverThreshold,
+				containerHealth: input.containerHealth,
 				userLogin: input.userLogin,
 			})
 			.where(eq(notifications.notificationId, input.notificationId))

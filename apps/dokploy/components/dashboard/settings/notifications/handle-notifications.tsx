@@ -59,6 +59,7 @@ const notificationBaseSchema = z.object({
 	dokployRestart: z.boolean().default(false),
 	dockerCleanup: z.boolean().default(false),
 	serverThreshold: z.boolean().default(false),
+	containerHealth: z.boolean().default(false),
 	userLogin: z.boolean().default(false),
 });
 
@@ -365,6 +366,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 					name: notification.name,
 					type: notification.notificationType,
 					serverThreshold: notification.serverThreshold,
+					containerHealth: notification.containerHealth,
 					userLogin: notification.userLogin,
 				});
 			} else if (notification.notificationType === "telegram") {
@@ -382,6 +384,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 					name: notification.name,
 					dockerCleanup: notification.dockerCleanup,
 					serverThreshold: notification.serverThreshold,
+					containerHealth: notification.containerHealth,
 					userLogin: notification.userLogin,
 				});
 			} else if (notification.notificationType === "discord") {
@@ -398,6 +401,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 					name: notification.name,
 					dockerCleanup: notification.dockerCleanup,
 					serverThreshold: notification.serverThreshold,
+					containerHealth: notification.containerHealth,
 					userLogin: notification.userLogin,
 				});
 			} else if (notification.notificationType === "email") {
@@ -418,6 +422,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 					name: notification.name,
 					dockerCleanup: notification.dockerCleanup,
 					serverThreshold: notification.serverThreshold,
+					containerHealth: notification.containerHealth,
 					userLogin: notification.userLogin,
 				});
 			} else if (notification.notificationType === "resend") {
@@ -435,6 +440,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 					name: notification.name,
 					dockerCleanup: notification.dockerCleanup,
 					serverThreshold: notification.serverThreshold,
+					containerHealth: notification.containerHealth,
 					userLogin: notification.userLogin,
 				});
 			} else if (notification.notificationType === "gotify") {
@@ -453,6 +459,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 					name: notification.name,
 					dockerCleanup: notification.dockerCleanup,
 					serverThreshold: notification.serverThreshold,
+					containerHealth: notification.containerHealth,
 				});
 			} else if (notification.notificationType === "ntfy") {
 				form.reset({
@@ -470,6 +477,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 					name: notification.name,
 					dockerCleanup: notification.dockerCleanup,
 					serverThreshold: notification.serverThreshold,
+					containerHealth: notification.containerHealth,
 					userLogin: notification.userLogin,
 				});
 			} else if (notification.notificationType === "mattermost") {
@@ -487,6 +495,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 					name: notification.name,
 					dockerCleanup: notification.dockerCleanup,
 					serverThreshold: notification.serverThreshold,
+					containerHealth: notification.containerHealth,
 					userLogin: notification.userLogin,
 				});
 			} else if (notification.notificationType === "lark") {
@@ -502,6 +511,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 					dockerCleanup: notification.dockerCleanup,
 					volumeBackup: notification.volumeBackup,
 					serverThreshold: notification.serverThreshold,
+					containerHealth: notification.containerHealth,
 					userLogin: notification.userLogin,
 				});
 			} else if (notification.notificationType === "teams") {
@@ -517,6 +527,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 					name: notification.name,
 					dockerCleanup: notification.dockerCleanup,
 					serverThreshold: notification.serverThreshold,
+					containerHealth: notification.containerHealth,
 					userLogin: notification.userLogin,
 				});
 			} else if (notification.notificationType === "custom") {
@@ -540,6 +551,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 					volumeBackup: notification.volumeBackup,
 					dockerCleanup: notification.dockerCleanup,
 					serverThreshold: notification.serverThreshold,
+					containerHealth: notification.containerHealth,
 					userLogin: notification.userLogin,
 				});
 			} else if (notification.notificationType === "pushover") {
@@ -559,6 +571,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 					name: notification.name,
 					dockerCleanup: notification.dockerCleanup,
 					serverThreshold: notification.serverThreshold,
+					containerHealth: notification.containerHealth,
 					userLogin: notification.userLogin,
 				});
 			}
@@ -592,6 +605,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 			volumeBackup,
 			dockerCleanup,
 			serverThreshold,
+			containerHealth,
 			userLogin,
 		} = data;
 		let promise: Promise<unknown> | null = null;
@@ -610,6 +624,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 				slackId: notification?.slackId || "",
 				notificationId: notificationId || "",
 				serverThreshold: serverThreshold,
+				containerHealth: containerHealth,
 				userLogin: userLogin,
 			});
 		} else if (data.type === "telegram") {
@@ -628,6 +643,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 				notificationId: notificationId || "",
 				telegramId: notification?.telegramId || "",
 				serverThreshold: serverThreshold,
+				containerHealth: containerHealth,
 				userLogin: userLogin,
 			});
 		} else if (data.type === "discord") {
@@ -645,6 +661,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 				notificationId: notificationId || "",
 				discordId: notification?.discordId || "",
 				serverThreshold: serverThreshold,
+				containerHealth: containerHealth,
 				userLogin: userLogin,
 			});
 		} else if (data.type === "email") {
@@ -666,6 +683,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 				notificationId: notificationId || "",
 				emailId: notification?.emailId || "",
 				serverThreshold: serverThreshold,
+				containerHealth: containerHealth,
 				userLogin: userLogin,
 			});
 		} else if (data.type === "resend") {
@@ -684,6 +702,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 				notificationId: notificationId || "",
 				resendId: notification?.resendId || "",
 				serverThreshold: serverThreshold,
+				containerHealth: containerHealth,
 				userLogin: userLogin,
 			});
 		} else if (data.type === "gotify") {
@@ -701,6 +720,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 				dockerCleanup: dockerCleanup,
 				decoration: data.decoration,
 				serverThreshold: serverThreshold,
+				containerHealth: containerHealth,
 				notificationId: notificationId || "",
 				gotifyId: notification?.gotifyId || "",
 			});
@@ -719,6 +739,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 				name: data.name,
 				dockerCleanup: dockerCleanup,
 				serverThreshold: serverThreshold,
+				containerHealth: containerHealth,
 				notificationId: notificationId || "",
 				ntfyId: notification?.ntfyId || "",
 			});
@@ -738,6 +759,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 				notificationId: notificationId || "",
 				mattermostId: notification?.mattermostId || "",
 				serverThreshold: serverThreshold,
+				containerHealth: containerHealth,
 				userLogin: userLogin,
 			});
 		} else if (data.type === "lark") {
@@ -754,6 +776,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 				notificationId: notificationId || "",
 				larkId: notification?.larkId || "",
 				serverThreshold: serverThreshold,
+				containerHealth: containerHealth,
 				userLogin: userLogin,
 			});
 		} else if (data.type === "teams") {
@@ -770,6 +793,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 				notificationId: notificationId || "",
 				teamsId: notification?.teamsId || "",
 				serverThreshold: serverThreshold,
+				containerHealth: containerHealth,
 				userLogin: userLogin,
 			});
 		} else if (data.type === "custom") {
@@ -797,6 +821,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 				name: data.name,
 				dockerCleanup: dockerCleanup,
 				serverThreshold: serverThreshold,
+				containerHealth: containerHealth,
 				userLogin: userLogin,
 				notificationId: notificationId || "",
 				customId: notification?.customId || "",
@@ -821,6 +846,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 				name: data.name,
 				dockerCleanup: dockerCleanup,
 				serverThreshold: serverThreshold,
+				containerHealth: containerHealth,
 				userLogin: userLogin,
 				notificationId: notificationId || "",
 				pushoverId: notification?.pushoverId || "",
@@ -2017,6 +2043,28 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 										)}
 									/>
 								)}
+
+								<FormField
+									control={form.control}
+									name="containerHealth"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs gap-2">
+											<div className="space-y-0.5">
+												<FormLabel>Container Crash Loop</FormLabel>
+												<FormDescription>
+													Trigger the action when a container keeps restarting
+													or a service keeps failing to start, on any server.
+												</FormDescription>
+											</div>
+											<FormControl>
+												<Switch
+													checked={field.value}
+													onCheckedChange={field.onChange}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
 
 								<FormField
 									control={form.control}
