@@ -1,4 +1,5 @@
 export * from "./abhash-engines";
+export * from "./abhash-middleware";
 export * from "./abhash-webhooks";
 export * from "./abhash-backups";
 export * from "./abhash-firewall";

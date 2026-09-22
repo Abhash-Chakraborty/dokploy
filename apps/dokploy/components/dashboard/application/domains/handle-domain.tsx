@@ -10,7 +10,9 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
 import { ProtectWithSso } from "@/components/abhash/forward-auth/protect-with-sso";
+import { MiddlewarePicker } from "@/components/abhash/middlewares/domain-picker";
 import { AlertBlock } from "@/components/shared/alert-block";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -214,6 +216,10 @@ export const AddDomain = ({ id, type, domainId = "", children }: Props) => {
 		},
 	);
 
+	const { data: middlewareOptions } = api.middlewares.options.useQuery();
+	const managedNames = new Map(
+		(middlewareOptions ?? []).map((option) => [option.ref, option.name]),
+	);
 	const form = useForm<Domain>({
 		resolver: zodResolver(domain),
 		defaultValues: {
@@ -860,26 +866,16 @@ export const AddDomain = ({ id, type, domainId = "", children }: Props) => {
 										<FormItem>
 											<div className="flex items-center gap-2">
 												<FormLabel>Middlewares</FormLabel>
-												<TooltipProvider>
-													<Tooltip>
-														<TooltipTrigger type="button">
-															<div className="size-4 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">
-																?
-															</div>
-														</TooltipTrigger>
-														<TooltipContent className="max-w-[300px]">
-															<p>
-																Add Traefik middleware references. Middlewares
-																must be defined in your Traefik configuration.
-															</p>
-														</TooltipContent>
-													</Tooltip>
-												</TooltipProvider>
+												<InfoTooltip content="Traefik middleware references. Pick a saved one, or type one defined in your own Traefik files and press Enter." />
 											</div>
+											<MiddlewarePicker
+												value={field.value ?? []}
+												onChange={(next) => form.setValue("middlewares", next)}
+											/>
 											<div className="flex flex-wrap gap-2 mb-2">
 												{field.value?.map((name, index) => (
-													<Badge key={index} variant="secondary">
-														{name}
+													<Badge key={index} variant="secondary" title={name}>
+														{managedNames.get(name) ?? name}
 														<X
 															className="ml-1 size-3 cursor-pointer"
 															onClick={() => {

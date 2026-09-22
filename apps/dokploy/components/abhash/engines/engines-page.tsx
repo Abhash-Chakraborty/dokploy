@@ -1,7 +1,9 @@
 import { Boxes, Copy, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DialogAction } from "@/components/shared/dialog-action";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,7 +56,17 @@ const CreateService = ({
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>New {engine.label}</DialogTitle>
-					<DialogDescription>{engine.description}</DialogDescription>
+					<DialogDescription>
+						{engine.useFor} It becomes a compose stack in the environment you
+						pick, reachable by other services there
+						{name ? (
+							<>
+								{" "}
+								at <code>{name}-…</code> on the Dokploy network
+							</>
+						) : null}
+						.
+					</DialogDescription>
 				</DialogHeader>
 				<div className="grid gap-3 sm:grid-cols-2">
 					<div className="flex flex-col gap-1.5">
@@ -380,6 +392,31 @@ const DatabaseTools = () => {
 	);
 };
 
+const CATEGORIES: Record<string, { label: string; hint: string }> = {
+	"key-value": {
+		label: "Caches and key-value",
+		hint: "In-memory stores that speak the Redis protocol.",
+	},
+	search: {
+		label: "Search and vectors",
+		hint: "Find things by text or by meaning, faster than a SQL LIKE.",
+	},
+	queue: {
+		label: "Queues and streams",
+		hint: "Hand work between services without them waiting on each other.",
+	},
+	analytics: {
+		label: "Analytics",
+		hint: "Aggregate over huge tables of events.",
+	},
+	document: { label: "Documents", hint: "Schemaless JSON documents." },
+	storage: { label: "Object storage", hint: "Files over the S3 API." },
+	sql: { label: "SQL", hint: "Relational databases." },
+};
+
+const statusVariant = (status?: string | null) =>
+	status === "done" ? "green" : status === "error" ? "red" : "outline";
+
 export const EnginesPage = () => {
 	const utils = api.useUtils();
 	const { data: catalog } = api.engines.catalog.useQuery();
@@ -387,81 +424,142 @@ export const EnginesPage = () => {
 	const [chosen, setChosen] = useState<Engine | null>(null);
 	const forget = api.engines.forget.useMutation();
 
+	const groups = Object.entries(CATEGORIES)
+		.map(([id, meta]) => ({
+			id,
+			...meta,
+			engines:
+				catalog?.engines.filter((engine) => engine.category === id) ?? [],
+		}))
+		.filter((group) => group.engines.length > 0);
+
 	return (
-		<section className="flex flex-col gap-4">
+		<section className="flex flex-col gap-6">
 			<PageHeader
 				icon={<Boxes className="size-5" />}
-				title="Databases and services"
-				description="More engines, deployed as ordinary stacks."
+				title={
+					<span className="flex items-center gap-2">
+						Databases and services
+						<InfoTooltip
+							content={
+								<span>
+									A catalogue, not something already running: nothing here
+									exists until you add it. Adding one creates an ordinary
+									compose stack in the project you pick and deploys it. Other
+									services reach it on the Dokploy network at the address shown
+									in its stack; no port is opened to the internet. Postgres,
+									MySQL, MariaDB, MongoDB and Redis stay in each project's
+									Create menu.
+								</span>
+							}
+						/>
+					</span>
+				}
+				description="Extra engines for caching, search, queues and storage, set up for you."
 			/>
 
-			<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-				{catalog?.engines.map((engine) => (
-					<div
-						key={engine.id}
-						className="flex flex-col gap-2 rounded-md border p-4"
-					>
-						<div className="flex items-center gap-2">
-							<span className="font-medium">{engine.label}</span>
-							<Badge variant="outline">{engine.category}</Badge>
-						</div>
-						<p className="flex-1 text-xs text-muted-foreground">
-							{engine.description}
-						</p>
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={() => setChosen(engine)}
-						>
-							<Plus className="size-4" />
-							Add
-						</Button>
+			{services && services.length > 0 && (
+				<div className="flex flex-col gap-2">
+					<h2 className="text-sm font-medium">Added by you</h2>
+					<ul className="divide-y rounded-md border">
+						{services.map((service) => {
+							const env = service.stack?.environment;
+							const href =
+								env && service.stack
+									? `/dashboard/project/${env.projectId}/environment/${service.stack.environmentId}/services/compose/${service.composeId}`
+									: null;
+							return (
+								<li
+									key={service.id}
+									className="flex items-center gap-3 px-4 py-3 text-sm"
+								>
+									{href ? (
+										<Link href={href} className="font-medium hover:underline">
+											{service.stack?.name}
+										</Link>
+									) : (
+										<span className="font-medium">{service.stack?.name}</span>
+									)}
+									<Badge variant="outline">
+										{service.engine} {service.version}
+									</Badge>
+									{env && (
+										<span className="truncate text-xs text-muted-foreground">
+											{env.project?.name} / {env.name}
+										</span>
+									)}
+									<Badge
+										variant={statusVariant(service.stack?.composeStatus)}
+										className="ml-auto"
+									>
+										{service.stack?.composeStatus ?? "idle"}
+									</Badge>
+									<DialogAction
+										title="Stop managing this service?"
+										description="The stack keeps running; it just leaves this list. Delete the stack from its project to remove it."
+										type="destructive"
+										onClick={async () => {
+											await forget
+												.mutateAsync({ id: service.id })
+												.then(async () => {
+													await utils.engines.list.invalidate();
+												})
+												.catch(fail);
+										}}
+									>
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											aria-label="Stop managing"
+											title="Stop managing"
+										>
+											<Trash2 className="size-4" />
+										</Button>
+									</DialogAction>
+								</li>
+							);
+						})}
+					</ul>
+				</div>
+			)}
+
+			{groups.map((group) => (
+				<div key={group.id} className="flex flex-col gap-2">
+					<h2 className="flex items-center gap-2 text-sm font-medium">
+						{group.label}
+						<InfoTooltip content={group.hint} />
+					</h2>
+					<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+						{group.engines.map((engine) => (
+							<div
+								key={engine.id}
+								className="flex flex-col gap-2 rounded-md border p-4"
+							>
+								<div className="flex items-center justify-between gap-2">
+									<span className="font-medium">{engine.label}</span>
+									<Button
+										variant="outline"
+										size="sm"
+										onClick={() => setChosen(engine)}
+									>
+										<Plus className="size-4" />
+										Add
+									</Button>
+								</div>
+								<p className="text-xs text-muted-foreground">
+									{engine.description}
+								</p>
+								<p className="text-xs">
+									<span className="font-medium">Good for: </span>
+									<span className="text-muted-foreground">{engine.useFor}</span>
+								</p>
+							</div>
+						))}
 					</div>
-				))}
-			</div>
+				</div>
+			))}
 
 			<CreateService engine={chosen} onDone={() => setChosen(null)} />
-
-			{services && services.length > 0 && (
-				<ul className="divide-y rounded-md border">
-					{services.map((service) => (
-						<li
-							key={service.id}
-							className="flex items-center gap-3 px-4 py-3 text-sm"
-						>
-							<span className="font-medium">{service.stack?.name}</span>
-							<Badge variant="outline">
-								{service.engine} {service.version}
-							</Badge>
-							<span className="text-xs text-muted-foreground">
-								{service.stack?.composeStatus ?? "idle"}
-							</span>
-							<DialogAction
-								title="Stop managing this service?"
-								description="The stack stays; Dokploy just stops treating it as a managed engine."
-								type="destructive"
-								onClick={async () => {
-									await forget
-										.mutateAsync({ id: service.id })
-										.then(async () => {
-											await utils.engines.list.invalidate();
-										})
-										.catch(fail);
-								}}
-							>
-								<Button
-									variant="ghost"
-									size="icon"
-									className="ml-auto"
-									aria-label="Stop managing"
-								>
-									<Trash2 className="size-4" />
-								</Button>
-							</DialogAction>
-						</li>
-					))}
-				</ul>
-			)}
 
 			<DatabaseTools />
 		</section>

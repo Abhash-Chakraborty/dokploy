@@ -349,7 +349,7 @@ ${input.logs}`,
 
 ${modeGuidance}
 
-Use tools instead of guessing: never invent project, service or server names or ids. Start with list_projects when you need to find something. Keep answers short and practical.
+Use tools instead of guessing: never invent project, service or server names or ids. Start with list_projects when you need to find something. Keep answers short and practical. Format answers as Markdown (short paragraphs, lists, inline code for names and commands); never write HTML tags.
 
 Current page: ${input.pageContext || "(unknown)"}`,
 					messages: [

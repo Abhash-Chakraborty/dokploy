@@ -1,3 +1,4 @@
+import { scopedMiddlewareRefs } from "@dokploy/server/services/abhash/middlewares/refs";
 import type { Domain } from "@dokploy/server/services/domain";
 import type { ApplicationNested } from "../builders";
 import {
@@ -196,6 +197,16 @@ export const createRouterConfig = async (
 		// custom middlewares from domain
 		if (domain.middlewares && domain.middlewares.length > 0) {
 			routerConfig.middlewares?.push(...domain.middlewares);
+		}
+
+		// Middlewares scoped to every project, or to this one.
+		const project = app.environment?.project;
+		if (project) {
+			for (const ref of await scopedMiddlewareRefs(project)) {
+				if (!routerConfig.middlewares?.includes(ref)) {
+					routerConfig.middlewares?.push(ref);
+				}
+			}
 		}
 	}
 

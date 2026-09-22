@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { quote } from "shell-quote";
 import { paths } from "../constants";
 import { type SpreadOptions, spreadUpdateFlags } from "../utils/cluster/spread";
+import { KEEP_DOCKER_ENV } from "../utils/process/docker-env";
 import { execAsync, execAsyncRemote } from "../utils/process/execAsync";
 import { findComposeById } from "./compose";
 
@@ -58,7 +59,7 @@ export const restartComposeService = async (
 		return;
 	}
 
-	const command = `env -i PATH="$PATH" docker compose -p ${quote([compose.appName])} -f ${quote([composeFile])} restart ${quote([serviceName])}`;
+	const command = `env -i PATH="$PATH" ${KEEP_DOCKER_ENV} docker compose -p ${quote([compose.appName])} -f ${quote([composeFile])} restart ${quote([serviceName])}`;
 	await run(compose.serverId, projectPath, command);
 };
 
@@ -94,6 +95,6 @@ export const scaleComposeService = async (
 		);
 	}
 
-	const command = `env -i PATH="$PATH" docker compose -p ${quote([compose.appName])} -f ${quote([composeFile])} up -d --no-recreate --no-deps --scale ${quote([`${serviceName}=${replicas}`])} ${quote([serviceName])}`;
+	const command = `env -i PATH="$PATH" ${KEEP_DOCKER_ENV} docker compose -p ${quote([compose.appName])} -f ${quote([composeFile])} up -d --no-recreate --no-deps --scale ${quote([`${serviceName}=${replicas}`])} ${quote([serviceName])}`;
 	await run(compose.serverId, projectPath, command);
 };

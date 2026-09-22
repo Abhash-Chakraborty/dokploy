@@ -60,6 +60,7 @@ export const abhashEnginesRouter = createTRPCRouter({
 			label: engine.label,
 			category: engine.category,
 			description: engine.description,
+			useFor: engine.useFor,
 			versions: engine.versions,
 			fields: engine.fields,
 		})),
@@ -79,6 +80,13 @@ export const abhashEnginesRouter = createTRPCRouter({
 				name: true,
 				appName: true,
 				composeStatus: true,
+				environmentId: true,
+			},
+			with: {
+				environment: {
+					columns: { name: true, projectId: true },
+					with: { project: { columns: { name: true } } },
+				},
 			},
 		});
 		const byId = new Map(stacks.map((stack) => [stack.composeId, stack]));

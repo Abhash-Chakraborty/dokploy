@@ -19,8 +19,22 @@ const BASELINE = `- name: Dokploy server baseline
     # ones that have nothing to do with it, and the error names whatever was
     # being installed at the time rather than the package actually at fault.
     # On a healthy host this does nothing.
+    # Ubuntu 24.04 runs sshd socket-activated, so /run/sshd only exists while
+    # ssh.service does. Without it the openssh-server postinst cannot restart
+    # sshd, dpkg stops half way, and every apt run after that fails.
+    - name: Make sure sshd can be restarted by package scripts
+      ansible.builtin.file:
+        path: /run/sshd
+        state: directory
+        mode: "0755"
+      when:
+        - dokploy_install_packages | bool
+        - ansible_os_family == "Debian"
+
     - name: Repair a half-configured package state
       ansible.builtin.command: dpkg --configure -a
+      environment:
+        DEBIAN_FRONTEND: noninteractive
       register: dokploy_dpkg_repair
       changed_when: dokploy_dpkg_repair.stdout | trim | length > 0
       failed_when: false
@@ -36,8 +50,12 @@ const BASELINE = `- name: Dokploy server baseline
         - ansible_os_family == "Debian"
         - dokploy_dpkg_repair.stdout | default("") | trim | length > 0
 
+    # A stale package index points at versions the mirrors have since
+    # replaced, and the download 404s.
     - name: Install the basics
-      ansible.builtin.package:
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
         name:
           # apt-utils first, or debconf defers every package's configuration
           # and says so on each run.
@@ -48,6 +66,8 @@ const BASELINE = `- name: Dokploy server baseline
           - fail2ban
           - chrony
         state: present
+      environment:
+        DEBIAN_FRONTEND: noninteractive
       when:
         - dokploy_install_packages | bool
         - ansible_os_family == "Debian"
@@ -107,10 +127,11 @@ const BASELINE = `- name: Dokploy server baseline
       notify: restart journald
 
   handlers:
+    # With socket activation ssh.service is usually inactive, reload fails,
+    # and each new connection reads the config anyway.
     - name: reload sshd
-      ansible.builtin.service:
-        name: ssh
-        state: reloaded
+      ansible.builtin.shell: systemctl is-active --quiet ssh && systemctl reload ssh || true
+      changed_when: true
       when: ansible_service_mgr == "systemd"
 
     - name: restart journald
@@ -122,20 +143,34 @@ const BASELINE = `- name: Dokploy server baseline
 
 const CLEANUP = `- name: Reclaim disk on Dokploy servers
   hosts: dokploy
-  gather_facts: false
+  # The journal step needs ansible_service_mgr, which is in the minimal set.
+  gather_facts: true
+  gather_subset:
+    - "!all"
+    - min
   vars:
     dokploy_prune_images_hours: 168
     dokploy_prune_volumes: false
   tasks:
+    # A server set up without Docker still gets its journal and disk report.
+    - name: Look for Docker
+      ansible.builtin.command: sh -c "command -v docker"
+      register: dokploy_docker
+      failed_when: false
+      changed_when: false
+
     - name: Prune stopped containers, old images and build cache
       ansible.builtin.command:
         cmd: docker system prune --force --filter "until={{ dokploy_prune_images_hours }}h"
+      when: dokploy_docker.rc == 0
       register: dokploy_prune
       changed_when: "'Total reclaimed space: 0B' not in dokploy_prune.stdout"
 
     - name: Prune unused volumes
       ansible.builtin.command: docker volume prune --force
-      when: dokploy_prune_volumes | bool
+      when:
+        - dokploy_docker.rc == 0
+        - dokploy_prune_volumes | bool
       register: dokploy_volume_prune
       changed_when: "'Total reclaimed space: 0B' not in dokploy_volume_prune.stdout"
 
@@ -161,11 +196,31 @@ const UPDATES = `- name: Patch Dokploy servers
   vars:
     dokploy_reboot: true
   tasks:
+    - name: Make sure sshd can be restarted by package scripts
+      ansible.builtin.file:
+        path: /run/sshd
+        state: directory
+        mode: "0755"
+      when: ansible_os_family == "Debian"
+
+    # Same repair as the baseline: one package left half-configured by an
+    # earlier run fails every upgrade after it.
+    - name: Repair a half-configured package state
+      ansible.builtin.command: dpkg --configure -a
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+      register: dokploy_dpkg_repair
+      changed_when: dokploy_dpkg_repair.stdout | trim | length > 0
+      failed_when: false
+      when: ansible_os_family == "Debian"
+
     - name: Update the package lists and upgrade
       ansible.builtin.apt:
         update_cache: true
         upgrade: safe
         autoremove: true
+      environment:
+        DEBIAN_FRONTEND: noninteractive
       when: ansible_os_family == "Debian"
 
     - name: Does it need a reboot?

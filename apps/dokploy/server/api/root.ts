@@ -12,6 +12,7 @@ import { abhashForwardAuthRouter } from "./routers/abhash/forward-auth";
 import { abhashJobsRouter } from "./routers/abhash/jobs";
 import { abhashLicenseKeyRouter } from "./routers/abhash/license-key";
 import { abhashMeshRouter } from "./routers/abhash/mesh";
+import { abhashMiddlewaresRouter } from "./routers/abhash/middlewares";
 import { abhashScimRouter } from "./routers/abhash/scim";
 import { abhashSsoRouter } from "./routers/abhash/sso";
 import { abhashVaultRouter } from "./routers/abhash/vault";
@@ -142,6 +143,7 @@ export const appRouter = createTRPCRouter({
 	firewall: abhashFirewallRouter,
 	abhashBackups: abhashBackupsRouter,
 	engines: abhashEnginesRouter,
+	middlewares: abhashMiddlewaresRouter,
 	schedule: scheduleRouter,
 	rollback: rollbackRouter,
 	volumeBackups: volumeBackupsRouter,

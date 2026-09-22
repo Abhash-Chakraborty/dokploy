@@ -34,6 +34,8 @@ export type EngineDefinition = {
 	label: string;
 	category: EngineCategory;
 	description: string;
+	/** Plain-language examples of what people run it for. */
+	useFor: string;
 	versions: string[];
 	fields: EngineField[];
 	/** Everything a drill and a backup need to know about this engine. */

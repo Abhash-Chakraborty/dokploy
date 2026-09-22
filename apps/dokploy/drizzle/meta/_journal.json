@@ -1527,6 +1527,13 @@
       "when": 1790056058316,
       "tag": "0217_abhash_container_health",
       "breakpoints": true
+    },
+    {
+      "idx": 218,
+      "version": "7",
+      "when": 1790092646144,
+      "tag": "0218_abhash_traefik_middlewares",
+      "breakpoints": true
     }
   ]
 }

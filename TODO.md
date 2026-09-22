@@ -90,7 +90,38 @@ repo or in the production database; the rest still need investigation.
   line (Docker, Schedules, Traefik), wider breadcrumbs, compact service cards,
   new update dialog, sign-in page branding, regrouped navigation.
 
+### Sixth batch
+
+- **Middlewares from the dashboard.** Settings → Middlewares defines rate
+  limits, IP allowlists, password gates, headers, redirects and custom Traefik
+  middlewares. Each applies to domains where it is picked, to every project,
+  or to chosen projects; the owner can also put one in front of the Dokploy
+  dashboard. Definitions go to one file per organization on every server
+  (migration `0218`); application routers update at once, compose routers on
+  their next deploy. Deleted or disabled ones stay defined as a no-op so no
+  router ever names a missing middleware, and nothing written can contain an
+  empty section, since one refused file stops Traefik reloading every file on
+  that server.
+- **Databases and services work.** Stacks deployed to a sandbox daemon now
+  stay there (`env -i` dropped `DOCKER_HOST`), every engine joins
+  `dokploy-network` under the address it advertises, and NATS, Garage,
+  Meilisearch, Kafka, MongoDB and KeyDB (ARM) start. The Mongo replica set
+  initiates itself. Every engine is deployed and checked by
+  `scripts/sandbox/e2e/engines.mjs`. The page explains what each is for.
+- **Command centre playbooks.** Baseline refreshes the apt cache, updates
+  repair a half-configured dpkg and give sshd its `/run/sshd`, cleanup gathers
+  the facts it reads, and the sshd handler no longer fails on socket-activated
+  24.04.
+- Assistant replies render as Markdown (HTML answers are converted, never
+  injected). Log drains say what they send.
+
 ### Still open
+
+- **Stream assistant replies.** `ai.chat` waits for the whole agent loop
+  (`generateText` with tools) before returning, so long answers appear at
+  once after a pause. Move it to `streamText` over an SSE route (tRPC
+  subscriptions are not wired here) and stream text deltas plus tool-call
+  events into the panel.
 
 - **Firewall adoption** (importing hand-written ufw rules into a Dokploy
   policy). Deferred on purpose: applying now works, keeps hand-written rules,
