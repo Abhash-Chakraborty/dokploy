@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -230,7 +231,22 @@ export const CommandCenter = () => {
 		<section className="flex flex-col gap-4">
 			<PageHeader
 				icon={<ServerCog className="size-5" />}
-				title="Command centre"
+				title={
+					<span className="flex items-center gap-2">
+						Command centre
+						<InfoTooltip
+							content={
+								<span>
+									Every server registered in this organization. The machine
+									Dokploy itself runs on is not one of them until you add it:
+									Dokploy runs in a container, so it reaches a server over SSH,
+									including this one. Add it under Settings → Servers and it
+									gets baselines, patching and cron here like the rest.
+								</span>
+							}
+						/>
+					</span>
+				}
 				description="Health, tags and actions for every server."
 				actions={
 					<div className="flex items-center gap-2">
