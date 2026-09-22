@@ -46,10 +46,10 @@ Official Dokploy installer:
 curl -sSL https://dokploy.com/install.sh | bash
 ```
 
-Abhash fork installer, after the personal domain is configured to serve this repository's `install.sh`:
+Abhash fork installer, as root on a fresh Linux server:
 
 ```bash
-curl -sSL https://abhashchakraborty.tech/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Abhash-Chakraborty/dokploy/main/install.sh | sudo bash
 ```
 
 For detailed documentation, visit [docs.dokploy.com](https://docs.dokploy.com).

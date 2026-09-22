@@ -1,0 +1,38 @@
+name: Installer
+
+# Regression test for issue #20: the installer must provision everything the
+# image needs, and repair an install left behind by the previous installer.
+on:
+  pull_request:
+    paths:
+      - install.sh
+      - scripts/sandbox/install-test.sh
+      - .github/workflows/installer-test.yml
+  push:
+    branches: [main]
+    paths:
+      - install.sh
+      - scripts/sandbox/install-test.sh
+  workflow_dispatch:
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [repair, fresh]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The repair case replays the previous installer from history.
+          fetch-depth: 0
+      - run: bash -n install.sh
+      - name: Install in a disposable Docker-in-Docker host
+        run: |
+          if [ "${{ matrix.mode }}" = fresh ]; then
+            scripts/sandbox/install-test.sh --fresh
+          else
+            scripts/sandbox/install-test.sh
+          fi
