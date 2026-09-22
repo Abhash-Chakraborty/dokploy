@@ -1,5 +1,5 @@
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
-import { Code2, FileInput, Globe2, HardDrive, HelpCircle } from "lucide-react";
+import { Code2, FileInput, Globe2, HardDrive, Info } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -227,7 +227,7 @@ export const AddImport = ({ environmentId, projectName }: Props) => {
 													<TooltipTrigger asChild>
 														<FormLabel className="break-all w-fit flex flex-row gap-1 items-center">
 															Select a Server {!isCloud ? "(Optional)" : ""}
-															<HelpCircle className="size-4 text-muted-foreground" />
+															<Info className="size-4 text-muted-foreground" />
 														</FormLabel>
 													</TooltipTrigger>
 													<TooltipContent

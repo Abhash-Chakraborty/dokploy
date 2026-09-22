@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { AlertBlock } from "@/components/shared/alert-block";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -95,7 +95,18 @@ export const AddCommandCompose = ({ composeId }: Props) => {
 		<Card className="bg-background">
 			<CardHeader className="flex flex-row justify-between">
 				<div>
-					<CardTitle className="text-xl">Run Command</CardTitle>
+					<CardTitle className="flex items-center gap-2 text-xl">
+						Run Command
+						<InfoTooltip
+							variant="warning"
+							content={
+								<span>
+									Changing the default command can break deploys, logs and
+									monitoring. It starts with <code>docker</code>.
+								</span>
+							}
+						/>
+					</CardTitle>
 					<CardDescription>
 						Override a custom command to the compose file
 					</CardDescription>
@@ -107,12 +118,6 @@ export const AddCommandCompose = ({ composeId }: Props) => {
 						onSubmit={form.handleSubmit(onSubmit)}
 						className="grid w-full gap-4"
 					>
-						<AlertBlock type="warning">
-							Modifying the default command may affect deployment stability,
-							impacting logs and monitoring. Proceed carefully and test
-							thoroughly. By default, the command starts with{" "}
-							<strong>docker</strong>.
-						</AlertBlock>
 						<div className="flex flex-col gap-4">
 							{data?.composeType === "docker-compose" && (
 								<FormField

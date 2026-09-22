@@ -89,6 +89,13 @@ export const webServerSettings = pgTable("webServerSettings", {
 			errorPageDescription: string | null;
 			footerText: string | null;
 			ogImageUrl: string | null;
+			// Sign-in page; optional so configs saved before they existed stay valid.
+			loginHeading?: string | null;
+			loginSubheading?: string | null;
+			loginLinkLabel?: string | null;
+			loginLinkUrl?: string | null;
+			hideCommunityLinks?: boolean | null;
+			hideLoginGradient?: boolean | null;
 		}>()
 		.default({
 			appName: null,
@@ -256,6 +263,12 @@ export const whitelabelingConfigSchema = z.object({
 	errorPageDescription: z.string().nullable(),
 	footerText: z.string().nullable(),
 	ogImageUrl: safeUrl,
+	loginHeading: z.string().max(80).nullable().optional(),
+	loginSubheading: z.string().max(200).nullable().optional(),
+	loginLinkLabel: z.string().max(60).nullable().optional(),
+	loginLinkUrl: safeUrl.optional(),
+	hideCommunityLinks: z.boolean().nullable().optional(),
+	hideLoginGradient: z.boolean().nullable().optional(),
 });
 
 export const apiUpdateWhitelabeling = z.object({

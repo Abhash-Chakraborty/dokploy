@@ -32,11 +32,18 @@ import type { LogLine } from "./utils";
 interface Props {
 	logs: LogLine[];
 	context: "build" | "runtime";
+	iconOnly?: boolean;
+	className?: string;
 }
 
 const MAX_LOG_LINES = 200;
 
-export function AnalyzeLogs({ logs, context }: Props) {
+export function AnalyzeLogs({
+	logs,
+	context,
+	iconOnly = false,
+	className,
+}: Props) {
 	const [open, setOpen] = useState(false);
 	const [aiId, setAiId] = useState<string>("");
 	const [copied, setCopied] = useState(false);
@@ -83,16 +90,29 @@ export function AnalyzeLogs({ logs, context }: Props) {
 			}}
 		>
 			<PopoverTrigger asChild>
-				<Button
-					variant="outline"
-					size="sm"
-					className="h-9"
-					disabled={logs.length === 0}
-					title="Analyze logs with AI"
-				>
-					<Bot className="mr-2 size-4" />
-					AI
-				</Button>
+				{iconOnly ? (
+					<Button
+						variant="ghost"
+						size="icon-xs"
+						className={className}
+						disabled={logs.length === 0}
+						title="Analyze logs with AI"
+						aria-label="Analyze logs with AI"
+					>
+						<Bot />
+					</Button>
+				) : (
+					<Button
+						variant="outline"
+						size="sm"
+						className="h-9"
+						disabled={logs.length === 0}
+						title="Analyze logs with AI"
+					>
+						<Bot className="mr-2 size-4" />
+						AI
+					</Button>
+				)}
 			</PopoverTrigger>
 			<PopoverContent className="w-[550px] p-0" align="end">
 				<div className="flex items-center justify-between border-b px-4 py-3">

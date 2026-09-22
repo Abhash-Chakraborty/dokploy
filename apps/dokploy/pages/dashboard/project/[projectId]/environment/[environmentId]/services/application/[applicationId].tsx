@@ -1,7 +1,7 @@
 import { validateRequest } from "@dokploy/server/lib/auth";
 import { createServerSideHelpers } from "@trpc/react-query/server";
 import copy from "copy-to-clipboard";
-import { HelpCircle, ServerOff } from "lucide-react";
+import { ServerOff, TriangleAlert } from "lucide-react";
 import type {
 	GetServerSidePropsContext,
 	InferGetServerSidePropsType,
@@ -171,7 +171,7 @@ const Service = (
 										<Tooltip>
 											<TooltipTrigger asChild>
 												<Label className="break-all w-fit flex flex-row gap-1 items-center">
-													<HelpCircle className="size-4 text-muted-foreground" />
+													<TriangleAlert className="size-4 text-amber-500" />
 												</Label>
 											</TooltipTrigger>
 											<TooltipContent
@@ -207,7 +207,7 @@ const Service = (
 							</div>
 						</div>
 					</CardHeader>
-					<CardContent className="space-y-2 py-8 border-t px-0">
+					<CardContent className="space-y-2 pt-5 pb-8 border-t px-0">
 						{data?.server?.serverStatus === "inactive" ? (
 							<div className="flex h-[55vh] border-2 rounded-xl border-dashed p-4">
 								<div className="max-w-3xl mx-auto flex flex-col items-center justify-center self-center gap-3">
@@ -240,7 +240,7 @@ const Service = (
 									router.push(newPath);
 								}}
 							>
-								<div className="flex flex-row items-center justify-between w-full">
+								<div className="flex flex-row items-center justify-between w-full lg:hidden">
 									<TabsList className="flex h-auto flex-wrap justify-start gap-x-8 gap-y-1 max-md:gap-x-4 lg:hidden">
 										<TabsTrigger value="general">General</TabsTrigger>
 										{permissions?.envVars.read && (

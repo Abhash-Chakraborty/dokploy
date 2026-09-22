@@ -1,12 +1,13 @@
 import { VALID_BRANCH_REGEX } from "@dokploy/server/utils/git-branch-validation";
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
-import { CheckIcon, ChevronsUpDown, HelpCircle, X } from "lucide-react";
+import { CheckIcon, ChevronsUpDown, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { GithubIcon } from "@/components/icons/data-tools-icons";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -423,19 +424,14 @@ export const SaveGithubProviderCompose = ({ composeId }: Props) => {
 								<FormItem className="md:col-span-2">
 									<div className="flex items-center gap-2">
 										<FormLabel>Trigger Type</FormLabel>
-										<TooltipProvider>
-											<Tooltip>
-												<TooltipTrigger asChild>
-													<HelpCircle className="size-4 text-muted-foreground hover:text-foreground transition-colors cursor-pointer" />
-												</TooltipTrigger>
-												<TooltipContent>
-													<p>
-														Choose when to trigger deployments: on push to the
-														selected branch or when a new tag is created.
-													</p>
-												</TooltipContent>
-											</Tooltip>
-										</TooltipProvider>
+										<InfoTooltip
+											content={
+												<>
+													Choose when to trigger deployments: on push to the
+													selected branch or when a new tag is created.
+												</>
+											}
+										/>
 									</div>
 									<Select
 										onValueChange={(value) => {

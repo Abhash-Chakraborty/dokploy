@@ -1,5 +1,5 @@
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
-import { HelpCircle, PlusIcon, SquarePen } from "lucide-react";
+import { Info, PlusIcon, SquarePen } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -237,7 +237,7 @@ export const HandleCertificate = ({ certificateId }: Props) => {
 												<TooltipTrigger asChild>
 													<FormLabel className="break-all w-fit flex flex-row gap-1 items-center">
 														Select a Server {!isCloud && "(Optional)"}
-														<HelpCircle className="size-4 text-muted-foreground" />
+														<Info className="size-4 text-muted-foreground" />
 													</FormLabel>
 												</TooltipTrigger>
 											</Tooltip>

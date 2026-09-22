@@ -1,4 +1,4 @@
-import { AlertBlock } from "@/components/shared/alert-block";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 
 /**
  * Domains attached to a compose service are rendered as docker labels and only
@@ -12,8 +12,6 @@ export const COMPOSE_REDEPLOY_HINT =
 export const COMPOSE_REDEPLOY_TOAST =
 	"Redeploy the compose to apply the changes.";
 
-export const ComposeRedeployAlert = ({ className }: { className?: string }) => (
-	<AlertBlock type="info" className={className}>
-		{COMPOSE_REDEPLOY_HINT}
-	</AlertBlock>
+export const ComposeRedeployHint = () => (
+	<InfoTooltip content={COMPOSE_REDEPLOY_HINT} />
 );

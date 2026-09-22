@@ -1,5 +1,4 @@
 import {
-	AlertTriangle,
 	ArrowUpDown,
 	BookIcon,
 	FolderInput,
@@ -12,6 +11,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { AlertBlock } from "@/components/shared/alert-block";
 import { BreadcrumbSidebar } from "@/components/shared/breadcrumb-sidebar";
 import { DateTooltip } from "@/components/shared/date-tooltip";
 import { FocusShortcutInput } from "@/components/shared/focus-shortcut-input";
@@ -349,13 +349,10 @@ export const ShowProjects = () => {
 																	)}
 
 																{hasNoEnvironments && (
-																	<div className="flex flex-row gap-2 items-center rounded-lg bg-yellow-50 p-2 mt-2 dark:bg-yellow-950">
-																		<AlertTriangle className="size-4 text-yellow-600 dark:text-yellow-400 shrink-0" />
-																		<span className="text-xs text-yellow-600 dark:text-yellow-400">
-																			You have access to this project but no
-																			environments are available
-																		</span>
-																	</div>
+																	<AlertBlock type="warning" className="mt-2">
+																		You have access to this project but no
+																		environments are available
+																	</AlertBlock>
 																)}
 															</span>
 															<div className="flex self-start space-x-1">
@@ -408,13 +405,10 @@ export const ShowProjects = () => {
 																								project?
 																							</AlertDialogTitle>
 																							{!emptyServices ? (
-																								<div className="flex flex-row gap-4 rounded-lg bg-yellow-50 p-2 dark:bg-yellow-950">
-																									<AlertTriangle className="text-yellow-600 dark:text-yellow-400" />
-																									<span className="text-sm text-yellow-600 dark:text-yellow-400">
-																										You have active services,
-																										please delete them first
-																									</span>
-																								</div>
+																								<AlertBlock type="warning">
+																									You have active services,
+																									please delete them first
+																								</AlertBlock>
 																							) : (
 																								<AlertDialogDescription>
 																									This action cannot be undone

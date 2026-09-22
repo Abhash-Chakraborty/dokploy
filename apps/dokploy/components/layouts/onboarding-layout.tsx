@@ -20,6 +20,18 @@ export const OnboardingLayout = ({ children, leftPanel }: Props) => {
 		"\u201CThe Open Source alternative to Netlify, Vercel, Heroku.\u201D";
 	const logoUrl =
 		whitelabeling?.loginLogoUrl || whitelabeling?.logoUrl || undefined;
+	const hideCommunity = !!whitelabeling?.hideCommunityLinks;
+	const panelLink = whitelabeling?.loginLinkUrl
+		? {
+				href: whitelabeling.loginLinkUrl,
+				label: whitelabeling.loginLinkLabel || "Learn more",
+			}
+		: hideCommunity
+			? null
+			: {
+					href: "https://github.com/Abhash-Chakraborty",
+					label: whitelabeling?.loginLinkLabel || "View the repository",
+				};
 
 	return (
 		<div className="container relative min-h-svh flex-col items-center justify-center flex lg:max-w-none lg:grid lg:grid-cols-2 lg:px-0 w-full">
@@ -27,7 +39,10 @@ export const OnboardingLayout = ({ children, leftPanel }: Props) => {
 				{/* Royalty-free CSS mesh gradient backdrop (DESIGN.md aesthetic). */}
 				<div className="absolute inset-0 bg-muted" />
 				<div
-					className="absolute inset-0 opacity-60"
+					className={cn(
+						"absolute inset-0 opacity-60",
+						whitelabeling?.hideLoginGradient && "hidden",
+					)}
 					style={{
 						backgroundImage:
 							"radial-gradient(at 20% 20%, rgba(0,124,240,0.25) 0px, transparent 50%), radial-gradient(at 80% 0%, rgba(121,40,202,0.25) 0px, transparent 50%), radial-gradient(at 80% 80%, rgba(255,0,128,0.20) 0px, transparent 50%), radial-gradient(at 0% 80%, rgba(80,227,194,0.25) 0px, transparent 50%)",
@@ -46,15 +61,19 @@ export const OnboardingLayout = ({ children, leftPanel }: Props) => {
 							<blockquote className="space-y-2">
 								<p className="text-lg text-primary">{appDescription}</p>
 							</blockquote>
-							<Link
-								href="https://github.com/Abhash-Chakraborty"
-								target="_blank"
-								rel="noopener noreferrer"
-								className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
-							>
-								<GithubIcon className="size-4" />
-								View the repository
-							</Link>
+							{panelLink && (
+								<Link
+									href={panelLink.href}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
+								>
+									{!whitelabeling?.loginLinkUrl && (
+										<GithubIcon className="size-4" />
+									)}
+									{panelLink.label}
+								</Link>
+							)}
 						</>
 					)}
 				</div>
@@ -63,7 +82,12 @@ export const OnboardingLayout = ({ children, leftPanel }: Props) => {
 				<div className="flex w-full flex-col justify-center space-y-6 max-w-lg mx-auto">
 					{children}
 				</div>
-				<div className="flex items-center gap-4 justify-center absolute bottom-4 right-4 text-muted-foreground">
+				<div
+					className={cn(
+						"flex items-center gap-4 justify-center absolute bottom-4 right-4 text-muted-foreground",
+						hideCommunity && "hidden",
+					)}
+				>
 					<Button variant="ghost" size="icon" asChild>
 						<Link
 							href="https://github.com/dokploy/dokploy"

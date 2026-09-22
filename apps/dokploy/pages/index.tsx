@@ -354,13 +354,14 @@ export default function Home({ IS_CLOUD, socialProviders }: Props) {
 								undefined
 							}
 						/>
-						Sign in
+						{whitelabeling?.loginHeading || "Sign in"}
 					</div>
 				</h1>
 				<p className="text-sm text-muted-foreground">
-					{sso.providers.length > 0
-						? "Sign in to continue"
-						: "Enter your email and password to sign in"}
+					{whitelabeling?.loginSubheading ||
+						(sso.providers.length > 0
+							? "Sign in to continue"
+							: "Enter your email and password to sign in")}
 				</p>
 			</div>
 			{error && (

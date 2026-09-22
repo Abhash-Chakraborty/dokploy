@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { AlertBlock } from "@/components/shared/alert-block";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -120,7 +121,24 @@ export const ShowBuildServer = ({ applicationId }: Props) => {
 				<div className="flex flex-row items-center gap-2">
 					<Server className="size-6 text-muted-foreground" />
 					<div>
-						<CardTitle className="text-xl">Build Server</CardTitle>
+						<CardTitle className="flex items-center gap-2 text-xl">
+							Build Server
+							<InfoTooltip
+								content={
+									<div className="space-y-1.5">
+										<p>
+											A build server builds the image and pushes it to the
+											registry; the deployment server then pulls it. Pick both
+											or neither.
+										</p>
+										<p>
+											The pull happens after the build, so it is not in the
+											build log. Watch the Logs tab to see the container start.
+										</p>
+									</div>
+								}
+							/>
+						</CardTitle>
 						<CardDescription>
 							Configure a dedicated server for building your application.
 						</CardDescription>
@@ -128,25 +146,6 @@ export const ShowBuildServer = ({ applicationId }: Props) => {
 				</div>
 			</CardHeader>
 			<CardContent className="flex flex-col gap-4">
-				<AlertBlock type="info">
-					Build servers offload the build process from your deployment servers.
-					Select a build server and registry to use for building your
-					application.
-				</AlertBlock>
-
-				<AlertBlock type="info">
-					📊 <strong>Important:</strong> Once the build finishes, you'll need to
-					wait a few seconds for the deployment server to download the image.
-					These download logs will <strong>NOT</strong> appear in the build
-					deployment logs. Check the <strong>Logs</strong> tab to see when the
-					container starts running.
-				</AlertBlock>
-
-				<AlertBlock type="info">
-					<strong>Note:</strong> Build Server and Build Registry must be
-					configured together. You can either select both or set both to None.
-				</AlertBlock>
-
 				{!registries || registries.length === 0 ? (
 					<AlertBlock type="warning">
 						You need to add at least one registry to use build servers. Please

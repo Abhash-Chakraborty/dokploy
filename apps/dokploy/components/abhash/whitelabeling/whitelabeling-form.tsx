@@ -18,6 +18,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/utils/api";
 
@@ -42,11 +43,18 @@ const schema = z.object({
 	errorPageTitle: z.string().trim().max(120),
 	errorPageDescription: z.string().trim().max(500),
 	footerText: z.string().trim().max(200),
+	loginHeading: z.string().trim().max(80),
+	loginSubheading: z.string().trim().max(200),
+	loginLinkLabel: z.string().trim().max(60),
+	loginLinkUrl: optionalUrl,
 	customCss: z.string(),
+	hideCommunityLinks: z.boolean(),
+	hideLoginGradient: z.boolean(),
 });
 
 type FormValues = z.infer<typeof schema>;
-type Field = keyof FormValues;
+type Toggle = "hideCommunityLinks" | "hideLoginGradient";
+type Field = Exclude<keyof FormValues, Toggle>;
 
 const EMPTY: FormValues = {
 	appName: "",
@@ -60,8 +68,27 @@ const EMPTY: FormValues = {
 	errorPageTitle: "",
 	errorPageDescription: "",
 	footerText: "",
+	loginHeading: "",
+	loginSubheading: "",
+	loginLinkLabel: "",
+	loginLinkUrl: "",
 	customCss: "",
+	hideCommunityLinks: false,
+	hideLoginGradient: false,
 };
+
+const TOGGLES: { name: Toggle; label: string; hint: string }[] = [
+	{
+		name: "hideCommunityLinks",
+		label: "Hide community links",
+		hint: "The GitHub, X and Discord icons, and the repository link.",
+	},
+	{
+		name: "hideLoginGradient",
+		label: "Plain sign-in backdrop",
+		hint: "A flat panel instead of the colour gradient.",
+	},
+];
 
 const SECTIONS: {
 	title: string;
@@ -108,6 +135,30 @@ const SECTIONS: {
 		],
 	},
 	{
+		title: "Sign-in page",
+		description:
+			"Also used on the register, invitation and password reset pages.",
+		fields: [
+			{ name: "loginHeading", label: "Heading", placeholder: "Sign in" },
+			{
+				name: "loginSubheading",
+				label: "Subheading",
+				placeholder: "Enter your email and password to sign in",
+			},
+			{
+				name: "loginLinkLabel",
+				label: "Side panel link text",
+				placeholder: "View the repository",
+			},
+			{
+				name: "loginLinkUrl",
+				label: "Side panel link URL",
+				placeholder: "https://…",
+				hint: "Replaces the repository link under the description.",
+			},
+		],
+	},
+	{
 		title: "Help links",
 		description: "Where the Docs and Support entries in the user menu point.",
 		fields: [
@@ -126,13 +177,18 @@ const SECTIONS: {
 	},
 ];
 
-const toConfig = (values: FormValues) =>
-	Object.fromEntries(
-		Object.entries(values).map(([key, value]) => [
-			key,
-			value.trim() === "" ? null : value,
-		]),
-	) as { [K in Field]: string | null };
+const toConfig = (values: FormValues) => ({
+	...(Object.fromEntries(
+		Object.entries(values)
+			.filter(([, value]) => typeof value === "string")
+			.map(([key, value]) => [
+				key,
+				(value as string).trim() === "" ? null : value,
+			]),
+	) as { [K in Field]: string | null }),
+	hideCommunityLinks: values.hideCommunityLinks,
+	hideLoginGradient: values.hideLoginGradient,
+});
 
 export const WhitelabelingForm = () => {
 	const utils = api.useUtils();
@@ -149,11 +205,14 @@ export const WhitelabelingForm = () => {
 
 	useEffect(() => {
 		if (!data) return;
+		const saved = data as Record<string, string | boolean | null | undefined>;
 		form.reset(
 			Object.fromEntries(
-				Object.keys(EMPTY).map((key) => [
+				Object.entries(EMPTY).map(([key, fallback]) => [
 					key,
-					(data as Record<string, string | null>)[key] ?? "",
+					typeof fallback === "boolean"
+						? !!saved[key]
+						: ((saved[key] as string | null | undefined) ?? ""),
 				]),
 			) as FormValues,
 		);
@@ -245,6 +304,29 @@ export const WhitelabelingForm = () => {
 										)}
 									/>
 								))}
+								{section.title === "Sign-in page" &&
+									TOGGLES.map((toggle) => (
+										<FormField
+											key={toggle.name}
+											control={form.control}
+											name={toggle.name}
+											render={({ field: input }) => (
+												<FormItem className="flex flex-row items-center justify-between gap-3 rounded-lg border px-3 py-2.5">
+													<div className="space-y-0.5">
+														<FormLabel>{toggle.label}</FormLabel>
+														<FormDescription>{toggle.hint}</FormDescription>
+													</div>
+													<FormControl>
+														<Switch
+															checked={input.value}
+															onCheckedChange={input.onChange}
+															disabled={isLoading}
+														/>
+													</FormControl>
+												</FormItem>
+											)}
+										/>
+									))}
 							</div>
 						</section>
 					))}

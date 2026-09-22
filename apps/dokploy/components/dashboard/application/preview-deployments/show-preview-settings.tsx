@@ -1,10 +1,11 @@
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
-import { HelpCircle, Plus, Settings2, X } from "lucide-react";
+import { Plus, Settings2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { AlertBlock } from "@/components/shared/alert-block";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,12 +36,6 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { api } from "@/utils/api";
 
 const schema = z
@@ -231,21 +226,16 @@ export const ShowPreviewSettings = ({ applicationId }: Props) => {
 											<FormItem className="md:col-span-2">
 												<div className="flex items-center gap-2">
 													<FormLabel>Preview Labels</FormLabel>
-													<TooltipProvider>
-														<Tooltip>
-															<TooltipTrigger asChild>
-																<HelpCircle className="size-4 text-muted-foreground hover:text-foreground transition-colors cursor-pointer" />
-															</TooltipTrigger>
-															<TooltipContent>
-																<p>
-																	Add a labels that will trigger a preview
-																	deployment for a pull request. If no labels
-																	are specified, all pull requests will trigger
-																	a preview deployment.
-																</p>
-															</TooltipContent>
-														</Tooltip>
-													</TooltipProvider>
+													<InfoTooltip
+														content={
+															<>
+																Add a labels that will trigger a preview
+																deployment for a pull request. If no labels are
+																specified, all pull requests will trigger a
+																preview deployment.
+															</>
+														}
+													/>
 												</div>
 												<div className="flex flex-wrap gap-2 mb-2">
 													{field.value?.map((label, index) => (
@@ -483,15 +473,14 @@ export const ShowPreviewSettings = ({ applicationId }: Props) => {
 										title="Build-time Arguments"
 										description={
 											<span>
-												Arguments are available only at build-time. See
-												documentation&nbsp;
+												Arguments are available only at build-time. See the{" "}
 												<a
 													className="text-primary"
 													href="https://docs.docker.com/build/building/variables/"
 													target="_blank"
 													rel="noopener noreferrer"
 												>
-													here
+													Docker documentation
 												</a>
 												.
 											</span>
@@ -506,15 +495,14 @@ export const ShowPreviewSettings = ({ applicationId }: Props) => {
 										description={
 											<span>
 												Secrets are specially designed for sensitive information
-												and are only available at build-time. See
-												documentation&nbsp;
+												and are only available at build-time. See the{" "}
 												<a
 													className="text-primary"
 													href="https://docs.docker.com/build/building/secrets/"
 													target="_blank"
 													rel="noopener noreferrer"
 												>
-													here
+													Docker documentation
 												</a>
 												.
 											</span>

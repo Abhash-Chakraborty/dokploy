@@ -1,7 +1,6 @@
 import { CheckIcon } from "lucide-react";
 import type React from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
 	Command,
 	CommandGroup,
@@ -13,8 +12,8 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { LogFilterTrigger } from "./log-filter-trigger";
 
 interface StatusLogsFilterProps {
 	value?: string[];
@@ -39,7 +38,10 @@ export function StatusLogsFilter({
 	const getSelectedBadges = () => {
 		if (allSelected) {
 			return (
-				<Badge variant="blank" className="rounded-sm px-1 font-normal">
+				<Badge
+					variant="blank"
+					className="h-4 rounded-sm px-1 text-[11px] font-normal"
+				>
 					All
 				</Badge>
 			);
@@ -63,12 +65,15 @@ export function StatusLogsFilter({
 												? "yellow"
 												: "blank"
 						}
-						className="rounded-sm px-1 font-normal"
+						className="h-4 rounded-sm px-1 text-[11px] font-normal"
 					>
 						{selected?.label}
 					</Badge>
 					{selectedValues.size > 1 && (
-						<Badge variant="blank" className="rounded-sm px-1 font-normal">
+						<Badge
+							variant="blank"
+							className="h-4 rounded-sm px-1 text-[11px] font-normal"
+						>
 							+{selectedValues.size - 1}
 						</Badge>
 					)}
@@ -82,15 +87,9 @@ export function StatusLogsFilter({
 	return (
 		<Popover>
 			<PopoverTrigger asChild>
-				<Button
-					variant="outline"
-					size="sm"
-					className="h-9 bg-input text-sm placeholder-gray-400 w-full sm:w-auto"
-				>
-					{title}
-					<Separator orientation="vertical" className="mx-2 h-4" />
-					<div className="space-x-1 flex">{getSelectedBadges()}</div>
-				</Button>
+				<LogFilterTrigger label={title ?? "Type"}>
+					{getSelectedBadges()}
+				</LogFilterTrigger>
 			</PopoverTrigger>
 			<PopoverContent className="w-[200px] p-0" align="start">
 				<Command>

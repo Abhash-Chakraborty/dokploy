@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { AlertBlock } from "@/components/shared/alert-block";
 import { CodeEditor } from "@/components/shared/code-editor";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Button } from "@/components/ui/button";
 import {
 	DialogDescription,
@@ -99,7 +100,17 @@ export const RandomizeCompose = ({ composeId }: Props) => {
 	return (
 		<div className="w-full">
 			<DialogHeader>
-				<DialogTitle>Randomize Compose (Experimental)</DialogTitle>
+				<DialogTitle className="flex items-center gap-2">
+					Randomize Compose (Experimental)
+					<InfoTooltip
+						content={
+							<span>
+								Turning this on adds a <code>COMPOSE_PREFIX</code> variable you
+								can use inside the compose file.
+							</span>
+						}
+					/>
+				</DialogTitle>
 				<DialogDescription>
 					Use this in case you want to deploy the same compose file and you have
 					conflicts with some property like volumes, networks, etc.
@@ -117,10 +128,6 @@ export const RandomizeCompose = ({ composeId }: Props) => {
 					<li>configs</li>
 					<li>secrets</li>
 				</ul>
-				<AlertBlock type="info">
-					When you activate this option, we will include a env `COMPOSE_PREFIX`
-					variable to the compose file so you can use it in your compose file.
-				</AlertBlock>
 			</div>
 			{isError && <AlertBlock type="error">{error?.message}</AlertBlock>}
 			<Form {...form}>

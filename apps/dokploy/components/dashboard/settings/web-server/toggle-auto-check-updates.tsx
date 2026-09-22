@@ -13,15 +13,18 @@ export const ToggleAutoCheckUpdates = ({ disabled }: { disabled: boolean }) => {
 	};
 
 	return (
-		<div className="flex items-center gap-4">
+		<div className="flex items-center gap-2">
 			<Switch
 				checked={enabled}
 				onCheckedChange={handleToggle}
 				id="autoCheckUpdatesToggle"
 				disabled={disabled}
 			/>
-			<Label className="text-primary" htmlFor="autoCheckUpdatesToggle">
-				Automatically check for new updates
+			<Label
+				className="text-xs font-normal text-muted-foreground"
+				htmlFor="autoCheckUpdatesToggle"
+			>
+				Check automatically
 			</Label>
 		</div>
 	);

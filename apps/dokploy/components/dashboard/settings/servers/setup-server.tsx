@@ -7,6 +7,7 @@ import { AlertBlock } from "@/components/shared/alert-block";
 import { CodeEditor } from "@/components/shared/code-editor";
 import { DialogAction } from "@/components/shared/dialog-action";
 import { DrawerLogs } from "@/components/shared/drawer-logs";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -110,6 +111,7 @@ export const SetupServer = ({
 					<div className="flex flex-col gap-1.5">
 						<DialogTitle className="flex items-center gap-2">
 							<ServerIcon className="size-5" /> Setup Server
+							<InfoTooltip content="Connect as root, or as a user with passwordless sudo." />
 						</DialogTitle>
 						<p className="text-muted-foreground text-sm">
 							To setup a server, please click on the button below.
@@ -125,12 +127,6 @@ export const SetupServer = ({
 					</div>
 				) : (
 					<div id="hook-form-add-gitlab" className="grid w-full gap-4">
-						<AlertBlock type="info">
-							You can connect as root or as a non-root user with passwordless
-							sudo access. If using a non-root user, ensure passwordless sudo is
-							configured.
-						</AlertBlock>
-
 						<Tabs defaultValue="ssh-keys">
 							<TabsList
 								className={cn(

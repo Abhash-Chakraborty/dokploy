@@ -54,14 +54,7 @@ import { DialogAction } from "@/components/shared/dialog-action";
 import { FocusShortcutInput } from "@/components/shared/focus-shortcut-input";
 import { StatusTooltip } from "@/components/shared/status-tooltip";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Command,
@@ -1035,27 +1028,33 @@ const EnvironmentPage = (
 			</Head>
 			<div className="w-full">
 				<div className="flex w-full flex-col">
-					<div className="flex justify-between gap-4 w-full items-center flex-wrap px-0 py-2">
-						<CardHeader className="p-0">
-							<CardTitle className="text-xl flex flex-row gap-2 items-center">
-								<FolderInput className="size-6 text-muted-foreground self-center" />
-								{currentEnvironment.project.name}
+					<div className="flex w-full flex-wrap items-center justify-between gap-4 pt-2 pb-5">
+						<div className="min-w-0 flex-[1_1_22rem] space-y-1">
+							<h1 className="flex min-w-0 items-center gap-2 text-xl font-semibold">
+								<FolderInput className="size-5 shrink-0 text-muted-foreground" />
+								<span className="truncate">
+									{currentEnvironment.project.name}
+								</span>
 								<AdvancedEnvironmentSelector
 									projectId={projectId}
 									currentEnvironmentId={environmentId}
 								/>
 								<EnvironmentVariables environmentId={environmentId}>
-									<Button variant="ghost" size="icon">
-										<SquareTerminal className="size-5 text-muted-foreground cursor-pointer" />
+									<Button
+										variant="ghost"
+										size="icon-sm"
+										title="Environment variables"
+									>
+										<SquareTerminal className="size-4 text-muted-foreground cursor-pointer" />
 									</Button>
 								</EnvironmentVariables>
-							</CardTitle>
-							<CardDescription>
+							</h1>
+							<p className="text-sm text-muted-foreground">
 								{currentEnvironment.description || "No description provided"}
-							</CardDescription>
-						</CardHeader>
-						<div className="flex flex-row gap-4 flex-wrap justify-between items-center">
-							<div className="flex flex-row gap-4 flex-wrap">
+							</p>
+						</div>
+						<div className="flex flex-row gap-2 flex-wrap justify-between items-center">
+							<div className="flex flex-row gap-2 flex-wrap">
 								<ProjectEnvironment projectId={projectId}>
 									<Button variant="outline">Project Environment</Button>
 								</ProjectEnvironment>
@@ -1102,10 +1101,10 @@ const EnvironmentPage = (
 							</div>
 						</div>
 					</div>
-					<CardContent className="space-y-2 py-8 border-t gap-4 flex flex-col min-h-[60vh] px-0">
+					<CardContent className="space-y-2 pt-5 pb-8 border-t gap-4 flex flex-col min-h-[60vh] px-0">
 						<>
-							<div className="flex flex-col gap-4 2xl:flex-row 2xl:items-center 2xl:justify-between">
-								<div className="flex items-center gap-4">
+							<div className="flex flex-wrap items-center justify-between gap-3">
+								<div className="flex items-center gap-3">
 									<div className="flex items-center gap-2">
 										<Checkbox
 											checked={selectedServices.length > 0}
@@ -1131,6 +1130,7 @@ const EnvironmentPage = (
 										<DropdownMenuTrigger asChild>
 											<Button
 												variant="outline"
+												size="sm"
 												disabled={selectedServices.length === 0}
 												isLoading={isBulkActionLoading}
 											>
@@ -1471,18 +1471,18 @@ const EnvironmentPage = (
 									</DropdownMenu>
 								</div>
 
-								<div className="flex flex-col gap-2 lg:flex-row lg:gap-4 lg:items-center">
-									<div className="w-full relative">
+								<div className="flex flex-1 flex-wrap items-center justify-end gap-2">
+									<div className="relative min-w-48 flex-1 sm:max-w-sm">
 										<FocusShortcutInput
 											placeholder="Filter services..."
 											value={searchQuery}
 											onChange={(e) => setSearchQuery(e.target.value)}
-											className="pr-10"
+											className="h-9 pl-8"
 										/>
-										<Search className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+										<Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
 									</div>
 									<Select value={sortBy} onValueChange={setSortBy}>
-										<SelectTrigger className="lg:w-[280px]">
+										<SelectTrigger size="sm" className="w-auto min-w-40">
 											<SelectValue placeholder="Sort by..." />
 										</SelectTrigger>
 										<SelectContent>
@@ -1505,8 +1505,9 @@ const EnvironmentPage = (
 										<PopoverTrigger asChild>
 											<Button
 												variant="outline"
+												size="sm"
 												aria-expanded={openCombobox}
-												className="min-w-[200px] justify-between"
+												className="min-w-36 justify-between font-normal"
 											>
 												{selectedTypes.length === 0
 													? "Select types..."
@@ -1569,7 +1570,7 @@ const EnvironmentPage = (
 											value={selectedServerId || "all"}
 											onValueChange={setSelectedServerId}
 										>
-											<SelectTrigger className="lg:w-[200px]">
+											<SelectTrigger size="sm" className="w-auto min-w-36">
 												<SelectValue placeholder="Filter by server..." />
 											</SelectTrigger>
 											<SelectContent>
@@ -1619,7 +1620,7 @@ const EnvironmentPage = (
 									</div>
 								) : (
 									<div className="flex w-full flex-col gap-4">
-										<div className="grid grid-cols-1 gap-4 pb-6 lg:grid-cols-2 xl:grid-cols-3">
+										<div className="grid grid-cols-1 gap-3 pb-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
 											{filteredServices?.map((service) => (
 												<ContextMenu key={service.id}>
 													<ContextMenuTrigger asChild>
@@ -1627,117 +1628,112 @@ const EnvironmentPage = (
 															href={`/dashboard/project/${projectId}/environment/${environmentId}/services/${service.type}/${service.id}`}
 															className="block h-full"
 														>
-															{/* The status, server and select affordances used to hang
-															    outside the card on negative offsets, which overlapped
-															    the neighbouring card at this grid gap and was clipped
-															    at the edges of the row. They sit inside now. */}
-															<Card className="group relative flex h-full cursor-pointer flex-col bg-transparent pt-9 transition-colors hover:bg-border">
-																{/* Status and select used to hang outside the card on
-																    negative offsets, overlapping the neighbouring card
-																    at this grid gap and clipping at the ends of a row.
-																    Both sit inside now, on a reserved top strip, so
-																    neither can land on the title or the footer. The
-																    server is named in the footer already, so the icon
-																    that used to sit up here as well is gone. */}
-																<div className="absolute right-3 top-3">
-																	<StatusTooltip status={service.status} />
-																</div>
-
-																<div
-																	className={cn(
-																		"absolute left-3 top-2.5 z-10 size-8 rounded-full border bg-background p-0 transition-opacity duration-200",
-																		selectedServices.includes(service.id)
-																			? "opacity-100"
-																			: "opacity-0 group-hover:opacity-100",
-																	)}
-																	onClick={(e) =>
-																		handleServiceSelect(service.id, e)
-																	}
-																>
-																	<div className="h-full w-full flex items-center justify-center">
-																		<Checkbox
-																			checked={selectedServices.includes(
-																				service.id,
+															<Card className="group relative flex h-full cursor-pointer flex-col gap-3 bg-transparent p-4 transition-colors hover:bg-muted/40">
+																<div className="flex items-start gap-3">
+																	<div
+																		className="relative flex size-9 shrink-0 items-center justify-center rounded-md border bg-muted/30 text-muted-foreground"
+																		onClick={(e) =>
+																			handleServiceSelect(service.id, e)
+																		}
+																	>
+																		<span
+																			className={cn(
+																				"flex items-center justify-center transition-opacity",
+																				selectedServices.includes(service.id)
+																					? "opacity-0"
+																					: "group-hover:opacity-0",
 																			)}
-																			className="data-[state=checked]:bg-primary"
-																		/>
+																		>
+																			{service.type === "postgres" && (
+																				<PostgresqlIcon className="size-5" />
+																			)}
+																			{service.type === "redis" && (
+																				<RedisIcon className="size-5" />
+																			)}
+																			{service.type === "mariadb" && (
+																				<MariadbIcon className="size-5" />
+																			)}
+																			{service.type === "mongo" && (
+																				<MongodbIcon className="size-5" />
+																			)}
+																			{service.type === "mysql" && (
+																				<MysqlIcon className="size-5" />
+																			)}
+																			{service.type === "application" &&
+																				(service.icon ? (
+																					// biome-ignore lint/performance/noImgElement: application icon is data URL
+																					<img
+																						src={service.icon}
+																						alt={service.name}
+																						className="size-5 object-contain"
+																					/>
+																				) : (
+																					<GlobeIcon className="size-5" />
+																				))}
+																			{service.type === "compose" &&
+																				(service.icon ? (
+																					// biome-ignore lint/performance/noImgElement: compose icon is data URL
+																					<img
+																						src={service.icon}
+																						alt={service.name}
+																						className="size-5 object-contain rounded-sm"
+																					/>
+																				) : (
+																					<CircuitBoard className="size-5" />
+																				))}
+																			{service.type === "libsql" && (
+																				<LibsqlIcon className="size-5" />
+																			)}
+																		</span>
+																		{/* The service icon doubles as the select box, so
+																			    selecting never overlaps the title or a
+																			    neighbouring card. */}
+																		<span
+																			className={cn(
+																				"absolute inset-0 flex items-center justify-center transition-opacity",
+																				selectedServices.includes(service.id)
+																					? "opacity-100"
+																					: "opacity-0 group-hover:opacity-100",
+																			)}
+																		>
+																			<Checkbox
+																				checked={selectedServices.includes(
+																					service.id,
+																				)}
+																				aria-label={`Select ${service.name}`}
+																				className="data-[state=checked]:bg-primary"
+																			/>
+																		</span>
+																	</div>
+																	<div className="min-w-0 flex-1">
+																		<div className="flex items-center justify-between gap-2">
+																			<span className="truncate text-sm font-medium">
+																				{service.name}
+																			</span>
+																			<StatusTooltip status={service.status} />
+																		</div>
+																		{service.description ? (
+																			<p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+																				{service.description}
+																			</p>
+																		) : (
+																			<p className="mt-0.5 text-xs capitalize text-muted-foreground/70">
+																				{service.type}
+																			</p>
+																		)}
 																	</div>
 																</div>
-
-																<CardHeader>
-																	<CardTitle className="flex items-center justify-between">
-																		<div className="flex flex-row items-center gap-2 justify-between w-full">
-																			<div className="flex flex-col gap-2">
-																				<span className="text-base flex items-center gap-2 font-medium leading-none flex-wrap">
-																					{service.name}
-																				</span>
-																				{service.description && (
-																					<span className="text-sm font-medium text-muted-foreground">
-																						{service.description}
-																					</span>
-																				)}
-																			</div>
-
-																			<span className="text-sm font-medium text-muted-foreground self-start">
-																				{service.type === "postgres" && (
-																					<PostgresqlIcon className="h-7 w-7" />
-																				)}
-																				{service.type === "redis" && (
-																					<RedisIcon className="h-7 w-7" />
-																				)}
-																				{service.type === "mariadb" && (
-																					<MariadbIcon className="h-7 w-7" />
-																				)}
-																				{service.type === "mongo" && (
-																					<MongodbIcon className="h-7 w-7" />
-																				)}
-																				{service.type === "mysql" && (
-																					<MysqlIcon className="h-7 w-7" />
-																				)}
-																				{service.type === "application" &&
-																					(service.icon ? (
-																						// biome-ignore lint/performance/noImgElement: application icon is data URL
-																						<img
-																							src={service.icon}
-																							alt={service.name}
-																							className="size-7 object-contain"
-																						/>
-																					) : (
-																						<GlobeIcon className="h-6 w-6" />
-																					))}
-																				{service.type === "compose" &&
-																					(service.icon ? (
-																						// biome-ignore lint/performance/noImgElement: compose icon is data URL
-																						<img
-																							src={service.icon}
-																							alt={service.name}
-																							className="size-7 object-contain rounded-sm"
-																						/>
-																					) : (
-																						<CircuitBoard className="h-6 w-6" />
-																					))}
-																				{service.type === "libsql" && (
-																					<LibsqlIcon className="h-6 w-6" />
-																				)}
-																			</span>
-																		</div>
-																	</CardTitle>
-																</CardHeader>
-																<CardFooter className="mt-auto">
-																	<div className="space-y-1 text-sm w-full">
-																		{service.serverName && (
-																			<div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-																				<ServerIcon className="size-3" />
-																				<span className="truncate">
-																					{service.serverName}
-																				</span>
-																			</div>
-																		)}
-																		<DateTooltip date={service.createdAt}>
-																			Created
-																		</DateTooltip>
-																	</div>
-																</CardFooter>
+																<div className="mt-auto flex items-center justify-between gap-2 border-t pt-3 text-xs text-muted-foreground">
+																	<span className="flex min-w-0 items-center gap-1.5">
+																		<ServerIcon className="size-3 shrink-0" />
+																		<span className="truncate">
+																			{service.serverName || "Dokploy server"}
+																		</span>
+																	</span>
+																	<DateTooltip date={service.createdAt}>
+																		Created
+																	</DateTooltip>
+																</div>
 															</Card>
 														</Link>
 													</ContextMenuTrigger>

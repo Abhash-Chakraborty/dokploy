@@ -18,7 +18,7 @@ export const WebServer = () => {
 	return (
 		<PageContainer>
 			<PageHeader
-				title="Web Server"
+				title="Dokploy server"
 				description="Reload or clean the web server."
 				icon={<ServerIcon className="size-5" />}
 			/>

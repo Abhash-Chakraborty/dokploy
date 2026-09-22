@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { AlertBlock } from "@/components/shared/alert-block";
 import { CodeEditor } from "@/components/shared/code-editor";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -101,16 +101,17 @@ export const EditScript = ({ serverId }: Props) => {
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-5xl overflow-x-hidden">
 				<DialogHeader>
-					<DialogTitle>Modify Script</DialogTitle>
+					<DialogTitle className="flex items-center gap-2">
+						Modify Script
+						<InfoTooltip
+							variant="warning"
+							content="Leave this script alone unless you know exactly what it installs."
+						/>
+					</DialogTitle>
 					<DialogDescription>
 						Modify the script which install everything necessary to deploy
 						applications on your server,
 					</DialogDescription>
-
-					<AlertBlock type="warning">
-						We recommend not modifying this script unless you know what you are
-						doing.
-					</AlertBlock>
 				</DialogHeader>
 				<div className="grid gap-4">
 					<Form {...form}>

@@ -17,8 +17,9 @@ import { ShowTraefikFile } from "./show-traefik-file";
 
 interface Props {
 	serverId?: string;
+	headerActions?: React.ReactNode;
 }
-export const ShowTraefikSystem = ({ serverId }: Props) => {
+export const ShowTraefikSystem = ({ serverId, headerActions }: Props) => {
 	const [file, setFile] = React.useState<null | string>(null);
 
 	const {
@@ -54,6 +55,7 @@ export const ShowTraefikSystem = ({ serverId }: Props) => {
 				}
 				description="Manage all the files and directories in '/etc/dokploy/traefik'."
 				icon={<FileIcon className="size-5" />}
+				actions={headerActions}
 			/>
 			<div>
 				<div className="flex flex-col lg:flex-row gap-4 md:gap-10 w-full">

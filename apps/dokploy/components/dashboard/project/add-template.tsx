@@ -4,7 +4,7 @@ import {
 	CheckIcon,
 	ChevronsUpDown,
 	Globe,
-	HelpCircle,
+	Info,
 	LayoutGrid,
 	List,
 	Loader2,
@@ -147,7 +147,7 @@ export const AddTemplate = ({ environmentId, baseUrl }: Props) => {
 
 				return { previousBookmarks };
 			},
-			onError: (err, variables, context) => {
+			onError: (_err, _variables, context) => {
 				if (context?.previousBookmarks) {
 					utils.user.getBookmarkedTemplates.setData(
 						undefined,
@@ -530,7 +530,7 @@ export const AddTemplate = ({ environmentId, baseUrl }: Props) => {
 																			<Label className="break-all w-fit flex flex-row gap-1 items-center pb-2 pt-3.5">
 																				Select a Server{" "}
 																				{!isCloud ? "(Optional)" : ""}
-																				<HelpCircle className="size-4 text-muted-foreground" />
+																				<Info className="size-4 text-muted-foreground" />
 																			</Label>
 																		</TooltipTrigger>
 																		<TooltipContent

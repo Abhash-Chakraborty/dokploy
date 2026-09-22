@@ -1,12 +1,14 @@
 import type { IUpdateData } from "@dokploy/server/index";
 import {
-	ArrowUpCircle,
-	Bug,
+	ArrowRight,
+	CircleArrowUp,
+	CircleCheck,
 	Download,
-	Info,
+	FileText,
+	PackagePlus,
 	RefreshCcw,
 	Server,
-	Stars,
+	ShieldCheck,
 	X,
 } from "lucide-react";
 import Link from "next/link";
@@ -17,6 +19,7 @@ import {
 	Dialog,
 	DialogClose,
 	DialogContent,
+	DialogDescription,
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
@@ -128,165 +131,105 @@ export const UpdateServer = ({
 					</TooltipProvider>
 				)}
 			</DialogTrigger>
-			<DialogContent className="max-w-lg" showCloseButton={false}>
-				<div className="flex items-center gap-2 mb-8">
-					<DialogTitle className="text-2xl font-semibold mr-auto">
-						Web Server Update
-					</DialogTitle>
-					{dokployVersion && (
-						<div className="flex items-center gap-1.5 rounded-full px-3 py-1 bg-muted">
-							<Server className="h-4 w-4 text-muted-foreground" />
-							<span className="text-sm text-muted-foreground">
-								{dokployVersion}{" "}
-								{(releaseTag === "canary" || releaseTag === "feature") &&
-									`(${releaseTag})`}
-							</span>
-						</div>
-					)}
+			<DialogContent className="max-w-md gap-5" showCloseButton={false}>
+				<div className="flex items-start gap-3">
+					<div className="flex size-10 shrink-0 items-center justify-center rounded-full border bg-muted/40">
+						<CircleArrowUp className="size-5 text-emerald-500" />
+					</div>
+					<div className="min-w-0 flex-1">
+						<DialogTitle className="text-lg font-semibold">
+							Update Dokploy
+						</DialogTitle>
+						<DialogDescription className="text-sm">
+							{isPending
+								? "Checking published releases and their images..."
+								: isUpdateAvailable
+									? "A new release is ready to install."
+									: hasCheckedUpdate
+										? "You are on the latest release."
+										: "Check for a newer release of this server."}
+						</DialogDescription>
+					</div>
 					<DialogClose asChild>
-						<Button variant="ghost" size="icon-sm" className="shrink-0">
+						<Button variant="ghost" size="icon-sm" className="-mt-1 -mr-1">
 							<X />
 							<span className="sr-only">Close</span>
 						</Button>
 					</DialogClose>
 				</div>
 
-				{/* Initial state */}
-				{!hasCheckedUpdate && (
-					<div className="mb-8">
-						<p className="text text-muted-foreground">
-							Check for new releases and update Dokploy.
-							<br />
-							<br />
-							We recommend checking for updates regularly to ensure you have the
-							latest features and security improvements.
-						</p>
-					</div>
-				)}
-
-				{/* Update available state */}
-				{isUpdateAvailable && latestVersion && (
-					<div className="mb-8">
-						<div className="inline-flex items-center gap-2 rounded-lg px-3 py-2 border border-emerald-900 bg-emerald-900 dark:bg-emerald-900/40 mb-4 w-full">
-							<div className="flex items-center gap-1.5">
-								<Download className="h-4 w-4 text-emerald-400" />
-								<span className="text font-medium text-emerald-400 ">
-									New version available:
-								</span>
-							</div>
-							<span className="text font-semibold text-emerald-300">
+				<div className="flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm">
+					<Server className="size-4 text-muted-foreground" />
+					<span className="text-muted-foreground">Installed</span>
+					<span className="font-mono text-xs">
+						{dokployVersion ?? "…"}
+						{(releaseTag === "canary" || releaseTag === "feature") &&
+							` (${releaseTag})`}
+					</span>
+					{isUpdateAvailable && latestVersion && (
+						<>
+							<ArrowRight className="size-3.5 text-muted-foreground" />
+							<span className="rounded-md bg-emerald-500/10 px-1.5 py-0.5 font-mono text-xs text-emerald-600 dark:text-emerald-400">
 								{latestVersion}
 							</span>
-						</div>
-
-						<div className="space-y-4 text-muted-foreground">
-							<p className="text">
-								A new version of the server software is available. Consider
-								updating if you:
-							</p>
-							<ul className="space-y-3">
-								<li className="flex items-start gap-2">
-									<Stars className="h-5 w-5 mt-0.5 text-[#5B9DFF]" />
-									<span className="text">
-										Want to access the latest features and improvements
-									</span>
-								</li>
-								<li className="flex items-start gap-2">
-									<Bug className="h-5 w-5 mt-0.5 text-[#5B9DFF]" />
-									<span className="text">
-										Are experiencing issues that may be resolved in the new
-										version
-									</span>
-								</li>
-							</ul>
-						</div>
-					</div>
-				)}
-
-				{/* Up to date state */}
-				{hasCheckedUpdate && !isUpdateAvailable && !isPending && (
-					<div className="mb-8">
-						<div className="flex flex-col items-center gap-6 mb-6">
-							<div className="rounded-full p-4 bg-emerald-400/40">
-								<ArrowUpCircle className="h-8 w-8 text-emerald-400" />
-							</div>
-							<div className="text-center space-y-2">
-								<h3 className="text-lg font-medium">
-									You are using the latest version
-								</h3>
-								<p className="text text-muted-foreground">
-									Your server is up to date with all the latest features and
-									security improvements.
-								</p>
-							</div>
-						</div>
-					</div>
-				)}
-
-				{hasCheckedUpdate && isPending && (
-					<div className="mb-8">
-						<div className="flex flex-col items-center gap-6 mb-6">
-							<div className="rounded-full p-4 bg-[#5B9DFF]/40 text-foreground">
-								<RefreshCcw className="h-8 w-8 animate-spin" />
-							</div>
-							<div className="text-center space-y-2">
-								<h3 className="text-lg font-medium">Checking for updates...</h3>
-								<p className="text text-muted-foreground">
-									Checking published GitHub releases and their matching
-									images...
-								</p>
-							</div>
-						</div>
-					</div>
-				)}
+						</>
+					)}
+					{isPending && (
+						<RefreshCcw className="ml-auto size-3.5 animate-spin text-muted-foreground" />
+					)}
+					{hasCheckedUpdate && !isUpdateAvailable && !isPending && (
+						<CircleCheck className="ml-auto size-4 text-emerald-500" />
+					)}
+				</div>
 
 				{isUpdateAvailable && (
-					<div className="rounded-lg bg-[#16254D] p-4 mb-8">
-						<div className="flex gap-2">
-							<Info className="h-5 w-5 shrink-0 text-[#5B9DFF]" />
-							<div className="text-[#5B9DFF]">
-								We recommend reviewing the{" "}
+					<ul className="space-y-2 text-sm text-muted-foreground">
+						<li className="flex items-center gap-2.5">
+							<PackagePlus className="size-4 shrink-0" />
+							New features and improvements
+						</li>
+						<li className="flex items-center gap-2.5">
+							<ShieldCheck className="size-4 shrink-0" />
+							Bug and security fixes
+						</li>
+						<li className="flex items-center gap-2.5">
+							<FileText className="size-4 shrink-0" />
+							<span>
+								Read the{" "}
 								<Link
 									href="https://github.com/Abhash-Chakraborty/dokploy/releases"
 									target="_blank"
-									className="text-white underline hover:text-zinc-200"
+									className="text-foreground underline underline-offset-2"
 								>
 									release notes
 								</Link>{" "}
-								for any breaking changes before updating.
-							</div>
-						</div>
-					</div>
+								for breaking changes first
+							</span>
+						</li>
+					</ul>
 				)}
 
-				<div className="flex items-center justify-between pt-2">
+				<div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
 					<ToggleAutoCheckUpdates disabled={isPending} />
-				</div>
-
-				<div className="flex items-center justify-end mt-4">
 					<div className="flex items-center gap-2">
-						<Button variant="outline" onClick={() => onOpenChange?.(false)}>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => onOpenChange?.(false)}
+						>
 							Cancel
 						</Button>
 						{isUpdateAvailable ? (
-							<UpdateWebServer buttonClassName="w-auto" />
+							<UpdateWebServer buttonClassName="w-auto" buttonSize="sm" />
 						) : (
 							<Button
+								size="sm"
 								variant="secondary"
 								onClick={handleCheckUpdates}
-								disabled={isPending}
+								isLoading={isPending}
 							>
-								{isPending ? (
-									<>
-										<RefreshCcw className="h-4 w-4 animate-spin" />
-										Checking for updates
-									</>
-								) : (
-									<>
-										<RefreshCcw className="h-4 w-4" />
-										Check for updates
-									</>
-								)}
+								{!isPending && <RefreshCcw className="size-4" />}
+								{isPending ? "Checking" : "Check for updates"}
 							</Button>
 						)}
 					</div>

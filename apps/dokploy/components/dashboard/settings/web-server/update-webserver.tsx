@@ -1,5 +1,4 @@
 import {
-	AlertTriangle,
 	CheckCircle2,
 	HardDriveDownload,
 	Loader2,
@@ -8,6 +7,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { AlertBlock } from "@/components/shared/alert-block";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -57,8 +57,10 @@ const ServiceStatusItem = ({
 
 export const UpdateWebServer = ({
 	buttonClassName,
+	buttonSize,
 }: {
 	buttonClassName?: string;
+	buttonSize?: React.ComponentProps<typeof Button>["size"];
 }) => {
 	const [modalState, setModalState] = useState<ModalState>("idle");
 	const [open, setOpen] = useState(false);
@@ -140,6 +142,7 @@ export const UpdateWebServer = ({
 			<AlertDialogTrigger asChild>
 				<Button
 					className={cn("relative w-full", buttonClassName)}
+					size={buttonSize}
 					variant="secondary"
 					onClick={() => setOpen(true)}
 				>
@@ -195,13 +198,10 @@ export const UpdateWebServer = ({
 									</div>
 
 									{!allHealthy && (
-										<div className="flex items-start gap-2 rounded-md border border-yellow-500/30 bg-yellow-500/10 p-3">
-											<AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
-											<span className="text-sm text-yellow-600 dark:text-yellow-400">
-												Some services are not healthy. You can still proceed
-												with the update.
-											</span>
-										</div>
+										<AlertBlock type="warning">
+											Some services are not healthy. You can still proceed with
+											the update.
+										</AlertBlock>
 									)}
 
 									{allHealthy && (
@@ -213,13 +213,10 @@ export const UpdateWebServer = ({
 							)}
 
 							{modalState === "results" && !healthResult && (
-								<div className="flex items-start gap-2 rounded-md border border-yellow-500/30 bg-yellow-500/10 p-3">
-									<AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
-									<span className="text-sm text-yellow-600 dark:text-yellow-400">
-										Could not verify services. You can still proceed with the
-										update.
-									</span>
-								</div>
+								<AlertBlock type="warning">
+									Could not verify services. You can still proceed with the
+									update.
+								</AlertBlock>
 							)}
 
 							{modalState === "updating" && (

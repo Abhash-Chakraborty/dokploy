@@ -1,6 +1,4 @@
 import { CheckIcon } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
 	Command,
 	CommandGroup,
@@ -15,6 +13,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { LogFilterTrigger } from "./log-filter-trigger";
 
 export type TimeFilter = "all" | "1h" | "6h" | "24h" | "168h" | "720h";
 
@@ -58,7 +57,7 @@ export function SinceLogsFilter({
 	onValueChange,
 	showTimestamp,
 	onTimestampChange,
-	title = "Time range",
+	title = "Since",
 }: SinceLogsFilterProps) {
 	const selectedLabel =
 		timeRanges.find((range) => range.value === value)?.label ??
@@ -67,19 +66,7 @@ export function SinceLogsFilter({
 	return (
 		<Popover>
 			<PopoverTrigger asChild>
-				<Button
-					variant="outline"
-					size="sm"
-					className="h-9 bg-input text-sm placeholder-gray-400 w-full sm:w-auto"
-				>
-					{title}
-					<Separator orientation="vertical" className="mx-2 h-4" />
-					<div className="space-x-1 flex">
-						<Badge variant="blank" className="rounded-sm px-1 font-normal">
-							{selectedLabel}
-						</Badge>
-					</div>
-				</Button>
+				<LogFilterTrigger label={title}>{selectedLabel}</LogFilterTrigger>
 			</PopoverTrigger>
 			<PopoverContent className="w-[200px] p-0" align="start">
 				<Command>

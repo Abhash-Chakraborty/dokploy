@@ -23,6 +23,12 @@ export const getAbhashPublicWhitelabelingConfig = async () => {
 		errorPageTitle,
 		errorPageDescription,
 		footerText,
+		loginHeading,
+		loginSubheading,
+		loginLinkLabel,
+		loginLinkUrl,
+		hideCommunityLinks,
+		hideLoginGradient,
 	} = config;
 	return {
 		appName,
@@ -35,5 +41,11 @@ export const getAbhashPublicWhitelabelingConfig = async () => {
 		errorPageTitle,
 		errorPageDescription,
 		footerText,
+		loginHeading: loginHeading ?? null,
+		loginSubheading: loginSubheading ?? null,
+		loginLinkLabel: loginLinkLabel ?? null,
+		loginLinkUrl: loginLinkUrl ?? null,
+		hideCommunityLinks: hideCommunityLinks ?? false,
+		hideLoginGradient: hideLoginGradient ?? false,
 	};
 };

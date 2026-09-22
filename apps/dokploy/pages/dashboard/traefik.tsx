@@ -10,8 +10,10 @@ import { appRouter } from "@/server/api/root";
 
 const Dashboard = () => {
 	return (
-		<ServerFilter>
-			{(serverId) => <ShowTraefikSystem serverId={serverId} />}
+		<ServerFilter inlinePicker>
+			{(serverId, picker) => (
+				<ShowTraefikSystem serverId={serverId} headerActions={picker} />
+			)}
 		</ServerFilter>
 	);
 };
