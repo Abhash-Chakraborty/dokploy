@@ -577,6 +577,12 @@ export const composeRouter = createTRPCRouter({
 				composeId: z.string().min(1),
 				serviceName: z.string().min(1),
 				replicas: z.number().int().min(0).max(100),
+				spread: z
+					.object({
+						spread: z.boolean(),
+						maxPerNode: z.number().int().min(0).max(100).optional(),
+					})
+					.optional(),
 			}),
 		)
 		.mutation(async ({ input, ctx }) => {
@@ -587,6 +593,7 @@ export const composeRouter = createTRPCRouter({
 				input.composeId,
 				input.serviceName,
 				input.replicas,
+				input.spread,
 			);
 			const compose = await findComposeById(input.composeId);
 			await audit(ctx, {
