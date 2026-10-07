@@ -64,7 +64,21 @@ describe("rendering the Docker chain", () => {
 	});
 
 	it("hooks the chain into DOCKER-USER", () => {
-		expect(block).toContain(`-I DOCKER-USER -j ${MANAGED_CHAIN}`);
+		expect(block).toContain(`-A DOCKER-USER -j ${MANAGED_CHAIN}`);
+	});
+
+	it("loads at boot, before Docker has created DOCKER-USER", () => {
+		// ufw reads after.rules before dockerd starts; an undeclared chain
+		// makes iptables-restore fail and ufw refuses to start.
+		expect(block).toContain(":DOCKER-USER - [0:0]");
+		expect(block.indexOf(":DOCKER-USER - [0:0]")).toBeLessThan(
+			block.indexOf(`-A DOCKER-USER -j ${MANAGED_CHAIN}`),
+		);
+	});
+
+	it("does not stack another hook on every ufw reload", () => {
+		expect(block).not.toContain("-I DOCKER-USER");
+		expect(block.match(/DOCKER-USER -j /g)).toHaveLength(1);
 	});
 
 	it("handles a port range", () => {
