@@ -52,7 +52,7 @@ import { APP_NAME_MESSAGE, APP_NAME_REGEX } from "@/utils/schema";
 type DbType = z.infer<typeof mySchema>["type"];
 
 const dockerImageDefaultPlaceholder: Record<DbType, string> = {
-	mongo: "mongo:8",
+	mongo: "mongo:8.2",
 	libsql: "ghcr.io/tursodatabase/libsql-server:v0.24.32",
 	mariadb: "mariadb:11",
 	mysql: "mysql:8",

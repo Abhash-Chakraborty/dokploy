@@ -126,7 +126,8 @@ const createSchema = createInsertSchema(mongo, {
 		message: DATABASE_PASSWORD_MESSAGE,
 	}),
 	databaseUser: z.string().min(1),
-	dockerImage: z.string().default("mongo:8"),
+	// mongo 8.0 refuses to start on Linux 6.19+ (SERVER-121912); 8.2 runs.
+	dockerImage: z.string().default("mongo:8.2"),
 	command: z.string().optional(),
 	args: z.array(z.string()).optional(),
 	env: z.string().optional(),
