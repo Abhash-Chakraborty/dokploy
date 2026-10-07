@@ -164,7 +164,7 @@ export const ShowNodes = ({ serverId }: Props) => {
 							/>
 						</div>
 
-						<ul className="list-disc list-inside text-sm text-muted-foreground border p-4 rounded-lg flex flex-col gap-1.5 mt-2.5">
+						<ul className="list-disc list-inside text-sm text-muted-foreground p-4 rounded-lg flex flex-col gap-1.5 mt-2.5 bg-muted/40">
 							<li>
 								<strong>Docker Registry:</strong> Use custom registries like
 								Docker Hub, DigitalOcean Registry, etc.

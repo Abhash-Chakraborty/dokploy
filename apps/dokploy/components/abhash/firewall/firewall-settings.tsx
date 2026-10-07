@@ -63,7 +63,7 @@ const Plan = ({ server }: { server: ServerRow }) => {
 						{data.lockout} — Dokploy refuses to apply this.
 					</div>
 				)}
-				<ul className="max-h-72 divide-y overflow-auto rounded-md border text-sm">
+				<ul className="max-h-72 divide-y overflow-auto text-sm divide-border/60">
 					{data?.rules.map((rule) => (
 						<li
 							key={`${rule.origin}-${rule.port}-${rule.protocol}`}
@@ -92,7 +92,7 @@ const Plan = ({ server }: { server: ServerRow }) => {
 					))}
 				</ul>
 				{data && (
-					<pre className="max-h-48 overflow-auto rounded-md border bg-muted/40 p-3 font-mono text-xs whitespace-pre-wrap">
+					<pre className="max-h-48 overflow-auto rounded-md bg-muted/40 p-3 font-mono text-xs whitespace-pre-wrap">
 						{data.ufw.join("\n")}
 					</pre>
 				)}
@@ -298,7 +298,7 @@ export const FirewallSettings = () => {
 				}
 			/>
 
-			<ul className="divide-y rounded-md border">
+			<ul className="divide-y divide-border/60">
 				{data?.servers.length === 0 && (
 					<li className="p-6 text-center text-sm text-muted-foreground">
 						No servers yet.
@@ -408,7 +408,7 @@ export const FirewallSettings = () => {
 			{data && data.rules.length > 0 && (
 				<div className="flex flex-col gap-2">
 					<h3 className="text-sm font-medium">Your rules</h3>
-					<ul className="divide-y rounded-md border text-sm">
+					<ul className="divide-y text-sm divide-border/60">
 						{data.rules.map((rule) => (
 							<li key={rule.id} className="flex items-center gap-2 px-3 py-2">
 								<Badge variant="outline" className="uppercase">

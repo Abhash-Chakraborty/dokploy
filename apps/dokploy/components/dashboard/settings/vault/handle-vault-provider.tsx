@@ -1195,7 +1195,7 @@ export const HandleVaultProvider = ({ vaultProviderId }: Props) => {
 							</>
 						)}
 
-						<div className="flex flex-col gap-2 rounded-lg border p-3">
+						<div className="flex flex-col gap-2 rounded-lg p-3 bg-muted/40">
 							<div className="flex flex-row items-center justify-between">
 								<FormLabel>Access</FormLabel>
 								<Button

@@ -250,7 +250,7 @@ export const VaultImportDialog = ({
 									{selected.size} selected
 								</span>
 							</div>
-							<ScrollArea className="h-80 rounded-md border">
+							<ScrollArea className="h-80 rounded-md bg-muted/40">
 								<div className="flex flex-col divide-y">
 									{rows.map((row) => (
 										<div

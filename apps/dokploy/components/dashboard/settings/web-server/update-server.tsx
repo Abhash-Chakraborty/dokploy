@@ -158,7 +158,7 @@ export const UpdateServer = ({
 					</DialogClose>
 				</div>
 
-				<div className="flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm">
+				<div className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm bg-muted/40">
 					<Server className="size-4 text-muted-foreground" />
 					<span className="text-muted-foreground">Installed</span>
 					<span className="font-mono text-xs">

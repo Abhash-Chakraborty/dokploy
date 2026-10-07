@@ -182,7 +182,7 @@ export const ReclaimSpaceDialog = ({ serverId, children }: Props) => {
 							return (
 								<div
 									key={scope.key}
-									className="flex flex-col gap-2 rounded-lg border p-3"
+									className="flex flex-col gap-2 rounded-lg p-3 bg-muted/40"
 								>
 									<label className="flex cursor-pointer items-start gap-3">
 										<Checkbox

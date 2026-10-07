@@ -100,7 +100,7 @@ export function LineCountFilter({
 				</LogFilterTrigger>
 			</PopoverTrigger>
 			<PopoverContent className="w-[200px] p-0" align="start">
-				<CommandPrimitive className="overflow-hidden rounded-md border border-none bg-popover text-popover-foreground">
+				<CommandPrimitive className="overflow-hidden rounded-md border-none bg-popover text-popover-foreground bg-muted/40">
 					<div className="flex items-center border-b px-3">
 						<Hash className="mr-2 h-4 w-4 shrink-0 opacity-50" />
 						<CommandPrimitive.Input

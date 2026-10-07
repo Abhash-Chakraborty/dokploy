@@ -198,7 +198,7 @@ const EditTemplate = ({
 							</SelectContent>
 						</Select>
 					</div>
-					<div className="flex items-center justify-between rounded-md border p-3">
+					<div className="flex items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 						<div>
 							<p className="text-sm font-medium">Every server</p>
 							<p className="text-xs text-muted-foreground">
@@ -208,7 +208,7 @@ const EditTemplate = ({
 						<Switch checked={all} onCheckedChange={setAll} />
 					</div>
 					{!all && (
-						<div className="flex max-h-40 flex-col gap-1 overflow-auto rounded-md border p-2">
+						<div className="flex max-h-40 flex-col gap-1 overflow-auto rounded-md p-2 bg-muted/40">
 							{servers?.map((server) => (
 								<label
 									key={server.serverId}
@@ -230,7 +230,7 @@ const EditTemplate = ({
 							))}
 						</div>
 					)}
-					<div className="flex items-center justify-between rounded-md border p-3">
+					<div className="flex items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 						<p className="text-sm font-medium">Run with sudo (become)</p>
 						<Switch checked={become} onCheckedChange={setBecome} />
 					</div>
@@ -318,7 +318,7 @@ export const AnsibleRuns = () => {
 				}
 			/>
 
-			<ul className="divide-y rounded-md border">
+			<ul className="divide-y divide-border/60">
 				{templates?.length === 0 && (
 					<li className="p-6 text-center text-sm text-muted-foreground">
 						No runs yet.

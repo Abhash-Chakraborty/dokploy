@@ -27,7 +27,7 @@ export const EngineSwitch = () => {
 	};
 
 	return status.rbacV2 ? (
-		<div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm">
+		<div className="flex flex-wrap items-center justify-between gap-3 text-sm py-3 border-b border-border/60 last:border-b-0">
 			<span className="text-muted-foreground">Per-project access is on.</span>
 			<DialogAction
 				title="Turn off per-project access?"

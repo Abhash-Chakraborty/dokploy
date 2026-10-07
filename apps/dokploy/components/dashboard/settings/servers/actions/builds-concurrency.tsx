@@ -74,14 +74,14 @@ export const BuildsConcurrency = ({ serverId, label }: Props) => {
 	const hasChanges = Number(value) !== (current ?? 1);
 
 	return (
-		<div className="flex flex-col gap-3 rounded-lg border p-3">
+		<div className="flex flex-col gap-3 rounded-lg p-3 bg-muted/40">
 			<div className="flex flex-row items-center justify-between gap-4">
 				<div className="space-y-0.5">
 					<div className="flex items-center gap-2">
 						<p className="text-sm font-medium">
 							{label ?? serverQuery.data?.name ?? "Dokploy Server"}
 						</p>
-						<span className="text-xs text-muted-foreground rounded border px-1.5 py-0.5">
+						<span className="text-xs text-muted-foreground rounded px-1.5 py-0.5 bg-muted/40">
 							{serverId
 								? (serverQuery.data?.ipAddress ?? "remote server")
 								: "local host"}

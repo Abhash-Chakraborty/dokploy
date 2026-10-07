@@ -325,7 +325,7 @@ export const ShowDiskUsage = ({ serverId }: Props) => {
 								<Loader2 className="animate-spin size-4" />
 							</div>
 						) : !buildCache?.length ? (
-							<div className="flex min-h-[45vh] w-full flex-col items-center justify-center gap-4 rounded-lg border border-dashed p-8">
+							<div className="flex min-h-[45vh] w-full flex-col items-center justify-center gap-4 py-10">
 								<div className="rounded-full bg-muted p-4">
 									<Database className="size-10 text-muted-foreground" />
 								</div>
@@ -347,7 +347,7 @@ export const ShowDiskUsage = ({ serverId }: Props) => {
 										className="max-w-xs"
 									/>
 								</div>
-								<div className="rounded-md border overflow-x-auto">
+								<div className="overflow-x-auto">
 									<Table>
 										<TableHeader>
 											{table.getHeaderGroups().map((headerGroup) => (

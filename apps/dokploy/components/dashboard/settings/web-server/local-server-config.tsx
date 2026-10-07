@@ -64,7 +64,7 @@ const LocalServerConfig = ({ onSave }: Props) => {
 		<Accordion
 			collapsible
 			type="single"
-			className="rounded-lg border bg-muted/20 px-3"
+			className="rounded-lg bg-muted/20 px-3 bg-muted/40"
 		>
 			<AccordionItem value="connectionSettings">
 				<AccordionTrigger

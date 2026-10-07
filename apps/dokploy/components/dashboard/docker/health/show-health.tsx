@@ -229,7 +229,7 @@ export const ShowHealth = ({ serverId }: Props) => {
 					</div>
 
 					{isFetching && !health && (
-						<div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground border border-dashed rounded-xl">
+						<div className="flex flex-col items-center justify-center gap-2 text-muted-foreground py-10">
 							<Loader2 className="size-8 animate-spin" />
 							<span>Checking server health…</span>
 						</div>
@@ -373,7 +373,7 @@ export const ShowHealth = ({ serverId }: Props) => {
 										{health.dockerNetworks.usageError}
 									</div>
 								) : (
-									<div className="rounded-lg border overflow-x-auto">
+									<div className="overflow-x-auto">
 										<Table>
 											<TableHeader>
 												<TableRow>

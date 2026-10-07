@@ -88,7 +88,7 @@ export const ShowVaultProviders = ({
 														key={provider.vaultProviderId}
 														className="flex items-center justify-between bg-sidebar p-1 w-full rounded-lg"
 													>
-														<div className="flex items-center justify-between p-3.5 rounded-lg bg-background border w-full">
+														<div className="flex items-center justify-between w-full py-3 border-b border-border/60 last:border-b-0">
 															<div className="flex flex-row items-center gap-3">
 																<ProviderIcon className="size-7 shrink-0" />
 																<div className="flex gap-2 flex-col">

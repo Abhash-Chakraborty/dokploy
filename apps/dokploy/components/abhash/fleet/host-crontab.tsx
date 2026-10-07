@@ -113,7 +113,7 @@ export const HostCrontab = ({ serverId }: { serverId: string }) => {
 					{data?.length ? "Nothing matches the filter" : "No cron jobs found"}
 				</div>
 			) : (
-				<div className="overflow-hidden rounded-lg border">
+				<div className="overflow-hidden rounded-lg bg-muted/40">
 					<Table>
 						<TableHeader>
 							<TableRow>
@@ -284,7 +284,7 @@ const AddHostCron = ({
 										key={preset.value}
 										type="button"
 										onClick={() => setSchedule(preset.value)}
-										className="rounded-md border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+										className="rounded-md px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground bg-muted/40"
 									>
 										{preset.label}
 									</button>

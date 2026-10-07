@@ -370,7 +370,7 @@ export const Enable2FA = () => {
 							<div className="flex flex-col gap-6 justify-center items-center">
 								{data?.qrCodeUrl ? (
 									<>
-										<div className="flex flex-col items-center gap-4 p-6 border rounded-lg">
+										<div className="flex flex-col items-center gap-4 p-6 rounded-lg bg-muted/40">
 											<QrCode className="size-5 text-muted-foreground" />
 											<span className="text-sm font-medium">
 												Scan this QR code with your authenticator app
@@ -392,7 +392,7 @@ export const Enable2FA = () => {
 										</div>
 
 										{backupCodes && backupCodes.length > 0 && (
-											<div className="w-full space-y-3 border rounded-lg p-4">
+											<div className="w-full space-y-3 rounded-lg p-4 bg-muted/40">
 												<div className="flex items-center justify-between">
 													<h4 className="font-medium">Backup Codes</h4>
 													<div className="flex items-center gap-2">

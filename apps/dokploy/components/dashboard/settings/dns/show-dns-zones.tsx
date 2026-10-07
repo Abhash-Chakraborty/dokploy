@@ -83,7 +83,7 @@ export const ShowDnsZones = ({ dnsProviderId }: Props) => {
 								<Loader2 className="animate-spin size-4" />
 							</div>
 						) : data?.length === 0 ? (
-							<div className="flex min-h-[45vh] w-full flex-col items-center justify-center gap-4 rounded-lg border border-dashed p-8">
+							<div className="flex min-h-[45vh] w-full flex-col items-center justify-center gap-4 py-10">
 								<div className="rounded-full bg-muted p-4">
 									<Globe className="size-10 text-muted-foreground" />
 								</div>
@@ -101,7 +101,7 @@ export const ShowDnsZones = ({ dnsProviderId }: Props) => {
 									<Link
 										key={zone.id}
 										href={`/dashboard/settings/dns/${dnsProviderId}/${zone.id}`}
-										className="group flex flex-col justify-between gap-6 rounded-xl border bg-background p-4 outline-none transition-colors duration-150 ease-out hover:border-foreground/20 hover:bg-muted/40 focus-visible:border-ring"
+										className="group flex flex-col justify-between gap-6 rounded-xl p-4 outline-none transition-colors duration-150 ease-out hover:border-foreground/20 hover:bg-muted/40 focus-visible:border-ring bg-muted/40"
 									>
 										<div className="flex items-start gap-3">
 											<span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors duration-150 group-hover:text-foreground">

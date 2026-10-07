@@ -31,7 +31,7 @@ export const ShowNodeData = ({ data }: Props) => {
 						See in detail the metadata of this node
 					</DialogDescription>
 				</DialogHeader>
-				<div className="text-wrap rounded-lg border p-4 text-sm sm:max-w-236 bg-card">
+				<div className="text-wrap rounded-lg p-4 text-sm sm:max-w-236 bg-muted/40">
 					<code>
 						<pre className="whitespace-pre-wrap wrap-break-word">
 							<CodeEditor

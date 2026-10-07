@@ -191,7 +191,7 @@ export const ShowDeployment = ({
 				<div
 					ref={scrollRef}
 					onScroll={handleScroll}
-					className="h-[720px] overflow-y-auto space-y-0 border p-4 bg-background rounded custom-logs-scrollbar"
+					className="h-[720px] overflow-y-auto space-y-0 p-4 rounded custom-logs-scrollbar bg-muted/40"
 				>
 					{" "}
 					{filteredLogs.length > 0 ? (

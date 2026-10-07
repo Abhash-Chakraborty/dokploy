@@ -109,7 +109,7 @@ export const EmergencySignIn = ({
 	const [open, setOpen] = useState(false);
 	if (!enforced) return <>{children}</>;
 	return open ? (
-		<div className="flex flex-col gap-3 rounded-md border border-dashed p-3">
+		<div className="flex flex-col gap-3 py-10">
 			<p className="text-xs text-muted-foreground">
 				Single sign-on is required. Only an organization owner can sign in with
 				a password here, and it is recorded in the audit log.

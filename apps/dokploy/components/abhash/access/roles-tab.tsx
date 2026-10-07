@@ -45,7 +45,7 @@ export const RolesTab = ({ canEdit }: { canEdit: boolean }) => (
 					One per member. Decides organization-wide powers: servers, registries,
 					members, settings.
 				</p>
-				<ul className="divide-y rounded-lg border">
+				<ul className="divide-y divide-border/60">
 					{ORG_ROLES.map((r) => (
 						<li key={r.name} className="flex flex-col gap-1 px-4 py-3">
 							<Badge variant="secondary" className="w-fit">
@@ -62,7 +62,7 @@ export const RolesTab = ({ canEdit }: { canEdit: boolean }) => (
 					Granted to a member or team on all projects, a project, an environment
 					or a service.
 				</p>
-				<ul className="divide-y rounded-lg border">
+				<ul className="divide-y divide-border/60">
 					{SCOPE_ROLES.map((r) => (
 						<li key={r.name} className="flex flex-col gap-1 px-4 py-3">
 							<Badge variant="outline" className="w-fit">

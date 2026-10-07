@@ -29,7 +29,7 @@ export const TagManager = () => {
 					<Loader2 className="animate-spin size-4" />
 				</div>
 			) : !tags || tags.length === 0 ? (
-				<div className="flex flex-col items-center gap-3 min-h-[25vh] justify-center rounded-lg border border-dashed">
+				<div className="flex flex-col items-center gap-3 min-h-[25vh] justify-center py-10">
 					<TagIcon className="size-6 text-muted-foreground" />
 					<span className="text-base text-muted-foreground text-center">
 						No tags yet. Create your first tag to start organizing projects.
@@ -41,7 +41,7 @@ export const TagManager = () => {
 					{tags.map((tag) => (
 						<div
 							key={tag.tagId}
-							className="flex items-center justify-between rounded-lg border bg-background px-4 py-3"
+							className="flex items-center justify-between py-3 border-b border-border/60 last:border-b-0"
 						>
 							<div className="flex items-center gap-3">
 								<TagBadge name={tag.name} color={tag.color} />

@@ -128,7 +128,7 @@ const RunCommand = ({
 								/>
 							</div>
 						)}
-						<div className="flex items-end justify-between gap-2 rounded-md border p-3">
+						<div className="flex items-end justify-between gap-2 rounded-md p-3 bg-muted/40">
 							<span className="text-sm">Stop on first failure</span>
 							<Switch
 								checked={stopOnFailure}
@@ -279,7 +279,7 @@ export const CommandCenter = () => {
 
 			{/* Bulk actions appear only once something is selected. */}
 			{selected.length > 0 && (
-				<div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm">
+				<div className="flex flex-wrap items-center gap-2 rounded-md bg-muted/40 px-3 py-2 text-sm">
 					<span>{selected.length} selected</span>
 					<Button variant="ghost" size="sm" onClick={() => setSelected([])}>
 						Clear
@@ -300,7 +300,7 @@ export const CommandCenter = () => {
 				</div>
 			)}
 
-			<ul className="divide-y rounded-md border">
+			<ul className="divide-y divide-border/60">
 				{servers.length === 0 && (
 					<li className="p-6 text-center text-sm text-muted-foreground">
 						No servers yet.

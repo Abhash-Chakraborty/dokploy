@@ -439,7 +439,7 @@ export const HandleDestinations = ({ destinationId }: Props) => {
 						)}
 					>
 						{isCloud ? (
-							<div className="flex flex-col gap-4 border p-2 rounded-lg">
+							<div className="flex flex-col gap-4 p-2 rounded-lg bg-muted/40">
 								<span className="text-sm text-muted-foreground">
 									Select a server to test the destination. If you don't have a
 									server choose the default one.

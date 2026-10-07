@@ -22,7 +22,7 @@ export const CapabilityNotice = ({
 	icon: Icon = PlugZap,
 	action,
 }: Props) => (
-	<div className="flex min-h-[35vh] w-full flex-col items-center justify-center gap-3 rounded-lg border border-dashed p-10 text-center">
+	<div className="flex min-h-[35vh] w-full flex-col items-center justify-center gap-3 text-center py-10">
 		<Icon className="size-8 text-muted-foreground" />
 		<div className="flex flex-col gap-1.5">
 			<span className="text-base font-medium">{title}</span>

@@ -128,7 +128,7 @@ export function LinkingAccount() {
 							{socialAccounts.map((acc) => (
 								<li
 									key={acc.accountId ?? acc.providerId}
-									className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm"
+									className="flex items-center justify-between text-sm py-3 border-b border-border/60 last:border-b-0"
 								>
 									<span className="font-medium">
 										{providerLabel(acc.providerId)}

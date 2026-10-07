@@ -179,7 +179,7 @@ export const ShowBackups = ({
 
 										return (
 											<div key={backup.backupId}>
-												<div className="flex w-full flex-col md:flex-row md:items-start justify-between gap-4 border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+												<div className="flex w-full flex-col md:flex-row md:items-start justify-between gap-4 rounded-lg p-4 hover:bg-muted/50 transition-colors bg-muted/40">
 													<div className="flex flex-col w-full gap-4">
 														<div className="flex items-center gap-3">
 															{backup.backupType === "compose" && (

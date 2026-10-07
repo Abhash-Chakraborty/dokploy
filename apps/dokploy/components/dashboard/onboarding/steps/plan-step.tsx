@@ -121,7 +121,7 @@ export const PlanStep = ({ onNext }: Props) => {
 				</p>
 			</div>
 
-			<div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border rounded-2xl overflow-hidden border">
+			<div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border rounded-2xl overflow-hidden bg-muted/40">
 				{PLANS.map((plan) => {
 					const productId =
 						plan.tier === "hobby"

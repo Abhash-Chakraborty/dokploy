@@ -124,7 +124,7 @@ export const AddCommandCompose = ({ composeId }: Props) => {
 									control={form.control}
 									name="pullImages"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Pull latest images on deploy</FormLabel>
 												<FormDescription>

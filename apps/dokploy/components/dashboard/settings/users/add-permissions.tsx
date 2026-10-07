@@ -324,7 +324,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 						className="grid  grid-cols-1 md:grid-cols-2  w-full gap-4"
 					>
 						{isCustomRole && (
-							<div className="md:col-span-2 rounded-lg border p-3 bg-muted/50 text-sm text-muted-foreground">
+							<div className="md:col-span-2 rounded-lg p-3 bg-muted/50 text-sm text-muted-foreground bg-muted/40">
 								This user has a custom role assigned. Capabilities are defined
 								by the role. You can still manage which projects, environments,
 								and services they can access below.
@@ -336,7 +336,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canCreateProjects"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Create Projects</FormLabel>
 												<FormDescription>
@@ -356,7 +356,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canDeleteProjects"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Delete Projects</FormLabel>
 												<FormDescription>
@@ -376,7 +376,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canCreateServices"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Create Services</FormLabel>
 												<FormDescription>
@@ -396,7 +396,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canDeleteServices"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Delete Services</FormLabel>
 												<FormDescription>
@@ -416,7 +416,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canCreateEnvironments"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Create Environments</FormLabel>
 												<FormDescription>
@@ -436,7 +436,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canDeleteEnvironments"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Delete Environments</FormLabel>
 												<FormDescription>
@@ -456,7 +456,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canAccessToTraefikFiles"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Access to Traefik Files</FormLabel>
 												<FormDescription>
@@ -476,7 +476,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canAccessToDocker"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Access to Docker</FormLabel>
 												<FormDescription>
@@ -496,7 +496,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canAccessToAPI"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Access to API/CLI</FormLabel>
 												<FormDescription>
@@ -516,7 +516,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canAccessToSSHKeys"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Access to SSH Keys</FormLabel>
 												<FormDescription>
@@ -536,7 +536,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canAccessToGitProviders"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Access to Git Providers</FormLabel>
 												<FormDescription>
@@ -581,7 +581,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 														return (
 															<FormItem
 																key={project.projectId}
-																className="flex flex-col items-start rounded-lg p-4 border"
+																className="flex flex-col items-start rounded-lg p-4 bg-muted/40"
 															>
 																{/* Project Header */}
 																<div className="flex flex-row gap-4 items-center w-full">
@@ -917,7 +917,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 													control={form.control}
 													name="accessedGitProviders"
 													render={({ field }) => (
-														<FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-lg border p-3">
+														<FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-lg p-3 bg-muted/40">
 															<FormControl>
 																<Checkbox
 																	checked={field.value?.includes(
@@ -981,7 +981,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 													control={form.control}
 													name="accessedServers"
 													render={({ field }) => (
-														<FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-lg border p-3">
+														<FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-lg p-3 bg-muted/40">
 															<FormControl>
 																<Checkbox
 																	checked={field.value?.includes(s.serverId)}

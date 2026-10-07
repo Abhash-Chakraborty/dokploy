@@ -163,7 +163,7 @@ export const AiSidebar = () => {
 					</Select>
 				</div>
 
-				<div className="mx-4 min-h-0 flex-1 space-y-3 overflow-y-auto rounded-md border p-3 text-sm">
+				<div className="mx-4 min-h-0 flex-1 space-y-3 overflow-y-auto rounded-md p-3 text-sm bg-muted/40">
 					{messages.length === 0 ? (
 						<p className="text-muted-foreground">
 							Ask about this page, your deployments, backups, schedules, or how
@@ -210,7 +210,7 @@ export const AiSidebar = () => {
 									return (
 										<div
 											key={key}
-											className="mt-2 flex items-center gap-2 rounded-md border px-2.5 py-2 text-xs text-foreground"
+											className="mt-2 flex items-center gap-2 rounded-md px-2.5 py-2 text-xs text-foreground bg-muted/40"
 										>
 											<span
 												className="min-w-0 flex-1 truncate font-mono"

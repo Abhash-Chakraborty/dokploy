@@ -50,7 +50,7 @@ function StatCard({
 	delta?: string;
 }) {
 	return (
-		<div className="rounded-xl border bg-background p-5 min-h-[140px] flex flex-col justify-between">
+		<div className="rounded-xl p-5 min-h-[140px] flex flex-col justify-between bg-muted/40">
 			<span className="text-xs uppercase tracking-wider text-muted-foreground">
 				{label}
 			</span>
@@ -72,7 +72,7 @@ function StatusListCard({
 	items: { dotClass: string; label: string; count: number }[];
 }) {
 	return (
-		<div className="rounded-xl border bg-background p-5 min-h-[140px] flex flex-col gap-3">
+		<div className="rounded-xl p-5 min-h-[140px] flex flex-col gap-3 bg-muted/40">
 			<span className="text-xs uppercase tracking-wider text-muted-foreground">
 				{label}
 			</span>
@@ -212,7 +212,7 @@ export const ShowHome = () => {
 				/>
 			</div>
 
-			<div className="rounded-xl border bg-background">
+			<div className="rounded-xl bg-muted/40">
 				<div className="flex items-center justify-between px-5 py-4 border-b">
 					<div className="flex items-center gap-2">
 						<Rocket className="size-4 text-muted-foreground" />

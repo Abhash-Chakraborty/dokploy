@@ -85,7 +85,7 @@ export const ShowGitProviders = () => {
 								{permissions?.gitProviders.create && (
 									<div>
 										<div className="flex items-center bg-sidebar p-1 w-full rounded-lg">
-											<div className="flex flex-wrap items-center gap-4 p-3.5 rounded-lg bg-background border w-full [&>button]:grow">
+											<div className="flex flex-wrap items-center gap-4 p-3.5 rounded-lg w-full [&>button]:grow bg-muted/40">
 												<AddGithubProvider />
 												<AddGitlabProvider />
 												<AddBitbucketProvider />
@@ -103,7 +103,7 @@ export const ShowGitProviders = () => {
 									</span>
 									{permissions?.gitProviders.create && (
 										<div className="flex items-center bg-sidebar p-1 w-full rounded-lg">
-											<div className="flex flex-wrap items-center gap-4 p-3.5 rounded-lg bg-background border w-full [&>button]:grow">
+											<div className="flex flex-wrap items-center gap-4 p-3.5 rounded-lg w-full [&>button]:grow bg-muted/40">
 												<AddGithubProvider />
 												<AddGitlabProvider />
 												<AddBitbucketProvider />
@@ -133,7 +133,7 @@ export const ShowGitProviders = () => {
 												key={gitProvider.gitProviderId}
 												className="flex items-center justify-between bg-sidebar p-1 w-full rounded-lg"
 											>
-												<div className="flex items-center justify-between p-3.5 rounded-lg bg-background border w-full">
+												<div className="flex items-center justify-between w-full py-3 border-b border-border/60 last:border-b-0">
 													<div className="flex flex-col items-center justify-between">
 														<div className="flex gap-3 flex-row items-center">
 															<div className="flex size-11 shrink-0 items-center justify-center rounded-lg border bg-muted/40">

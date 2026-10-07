@@ -77,7 +77,7 @@ export const CreateFileDialog = ({
 						</div>
 						<div className="space-y-2">
 							<Label>Content</Label>
-							<div className="h-[200px] rounded-md border">
+							<div className="h-[200px] rounded-md bg-muted/40">
 								<CodeEditor
 									value={content}
 									onChange={(v) => setContent(v ?? "")}

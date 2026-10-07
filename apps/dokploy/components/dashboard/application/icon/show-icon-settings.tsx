@@ -202,7 +202,7 @@ export const ShowIconSettings = ({
 						/>
 					</div>
 
-					<div className="max-h-[300px] overflow-y-auto border rounded-lg p-4">
+					<div className="max-h-[300px] overflow-y-auto rounded-lg p-4 bg-muted/40">
 						{displayedIcons.length === 0 ? (
 							<div className="text-center py-8 text-sm text-muted-foreground">
 								No icons found
@@ -215,7 +215,7 @@ export const ShowIconSettings = ({
 											type="button"
 											key={i.slug}
 											onClick={() => handleIconSelect(i)}
-											className="flex flex-col items-center gap-1.5 p-2 rounded-lg border hover:border-primary hover:bg-muted transition-colors group"
+											className="flex flex-col items-center gap-1.5 p-2 rounded-lg hover:border-primary hover:bg-muted transition-colors group bg-muted/40"
 										>
 											<svg
 												xmlns="http://www.w3.org/2000/svg"

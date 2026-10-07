@@ -2,7 +2,6 @@
 import type { inferRouterOutputs } from "@trpc/server";
 import {
 	Activity,
-	ArrowLeft,
 	BarChartHorizontalBigIcon,
 	Bell,
 	BlocksIcon,
@@ -16,10 +15,8 @@ import {
 	ChevronRight,
 	ChevronsUpDown,
 	ClipboardList,
-	Clock,
 	Cloud,
 	CreditCard,
-	Database,
 	DatabaseBackup,
 	FileLock,
 	Folder,
@@ -27,11 +24,9 @@ import {
 	GalleryVerticalEnd,
 	GitBranch,
 	Globe,
-	HardDrive,
 	HeartHandshake,
 	HeartPulse,
 	House,
-	Key,
 	KeyRound,
 	Layers,
 	LayoutGrid,
@@ -99,7 +94,6 @@ import {
 	SidebarContent,
 	SidebarFooter,
 	SidebarGroup,
-	SidebarGroupLabel,
 	SidebarHeader,
 	SidebarInset,
 	SidebarMenu,
@@ -130,6 +124,7 @@ import { Logo } from "../shared/logo";
 import { VersionFooter } from "../shared/version-footer";
 import { Button } from "../ui/button";
 import { TimeBadge } from "../ui/time-badge";
+import { SettingsNav, type SettingsNavGroup } from "./settings-nav";
 import { UpdateServerButton } from "./update-server";
 import { UserNav } from "./user-nav";
 
@@ -212,6 +207,13 @@ const MENU: Menu = {
 		},
 		{
 			isSingle: true,
+			title: "Backups",
+			url: "/dashboard/backups",
+			icon: DatabaseBackup,
+			isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
+		},
+		{
+			isSingle: true,
 			title: "Schedules",
 			url: "/dashboard/schedules",
 			icon: CalendarClock,
@@ -270,6 +272,12 @@ const MENU: Menu = {
 			icon: BlocksIcon,
 			items: [
 				{
+					title: "Servers",
+					url: "/dashboard/settings/servers",
+					icon: Server,
+					isEnabled: ({ permissions }) => !!permissions?.server.read,
+				},
+				{
 					title: "Docker",
 					url: "/dashboard/docker",
 					icon: BlocksIcon,
@@ -284,11 +292,17 @@ const MENU: Menu = {
 					isEnabled: ({ permissions }) => !!permissions?.traefikFiles.read,
 				},
 				{
-					title: "Terminals",
+					title: "Terminal",
 					url: "/dashboard/terminals",
 					icon: SquareTerminal,
 					// Same permission the terminal WebSocket enforces.
 					isEnabled: ({ permissions }) => !!permissions?.server.terminal,
+				},
+				{
+					title: "Command centre",
+					url: "/dashboard/command-center",
+					icon: ServerCog,
+					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
 				},
 			],
 		},
@@ -370,7 +384,7 @@ const MENU: Menu = {
 		},
 		{
 			isSingle: false,
-			title: "Servers",
+			title: "Platform",
 			icon: Server,
 			items: [
 				{
@@ -383,27 +397,12 @@ const MENU: Menu = {
 						!!(permissions?.organization.update && !isCloud),
 				},
 				{
-					title: "Remote servers",
-					url: "/dashboard/settings/servers",
-					description: "The machines Dokploy deploys to, and their state.",
-					icon: Server,
-					isEnabled: ({ permissions }) => !!permissions?.server.read,
-				},
-				{
 					title: "Builds",
 					url: "/dashboard/settings/deployments",
 					description: "Build concurrency and the queue of running builds.",
 					icon: Boxes,
 					isEnabled: ({ permissions, isCloud }) =>
 						!!(permissions?.server.read && !isCloud),
-				},
-				{
-					title: "Command centre",
-					url: "/dashboard/command-center",
-					description:
-						"Run Docker, Traefik and Swarm operations across every server.",
-					icon: ServerCog,
-					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
 				},
 				{
 					title: "Ansible",
@@ -502,14 +501,6 @@ const MENU: Menu = {
 					icon: Lock,
 					isEnabled: ({ isCloud }) => !isCloud,
 				},
-				{
-					title: "S3 destinations",
-					url: "/dashboard/settings/destinations",
-					description:
-						"S3 buckets that legacy database and volume backups write to.",
-					icon: HardDrive,
-					isEnabled: ({ permissions }) => !!permissions?.destination.read,
-				},
 			],
 		},
 		{
@@ -522,14 +513,6 @@ const MENU: Menu = {
 					url: "/dashboard/settings/engines",
 					description: "Run more database and service types as managed stacks.",
 					icon: Boxes,
-					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
-				},
-				{
-					title: "Backups",
-					url: "/dashboard/settings/backup-health",
-					description:
-						"Restic repositories with restore drills, and the older per-service jobs.",
-					icon: DatabaseBackup,
 					isEnabled: ({ isCloud, auth }) => !isCloud && auth?.role !== "member",
 				},
 				{
@@ -579,80 +562,6 @@ const MENU: Menu = {
 		},
 	],
 } as const;
-
-const SERVICE_NAVIGATION: Record<
-	string,
-	Array<{ title: string; tab: string; icon: LucideIcon }>
-> = {
-	application: [
-		{ title: "General", tab: "general", icon: Activity },
-		{ title: "Environment", tab: "environment", icon: KeyRound },
-		{ title: "Domains", tab: "domains", icon: GalleryVerticalEnd },
-		{ title: "Deployments", tab: "deployments", icon: Rocket },
-		{ title: "Preview Deployments", tab: "preview-deployments", icon: Forward },
-		{ title: "Schedules", tab: "schedules", icon: Clock },
-		{ title: "Volume Backups", tab: "volume-backups", icon: Database },
-		{ title: "Logs", tab: "logs", icon: ClipboardList },
-		{ title: "Patches", tab: "patches", icon: ShieldCheck },
-		{ title: "Monitoring", tab: "monitoring", icon: BarChartHorizontalBigIcon },
-		{ title: "Advanced", tab: "advanced", icon: Key },
-	],
-	compose: [
-		{ title: "General", tab: "general", icon: Activity },
-		{ title: "Environment", tab: "environment", icon: KeyRound },
-		{ title: "Domains", tab: "domains", icon: GalleryVerticalEnd },
-		{ title: "Deployments", tab: "deployments", icon: Rocket },
-		{ title: "Containers", tab: "containers", icon: Boxes },
-		{ title: "Backups", tab: "backups", icon: Database },
-		{ title: "Schedules", tab: "schedules", icon: Clock },
-		{ title: "Volume Backups", tab: "volumeBackups", icon: Database },
-		{ title: "Logs", tab: "logs", icon: ClipboardList },
-		{ title: "Patches", tab: "patches", icon: ShieldCheck },
-		{ title: "Monitoring", tab: "monitoring", icon: BarChartHorizontalBigIcon },
-		{ title: "Advanced", tab: "advanced", icon: Key },
-	],
-	libsql: [
-		{ title: "General", tab: "general", icon: Activity },
-		{ title: "Environment", tab: "environment", icon: KeyRound },
-		{ title: "Logs", tab: "logs", icon: ClipboardList },
-		{ title: "Monitoring", tab: "monitoring", icon: BarChartHorizontalBigIcon },
-		{ title: "Backups", tab: "backups", icon: Database },
-		{ title: "Advanced", tab: "advanced", icon: Key },
-	],
-	redis: [
-		{ title: "General", tab: "general", icon: Activity },
-		{ title: "Environment", tab: "environment", icon: KeyRound },
-		{ title: "Logs", tab: "logs", icon: ClipboardList },
-		{ title: "Monitoring", tab: "monitoring", icon: BarChartHorizontalBigIcon },
-		{ title: "Advanced", tab: "advanced", icon: Key },
-	],
-};
-
-const DATABASE_SERVICE_NAVIGATION = [
-	{ title: "General", tab: "general", icon: Activity },
-	{ title: "Environment", tab: "environment", icon: KeyRound },
-	{ title: "Logs", tab: "logs", icon: ClipboardList },
-	{ title: "Monitoring", tab: "monitoring", icon: BarChartHorizontalBigIcon },
-	{ title: "Backups", tab: "backups", icon: Database },
-	{ title: "Advanced", tab: "advanced", icon: Key },
-];
-
-for (const service of ["postgres", "mysql", "mariadb", "mongo"]) {
-	SERVICE_NAVIGATION[service] = DATABASE_SERVICE_NAVIGATION;
-}
-
-/**
- * Every URL reachable from the settings nav. Command centre is listed there but
- * lives outside /dashboard/settings, and without this the sidebar would fall
- * back to the home nav while that page is open.
- */
-const SETTINGS_ROUTES = MENU.settings.flatMap((item) =>
-	"items" in item && item.items
-		? item.items.map((sub) => sub.url)
-		: "url" in item && item.url
-			? [item.url]
-			: [],
-);
 
 /**
  * Creates a menu based on the current user's role and permissions
@@ -1142,7 +1051,6 @@ export default function Page({ children }: Props) {
 	}, []);
 
 	const pathname = usePathname();
-	const searchParams = useSearchParams();
 	const { data: auth } = api.user.get.useQuery();
 	const { data: permissions } = api.user.getPermissions.useQuery();
 	const { data: whitelabeling } = api.whitelabeling.get.useQuery(undefined, {
@@ -1151,15 +1059,6 @@ export default function Page({ children }: Props) {
 	});
 
 	const includesProjects = pathname?.includes("/dashboard/project");
-	const isSettings =
-		pathname?.startsWith("/dashboard/settings") ||
-		SETTINGS_ROUTES.some((route) => pathname === route);
-	const serviceType = pathname?.match(/\/services\/([^/]+)\//)?.[1];
-	const isService = !!serviceType;
-	const activeServiceTab = searchParams.get("tab") || "general";
-	const serviceNavigation = serviceType
-		? (SERVICE_NAVIGATION[serviceType] ?? [])
-		: [];
 	const { data: isCloud } = api.settings.isCloud.useQuery();
 
 	const { home: filteredHome, settings: filteredSettings } =
@@ -1174,15 +1073,17 @@ export default function Page({ children }: Props) {
 		[...filteredHome, ...filteredSettings],
 		pathname,
 	);
-	const visibleNavigation = isService
-		? serviceNavigation.map((item) => ({
-				...item,
-				isSingle: true as const,
-				url: `${pathname}?tab=${item.tab}`,
-			}))
-		: isSettings
-			? filteredSettings
-			: filteredHome;
+	// The sidebar never swaps: service sections are tabs on the service page,
+	// and settings sections are listed inside the settings pages.
+	const visibleNavigation = filteredHome;
+	const settingsGroups: SettingsNavGroup[] = filteredSettings.map((item) =>
+		item.isSingle === false
+			? { title: item.title, items: item.items }
+			: { title: item.title, items: [item] },
+	);
+	const isSettings = settingsGroups.some((group) =>
+		group.items.some((item) => isActiveRoute({ itemUrl: item.url, pathname })),
+	);
 
 	if (!isLoaded) {
 		return <div className="w-full h-screen bg-background" />; // Placeholder mientras se carga
@@ -1200,13 +1101,13 @@ export default function Page({ children }: Props) {
 			}}
 			style={
 				{
-					"--sidebar-width": "19.5rem",
-					"--sidebar-width-mobile": "19.5rem",
+					"--sidebar-width": "15rem",
+					"--sidebar-width-mobile": "17rem",
 				} as React.CSSProperties
 			}
 		>
 			<MobileCloser />
-			<Sidebar collapsible="icon" variant="floating">
+			<Sidebar collapsible="icon" variant="sidebar">
 				<SidebarHeader>
 					<div className="flex items-center justify-between gap-2">
 						<LogoWrapper />
@@ -1215,35 +1116,15 @@ export default function Page({ children }: Props) {
 				</SidebarHeader>
 				<SidebarContent>
 					<SidebarGroup>
-						<SidebarGroupLabel
-							className={cn((isSettings || isService) && "h-9 px-1")}
-						>
-							{isSettings || isService ? (
-								<Link
-									href={isService ? "/dashboard/projects" : "/dashboard/home"}
-									className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent"
-								>
-									<ArrowLeft className="size-4" />
-									<span className="truncate">
-										{isService
-											? `${serviceType?.charAt(0).toUpperCase()}${serviceType?.slice(1)}`
-											: "Settings"}
-									</span>
-								</Link>
-							) : (
-								"Home"
-							)}
-						</SidebarGroupLabel>
 						<SidebarMenu>
 							{visibleNavigation.map((item) => {
 								const isSingle = item.isSingle !== false;
-								const isActive = isService
-									? "tab" in item && item.tab === activeServiceTab
-									: isSingle
-										? isActiveRoute({ itemUrl: item.url, pathname })
-										: item.items.some((item) =>
-												isActiveRoute({ itemUrl: item.url, pathname }),
-											);
+								const isActive = isSingle
+									? isActiveRoute({ itemUrl: item.url, pathname }) ||
+										(item.title === "Settings" && isSettings)
+									: item.items.some((item) =>
+											isActiveRoute({ itemUrl: item.url, pathname }),
+										);
 
 								return (
 									<Collapsible
@@ -1257,17 +1138,13 @@ export default function Page({ children }: Props) {
 												<SidebarMenuButton
 													asChild
 													tooltip={item.title}
-													className={cn(isActive && "bg-border")}
+													isActive={isActive}
 												>
 													<Link
 														href={item.url}
 														className="flex w-full items-center gap-2"
 													>
-														{item.icon && (
-															<item.icon
-																className={cn(isActive && "text-primary")}
-															/>
-														)}
+														{item.icon && <item.icon />}
 														<span>{item.title}</span>
 													</Link>
 												</SidebarMenuButton>
@@ -1296,24 +1173,12 @@ export default function Page({ children }: Props) {
 																const link = (
 																	<SidebarMenuSubButton
 																		asChild
-																		className={cn(
-																			isSubItemActive && "bg-border",
-																		)}
+																		isActive={isSubItemActive}
 																	>
 																		<Link
 																			href={subItem.url}
 																			className="flex w-full items-center"
 																		>
-																			{subItem.icon && (
-																				<span className="mr-2">
-																					<subItem.icon
-																						className={cn(
-																							"h-4 w-4 text-muted-foreground",
-																							isSubItemActive && "text-primary",
-																						)}
-																					/>
-																				</span>
-																			)}
 																			<span>{subItem.title}</span>
 																		</Link>
 																	</SidebarMenuSubButton>
@@ -1379,8 +1244,8 @@ export default function Page({ children }: Props) {
 			<SidebarInset>
 				{isCloud === true && <TrialBanner />}
 				{!includesProjects && (
-					<header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-						<div className="flex items-center justify-between w-full px-4">
+					<header className="flex h-12 shrink-0 items-center gap-2">
+						<div className="flex items-center justify-between w-full px-4 sm:px-8">
 							<div className="flex items-center gap-2">
 								{/* Only show this outer toggle when the sidebar is collapsed;
 								    the in-sidebar toggle handles the expanded state, so there
@@ -1410,8 +1275,15 @@ export default function Page({ children }: Props) {
 					</header>
 				)}
 
-				<div className="flex flex-col w-full min-w-0 p-4 pt-0 overflow-x-hidden">
-					{children}
+				<div className="flex w-full min-w-0 flex-col overflow-x-hidden px-4 pb-6 sm:px-8">
+					{isSettings ? (
+						<div className="mx-auto flex w-full max-w-6xl flex-col gap-6 lg:flex-row lg:gap-10">
+							<SettingsNav groups={settingsGroups} pathname={pathname ?? ""} />
+							<div className="min-w-0 flex-1">{children}</div>
+						</div>
+					) : (
+						children
+					)}
 				</div>
 				<VersionFooter />
 			</SidebarInset>

@@ -636,7 +636,7 @@ export const AddDomain = ({ id, type, domainId = "", children }: Props) => {
 									control={form.control}
 									name="stripPath"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Strip Path</FormLabel>
 												<FormDescription>
@@ -680,7 +680,7 @@ export const AddDomain = ({ id, type, domainId = "", children }: Props) => {
 									control={form.control}
 									name="useCustomEntrypoint"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between p-3 mt-4 border rounded-lg shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between mt-4 py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Custom Entrypoint</FormLabel>
 												<FormDescription>
@@ -729,7 +729,7 @@ export const AddDomain = ({ id, type, domainId = "", children }: Props) => {
 									control={form.control}
 									name="https"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between p-3 mt-4 border rounded-lg shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between mt-4 py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>HTTPS</FormLabel>
 												<FormDescription>

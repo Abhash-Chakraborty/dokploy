@@ -84,7 +84,7 @@ export const ShowTraefikSystem = ({ serverId, headerActions }: Props) => {
 								}}
 							/>
 						) : (
-							<div className="w-full flex-col gap-4 flex items-center justify-center h-[55vh] border border-dashed rounded-lg">
+							<div className="w-full flex-col gap-4 flex items-center justify-center h-[55vh] py-10">
 								<div className="flex items-center justify-center size-14 rounded-full bg-muted">
 									<FolderOpen className="size-7 text-muted-foreground" />
 								</div>
@@ -106,7 +106,7 @@ export const ShowTraefikSystem = ({ serverId, headerActions }: Props) => {
 						<>
 							<Tree
 								data={directories}
-								className="lg:max-w-[19rem] w-full lg:h-[660px] border rounded-lg"
+								className="lg:max-w-[19rem] w-full lg:h-[660px] rounded-lg bg-muted/40"
 								onSelectChange={(item) => setFile(item?.id || null)}
 								folderIcon={Folder}
 								itemIcon={Workflow}
@@ -115,7 +115,7 @@ export const ShowTraefikSystem = ({ serverId, headerActions }: Props) => {
 								{file ? (
 									<ShowTraefikFile path={file} serverId={serverId} />
 								) : (
-									<div className="h-full min-h-[300px] w-full flex-col gap-4 flex items-center justify-center border border-dashed rounded-lg">
+									<div className="h-full min-h-[300px] w-full flex-col gap-4 flex items-center justify-center py-10">
 										<div className="flex items-center justify-center size-14 rounded-full bg-muted">
 											<MousePointerClick className="size-7 text-muted-foreground" />
 										</div>

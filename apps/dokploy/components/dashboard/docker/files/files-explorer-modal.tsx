@@ -263,7 +263,7 @@ export const FilesExplorerModal = ({
 				</div>
 
 				<div className="flex gap-4 min-h-[55vh] max-h-[65vh]">
-					<div className="w-72 shrink-0 border rounded-lg overflow-y-auto">
+					<div className="w-72 shrink-0 rounded-lg overflow-y-auto bg-muted/40">
 						{isLoadingEntries ? (
 							<div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground p-4">
 								<span>Loading...</span>
@@ -340,11 +340,11 @@ export const FilesExplorerModal = ({
 
 					<div className="flex-1 min-w-0 flex flex-col gap-2">
 						{!selectedFile ? (
-							<div className="flex flex-1 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
+							<div className="flex flex-1 items-center justify-center text-sm text-muted-foreground py-10">
 								Select a file to view or edit it
 							</div>
 						) : isLoadingFile ? (
-							<div className="flex flex-1 items-center justify-center gap-2 text-sm text-muted-foreground rounded-lg border">
+							<div className="flex flex-1 items-center justify-center gap-2 text-sm text-muted-foreground rounded-lg bg-muted/40">
 								<span>Loading...</span>
 								<Loader2 className="animate-spin size-4" />
 							</div>
@@ -378,11 +378,11 @@ export const FilesExplorerModal = ({
 										content or the terminal for full access.
 									</AlertBlock>
 								) : isBinary ? (
-									<div className="flex flex-1 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
+									<div className="flex flex-1 items-center justify-center text-sm text-muted-foreground py-10">
 										Binary file — use Download instead
 									</div>
 								) : (
-									<div className="flex-1 overflow-auto rounded-lg border">
+									<div className="flex-1 overflow-auto rounded-lg bg-muted/40">
 										<CodeEditor
 											lineWrapping
 											value={editorContent}

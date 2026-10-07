@@ -186,7 +186,7 @@ export const ShowClusterSettings = ({ id, type }: Props) => {
 									</FormItem>
 								)}
 							/>
-							<div className="flex flex-wrap items-end gap-4 rounded-lg border px-4 py-3">
+							<div className="flex flex-wrap items-end gap-4 rounded-lg px-4 py-3 bg-muted/40">
 								<FormField
 									control={form.control}
 									name="spread"

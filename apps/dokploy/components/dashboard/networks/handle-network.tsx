@@ -271,7 +271,7 @@ export const HandleNetwork = ({ serverId, children }: HandleNetworkProps) => {
 									control={form.control}
 									name={option.name}
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-start justify-between gap-3 space-y-0 rounded-lg border p-4">
+										<FormItem className="flex flex-row items-start justify-between gap-3 space-y-0 rounded-lg p-4 bg-muted/40">
 											<div className="space-y-1 pr-1">
 												<FormLabel>{option.label}</FormLabel>
 												<FormDescription className="text-muted-foreground">
@@ -289,7 +289,7 @@ export const HandleNetwork = ({ serverId, children }: HandleNetworkProps) => {
 								/>
 							))}
 						</div>
-						<div className="space-y-4 rounded-lg border p-4">
+						<div className="space-y-4 rounded-lg p-4 bg-muted/40">
 							<div className="space-y-1">
 								<FormLabel>IPAM</FormLabel>
 								<p className="text-sm text-muted-foreground">

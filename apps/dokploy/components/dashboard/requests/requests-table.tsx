@@ -233,7 +233,7 @@ export const RequestsTable = ({ dateRange }: RequestsTableProps) => {
 								</DropdownMenuContent>
 							</DropdownMenu>
 						</div>
-						<div className="rounded-md border ">
+						<div className="rounded-md bg-muted/40">
 							<Table>
 								<TableHeader>
 									{table.getHeaderGroups().map((headerGroup) => (
@@ -354,7 +354,7 @@ export const RequestsTable = ({ dateRange }: RequestsTableProps) => {
 						</SheetDescription>
 					</SheetHeader>
 					<ScrollArea className="grow mt-4 pr-4">
-						<div className="border rounded-md">
+						<div className="rounded-md bg-muted/40">
 							<Table>
 								<TableBody>
 									{Object.entries(selectedRow || {}).map(([key, value]) => (

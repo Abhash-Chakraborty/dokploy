@@ -53,7 +53,7 @@ export function NodeCard({ node, serverId }: Props) {
 			<CardContent>
 				<div className="space-y-6">
 					<div className="flex flex-wrap gap-y-2 items-center justify-between">
-						<div className="flex items-center space-x-4 p-2 rounded-xl border">
+						<div className="flex items-center space-x-4 p-2 rounded-xl bg-muted/40">
 							<div
 								className={`h-2.5 w-2.5 rounded-full ${node.Status === "Ready" ? "bg-green-500" : "bg-red-500"}`}
 							/>

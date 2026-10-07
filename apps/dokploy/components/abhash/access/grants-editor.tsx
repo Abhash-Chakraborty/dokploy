@@ -166,11 +166,11 @@ export const GrantsEditor = ({ subjectType, subjectId, canEdit }: Props) => {
 				{isLoading ? (
 					<p className="text-sm text-muted-foreground">Loading…</p>
 				) : !grants?.length ? (
-					<p className="rounded-md border border-dashed px-3 py-4 text-center text-sm text-muted-foreground">
+					<p className="text-center text-sm text-muted-foreground py-10">
 						No access granted yet.
 					</p>
 				) : (
-					<ul className="divide-y rounded-md border">
+					<ul className="divide-y divide-border/60">
 						{grants.map((g) => {
 							const Icon = SCOPE_META[g.scopeType].icon;
 							return (
@@ -212,7 +212,7 @@ export const GrantsEditor = ({ subjectType, subjectId, canEdit }: Props) => {
 			</div>
 
 			{canEdit && (
-				<div className="flex flex-col gap-3 rounded-md border bg-muted/30 p-3">
+				<div className="flex flex-col gap-3 rounded-md bg-muted/30 p-3 bg-muted/40">
 					<h4 className="text-sm font-medium">Grant access</h4>
 					<div className="grid gap-3 sm:grid-cols-2">
 						<div className="flex flex-col gap-1.5">

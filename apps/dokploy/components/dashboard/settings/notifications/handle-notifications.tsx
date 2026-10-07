@@ -942,7 +942,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 															/>
 															<Label
 																htmlFor={key}
-																className="h-24 flex flex-col gap-2 items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary has-data-[state=checked]:border-primary cursor-pointer"
+																className="h-24 flex flex-col gap-2 items-center justify-between border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary has-data-[state=checked]:border-primary cursor-pointer py-3 border-b border-border/60 last:border-b-0"
 															>
 																{value.icon}
 																{value.label}
@@ -1103,7 +1103,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 											name="decoration"
 											defaultValue={true}
 											render={({ field }) => (
-												<FormItem className="flex items-center justify-between rounded-lg border p-3 shadow-xs">
+												<FormItem className="flex items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 													<div className="space-y-0.5">
 														<FormLabel>Decoration</FormLabel>
 														<FormDescription>
@@ -1435,7 +1435,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 											name="decoration"
 											defaultValue={true}
 											render={({ field }) => (
-												<FormItem className="flex items-center justify-between rounded-lg border p-3 shadow-xs">
+												<FormItem className="flex items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 													<div className="space-y-0.5">
 														<FormLabel>Decoration</FormLabel>
 														<FormDescription>
@@ -1626,7 +1626,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 												{headerFields.map((field, index) => (
 													<div
 														key={field.id}
-														className="flex items-center gap-2 p-2 border rounded-md bg-muted/50"
+														className="flex items-center gap-2 p-2 rounded-md bg-muted/50 bg-muted/40"
 													>
 														<FormField
 															control={form.control}
@@ -1876,7 +1876,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 									control={form.control}
 									name="appDeploy"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs gap-2">
+										<FormItem className="flex flex-row items-center justify-between gap-2 py-3 border-b border-border/60 last:border-b-0">
 											<div className="">
 												<FormLabel>App Deploy</FormLabel>
 												<FormDescription>
@@ -1896,7 +1896,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 									control={form.control}
 									name="appBuildError"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs gap-2">
+										<FormItem className="flex flex-row items-center justify-between gap-2 py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>App Build Error</FormLabel>
 												<FormDescription>
@@ -1917,7 +1917,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 									control={form.control}
 									name="databaseBackup"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs gap-2">
+										<FormItem className="flex flex-row items-center justify-between gap-2 py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Database Backup</FormLabel>
 												<FormDescription>
@@ -1938,7 +1938,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 									control={form.control}
 									name="dokployBackup"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs gap-2">
+										<FormItem className="flex flex-row items-center justify-between gap-2 py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Dokploy Backup</FormLabel>
 												<FormDescription>
@@ -1959,7 +1959,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 									control={form.control}
 									name="volumeBackup"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs gap-2">
+										<FormItem className="flex flex-row items-center justify-between gap-2 py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Volume Backup</FormLabel>
 												<FormDescription>
@@ -1980,7 +1980,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 									control={form.control}
 									name="dockerCleanup"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs gap-2">
+										<FormItem className="flex flex-row items-center justify-between gap-2 py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Docker Cleanup</FormLabel>
 												<FormDescription>
@@ -2002,7 +2002,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 										control={form.control}
 										name="dokployRestart"
 										render={({ field }) => (
-											<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs gap-2">
+											<FormItem className="flex flex-row items-center justify-between gap-2 py-3 border-b border-border/60 last:border-b-0">
 												<div className="space-y-0.5">
 													<FormLabel>Dokploy Restart</FormLabel>
 													<FormDescription>
@@ -2025,7 +2025,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 										control={form.control}
 										name="serverThreshold"
 										render={({ field }) => (
-											<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs gap-2">
+											<FormItem className="flex flex-row items-center justify-between gap-2 py-3 border-b border-border/60 last:border-b-0">
 												<div className="space-y-0.5">
 													<FormLabel>Server Threshold</FormLabel>
 													<FormDescription>
@@ -2048,7 +2048,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 									control={form.control}
 									name="containerHealth"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs gap-2">
+										<FormItem className="flex flex-row items-center justify-between gap-2 py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Container Crash Loop</FormLabel>
 												<FormDescription>
@@ -2070,7 +2070,7 @@ export const HandleNotifications = ({ notificationId }: Props) => {
 									control={form.control}
 									name="userLogin"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm gap-2">
+										<FormItem className="flex flex-row items-center justify-between gap-2 py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>New Login</FormLabel>
 												<FormDescription>

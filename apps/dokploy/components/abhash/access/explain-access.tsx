@@ -59,7 +59,7 @@ export const ExplainAccess = ({ userId }: { userId: string }) => {
 			</div>
 
 			{scopeId && (
-				<div className="rounded-md border">
+				<div className="rounded-md bg-muted/40">
 					{isFetching ? (
 						<p className="p-3 text-sm text-muted-foreground">Checking…</p>
 					) : !data ? (

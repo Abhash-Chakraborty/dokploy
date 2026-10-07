@@ -117,7 +117,7 @@ export const ShowPreviewDeployments = ({ applicationId }: Props) => {
 									return (
 										<div
 											key={deployment.previewDeploymentId}
-											className="group relative overflow-hidden border rounded-lg transition-colors"
+											className="group relative overflow-hidden rounded-lg transition-colors bg-muted/40"
 										>
 											<div
 												className={`absolute left-0 top-0 w-1 h-full ${

@@ -151,7 +151,7 @@ export function GPUSupport({ serverId }: GPUSupportProps) {
 						) : (
 							<div className="grid gap-4">
 								{/* Prerequisites Section */}
-								<div className="border rounded-lg p-4">
+								<div className="rounded-lg p-4 bg-muted/40">
 									<h3 className="text-lg font-semibold mb-1">Prerequisites</h3>
 									<p className="text-sm text-muted-foreground mb-4">
 										Shows all software checks and available hardware
@@ -203,7 +203,7 @@ export function GPUSupport({ serverId }: GPUSupportProps) {
 								</div>
 
 								{/* Configuration Status */}
-								<div className="border rounded-lg p-4">
+								<div className="rounded-lg p-4 bg-muted/40">
 									<h3 className="text-lg font-semibold mb-1">
 										Docker Swarm GPU Status
 									</h3>

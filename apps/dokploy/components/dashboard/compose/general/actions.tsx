@@ -219,7 +219,7 @@ export const ComposeActions = ({ composeId }: Props) => {
 				</Button>
 			</DockerTerminalModal>
 			{canUpdateService && (
-				<div className="flex flex-row items-center gap-2 rounded-md px-4 py-2 border">
+				<div className="flex flex-row items-center gap-2 rounded-md px-4 py-2 bg-muted/40">
 					<span className="text-sm font-medium">Autodeploy</span>
 					<Switch
 						aria-label="Toggle autodeploy"

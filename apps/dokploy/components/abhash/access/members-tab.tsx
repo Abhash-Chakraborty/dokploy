@@ -82,7 +82,7 @@ export const MembersTab = () => {
 	}
 
 	return (
-		<div className="overflow-x-auto rounded-lg border">
+		<div className="overflow-x-auto">
 			<Table>
 				<TableHeader>
 					<TableRow>

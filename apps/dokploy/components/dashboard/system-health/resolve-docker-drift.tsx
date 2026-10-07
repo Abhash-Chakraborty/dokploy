@@ -219,7 +219,7 @@ export const ResolveDockerDrift = ({
 									return (
 										<div
 											key={row.serverId}
-											className="flex flex-col gap-1 rounded-md border p-3"
+											className="flex flex-col gap-1 rounded-md p-3 bg-muted/40"
 										>
 											<div className="flex items-center justify-between gap-3">
 												<div className="flex min-w-0 items-center gap-2">
@@ -245,7 +245,7 @@ export const ResolveDockerDrift = ({
 						) : null}
 
 						{localHost ? (
-							<div className="flex flex-col gap-2 rounded-md border p-3">
+							<div className="flex flex-col gap-2 rounded-md p-3 bg-muted/40">
 								<div className="flex items-center gap-2">
 									<AlertTriangle className="size-4 text-amber-500" />
 									<span className="text-sm font-medium">

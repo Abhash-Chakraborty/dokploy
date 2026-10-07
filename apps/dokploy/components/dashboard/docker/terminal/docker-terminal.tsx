@@ -119,11 +119,11 @@ export const DockerTerminal: React.FC<Props> = ({
 				</div>
 			)}
 			{hasContainer ? (
-				<div className="w-full h-[420px] rounded-lg p-2 bg-transparent border">
+				<div className="w-full h-[420px] rounded-lg p-2 bg-transparent bg-muted/40">
 					<div id={id} ref={termRef} className="h-full" />
 				</div>
 			) : (
-				<div className="flex h-[420px] w-full items-center justify-center rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
+				<div className="flex h-[420px] w-full items-center justify-center text-center text-sm text-muted-foreground py-10">
 					Select a container above to open a terminal. If none are listed, make
 					sure the service is deployed and running.
 				</div>

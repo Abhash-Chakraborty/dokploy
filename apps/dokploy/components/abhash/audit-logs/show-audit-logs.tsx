@@ -144,7 +144,7 @@ export const ShowAbhashAuditLogs = () => {
 			<div className="flex flex-col gap-3">
 				<div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
 					<div className="flex items-center gap-3">
-						<div className="flex h-10 w-10 items-center justify-center rounded-md border bg-background">
+						<div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted/40">
 							<ShieldCheck className="h-5 w-5 text-muted-foreground" />
 						</div>
 						<div>
@@ -176,19 +176,19 @@ export const ShowAbhashAuditLogs = () => {
 				</div>
 
 				<div className="grid gap-3 md:grid-cols-3">
-					<div className="rounded-md border bg-background p-3">
+					<div className="rounded-md p-3 bg-muted/40">
 						<div className="text-muted-foreground text-xs">Total events</div>
 						<div className="mt-1 font-semibold text-2xl">
 							{summary.data?.total ?? 0}
 						</div>
 					</div>
-					<div className="rounded-md border bg-background p-3">
+					<div className="rounded-md p-3 bg-muted/40">
 						<div className="text-muted-foreground text-xs">Last 24 hours</div>
 						<div className="mt-1 font-semibold text-2xl">
 							{summary.data?.last24Hours ?? 0}
 						</div>
 					</div>
-					<div className="rounded-md border bg-background p-3">
+					<div className="rounded-md p-3 bg-muted/40">
 						<div className="text-muted-foreground text-xs">Top action</div>
 						<div className="mt-2">
 							<Badge variant="blue">
@@ -250,7 +250,7 @@ export const ShowAbhashAuditLogs = () => {
 				</div>
 			</div>
 
-			<div className="rounded-lg border">
+			<div className="rounded-lg bg-muted/40">
 				<Table>
 					<TableHeader>
 						<TableRow>

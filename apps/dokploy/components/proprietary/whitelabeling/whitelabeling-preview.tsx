@@ -28,7 +28,7 @@ export function WhitelabelingPreview({ config }: WhitelabelingPreviewProps) {
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<div className="rounded-lg border overflow-hidden">
+				<div className="rounded-lg overflow-hidden bg-muted/40">
 					{/* Simulated sidebar header */}
 					<div className="flex items-center gap-3 p-4 border-b bg-sidebar">
 						{config.logoUrl ? (
@@ -55,7 +55,7 @@ export function WhitelabelingPreview({ config }: WhitelabelingPreviewProps) {
 							<div className="px-3 py-1.5 rounded-md text-xs bg-primary text-primary-foreground font-medium">
 								Button
 							</div>
-							<div className="px-3 py-1.5 rounded-md text-xs border font-medium">
+							<div className="px-3 py-1.5 rounded-md text-xs font-medium bg-muted/40">
 								Secondary
 							</div>
 						</div>

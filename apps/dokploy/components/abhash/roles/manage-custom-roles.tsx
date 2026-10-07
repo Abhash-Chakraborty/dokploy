@@ -190,7 +190,7 @@ const RoleDialog = ({
 					{groups.map((group) => (
 						<div key={group.title} className="flex flex-col gap-2">
 							<h4 className="text-sm font-medium">{group.title}</h4>
-							<div className="divide-y rounded-lg border">
+							<div className="divide-y divide-border/60">
 								{group.resources.map((resource) => {
 									const actions = statements[resource] ?? [];
 									const granted = new Set(permissions[resource] ?? []);
@@ -292,12 +292,12 @@ export const ManageCustomRoles = () => {
 			{isLoading ? (
 				<p className="text-sm text-muted-foreground">Loading roles…</p>
 			) : !roles?.length ? (
-				<div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-10 text-center">
+				<div className="flex flex-col items-center gap-2 text-center py-10">
 					<ShieldCheck className="size-8 text-muted-foreground" />
 					<p className="text-sm text-muted-foreground">No custom roles yet.</p>
 				</div>
 			) : (
-				<div className="divide-y rounded-lg border">
+				<div className="divide-y divide-border/60">
 					{roles.map((role) => (
 						<div
 							key={role.role}

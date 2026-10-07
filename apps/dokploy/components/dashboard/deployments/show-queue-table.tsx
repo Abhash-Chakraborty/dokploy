@@ -95,7 +95,7 @@ export function ShowQueueTable(props: { embedded?: boolean }) {
 					<span>Loading queue...</span>
 				</div>
 			) : (
-				<div className="rounded-md border overflow-x-auto">
+				<div className="overflow-x-auto">
 					<Table>
 						<TableHeader>
 							<TableRow>

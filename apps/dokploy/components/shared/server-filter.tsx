@@ -91,7 +91,7 @@ export const ServerFilter = ({
 	if (isCloud && !servers?.length) {
 		return (
 			<Card className="w-full border-none bg-transparent p-0 shadow-none">
-				<div className="rounded-xl bg-background shadow-md flex flex-col items-center justify-center gap-5 min-h-[60vh] border border-dashed px-4">
+				<div className="flex flex-col items-center justify-center gap-5 min-h-[60vh] py-10">
 					<div className="flex items-center justify-center size-16 rounded-full bg-muted">
 						<ServerIcon className="size-8 text-muted-foreground" />
 					</div>

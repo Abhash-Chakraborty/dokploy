@@ -191,7 +191,7 @@ export const ShowServers = () => {
 																		copy(server.ipAddress);
 																		toast.success("IP copied to clipboard");
 																	}}
-																	className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs hover:bg-muted transition-colors"
+																	className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs hover:bg-muted transition-colors bg-muted/40"
 																	title="Copy IP"
 																>
 																	{server.ipAddress}

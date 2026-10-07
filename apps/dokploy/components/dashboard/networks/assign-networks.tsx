@@ -120,7 +120,7 @@ export const AssignNetworks = ({ id, type }: Props) => {
 				</div>
 			</CardHeader>
 			<CardContent className="flex flex-col gap-4">
-				<div className="flex flex-row items-start justify-between gap-3 rounded-lg border p-4">
+				<div className="flex flex-row items-start justify-between gap-3 rounded-lg p-4 bg-muted/40">
 					<div className="space-y-1 pr-1">
 						<div className="flex items-center gap-2">
 							<span className="text-sm font-medium">

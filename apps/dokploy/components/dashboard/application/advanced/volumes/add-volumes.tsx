@@ -220,7 +220,7 @@ export const AddVolumes = ({
 															/>
 															<Label
 																htmlFor="bind"
-																className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary has-data-[state=checked]:border-primary cursor-pointer"
+																className="flex flex-col items-center justify-between border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary has-data-[state=checked]:border-primary cursor-pointer py-3 border-b border-border/60 last:border-b-0"
 															>
 																Bind Mount
 															</Label>
@@ -240,7 +240,7 @@ export const AddVolumes = ({
 															/>
 															<Label
 																htmlFor="volume"
-																className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary has-data-[state=checked]:border-primary cursor-pointer"
+																className="flex flex-col items-center justify-between border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary has-data-[state=checked]:border-primary cursor-pointer py-3 border-b border-border/60 last:border-b-0"
 															>
 																Volume Mount
 															</Label>
@@ -264,7 +264,7 @@ export const AddVolumes = ({
 														/>
 														<Label
 															htmlFor="file"
-															className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary has-data-[state=checked]:border-primary cursor-pointer"
+															className="flex flex-col items-center justify-between border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary has-data-[state=checked]:border-primary cursor-pointer py-3 border-b border-border/60 last:border-b-0"
 														>
 															File Mount
 														</Label>

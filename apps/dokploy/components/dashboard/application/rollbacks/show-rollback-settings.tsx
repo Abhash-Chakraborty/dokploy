@@ -134,7 +134,7 @@ export const ShowRollbackSettings = ({ applicationId, children }: Props) => {
 							control={form.control}
 							name="rollbackActive"
 							render={({ field }) => (
-								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+								<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 									<div className="space-y-0.5">
 										<FormLabel className="text-base">
 											Enable Rollbacks

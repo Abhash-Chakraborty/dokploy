@@ -164,7 +164,7 @@ export const NetworkForm = ({ id, type }: NetworkFormProps) => {
 					</FormDescription>
 					<div className="space-y-2 mt-2">
 						{fields.map((field, index) => (
-							<div key={field.id} className="space-y-2 p-3 border rounded">
+							<div key={field.id} className="space-y-2 p-3 rounded bg-muted/40">
 								<FormField
 									control={form.control}
 									name={`networks.${index}.Target`}

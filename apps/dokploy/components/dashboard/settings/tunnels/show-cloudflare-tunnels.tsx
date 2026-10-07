@@ -213,7 +213,7 @@ export const ShowCloudflareTunnels = () => {
 						<Loader2 className="size-4 animate-spin" />
 					</div>
 				) : !tunnels || tunnels.length === 0 ? (
-					<div className="flex min-h-[20vh] flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-8 text-center">
+					<div className="flex min-h-[20vh] flex-col items-center justify-center gap-2 text-center py-10">
 						<Cloud className="size-8 text-muted-foreground" />
 						<span className="text-base font-medium">No tunnels yet</span>
 						<span className="max-w-md text-sm text-muted-foreground">
@@ -226,7 +226,7 @@ export const ShowCloudflareTunnels = () => {
 						{tunnels.map((tunnel) => (
 							<li
 								key={tunnel.cloudflareTunnelId}
-								className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
+								className="flex flex-col gap-2 rounded-lg p-3 sm:flex-row sm:items-center sm:justify-between bg-muted/40"
 							>
 								<div className="flex min-w-0 flex-col gap-1">
 									<div className="flex flex-wrap items-center gap-2">

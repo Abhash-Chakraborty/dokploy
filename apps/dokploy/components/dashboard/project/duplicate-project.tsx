@@ -305,7 +305,7 @@ export const DuplicateProject = ({
 
 					<div className="grid gap-2">
 						<Label>Selected services to duplicate</Label>
-						<div className="space-y-2 max-h-[200px] overflow-y-auto border rounded-md p-4">
+						<div className="space-y-2 max-h-[200px] overflow-y-auto rounded-md p-4 bg-muted/40">
 							{selectedServices.map((service) => (
 								<div key={service.id} className="flex items-center space-x-2">
 									<span className="text-sm">

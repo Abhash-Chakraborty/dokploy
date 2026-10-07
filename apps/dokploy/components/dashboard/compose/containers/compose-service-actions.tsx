@@ -66,7 +66,7 @@ export const ComposeServiceActions = ({
 	};
 
 	return (
-		<div className="flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2">
+		<div className="flex flex-wrap items-center gap-2 rounded-lg px-3 py-2 bg-muted/40">
 			<Select value={service} onValueChange={setService}>
 				<SelectTrigger size="sm" className="w-56" aria-label="Service">
 					<SelectValue placeholder="Pick a service" />

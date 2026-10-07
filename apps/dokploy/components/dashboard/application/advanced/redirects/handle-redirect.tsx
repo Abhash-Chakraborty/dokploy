@@ -246,7 +246,7 @@ export const HandleRedirect = ({
 								control={form.control}
 								name="permanent"
 								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between p-3 mt-4 border rounded-lg shadow-xs">
+									<FormItem className="flex flex-row items-center justify-between mt-4 py-3 border-b border-border/60 last:border-b-0">
 										<div className="space-y-0.5">
 											<FormLabel>Permanent</FormLabel>
 											<FormDescription>

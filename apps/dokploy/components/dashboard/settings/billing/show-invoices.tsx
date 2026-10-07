@@ -65,7 +65,7 @@ export const ShowInvoices = () => {
 					</span>
 				</div>
 			) : invoices && invoices.length > 0 ? (
-				<div className="rounded-md border">
+				<div className="rounded-md bg-muted/40">
 					<Table>
 						<TableHeader>
 							<TableRow>

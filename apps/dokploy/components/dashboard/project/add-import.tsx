@@ -386,7 +386,7 @@ export const AddImport = ({ environmentId, projectName }: Props) => {
 											{templateInfo.template.domains.map((domain, index) => (
 												<div
 													key={index}
-													className="rounded-lg border bg-card p-3 text-card-foreground shadow-xs"
+													className="rounded-lg p-3 bg-muted/40"
 												>
 													<div className="font-medium">
 														{domain.serviceName}
@@ -418,7 +418,7 @@ export const AddImport = ({ environmentId, projectName }: Props) => {
 											{templateInfo.template.envs.map((env, index) => (
 												<div
 													key={index}
-													className="rounded-lg truncate border bg-card p-2 font-mono text-sm"
+													className="rounded-lg truncate p-2 font-mono text-sm bg-muted/40"
 												>
 													{env}
 												</div>
@@ -441,7 +441,7 @@ export const AddImport = ({ environmentId, projectName }: Props) => {
 											{templateInfo.template.mounts.map((mount, index) => (
 												<div
 													key={index}
-													className="rounded-lg border bg-card p-2 font-mono text-sm hover:bg-accent cursor-pointer transition-colors"
+													className="rounded-lg p-2 font-mono text-sm hover:bg-accent cursor-pointer transition-colors bg-muted/40"
 													onClick={() => {
 														setSelectedMount(mount);
 														setMountOpen(true);

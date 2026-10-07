@@ -282,7 +282,7 @@ export const ShowGeneralApplication = ({ applicationId }: Props) => {
 						</Button>
 					</DockerTerminalModal>
 					{canUpdateService && (
-						<div className="flex flex-row items-center gap-2 justify-between rounded-md px-4 py-2 border col-span-2 md:col-span-1">
+						<div className="flex flex-row items-center gap-2 justify-between col-span-2 md:col-span-1 py-3 border-b border-border/60 last:border-b-0">
 							<span className="text-sm font-medium">Autodeploy</span>
 							<Switch
 								aria-label="Toggle autodeploy"
@@ -306,7 +306,7 @@ export const ShowGeneralApplication = ({ applicationId }: Props) => {
 					)}
 
 					{canUpdateService && (
-						<div className="flex flex-row items-center gap-2 justify-between rounded-md px-4 py-2 border col-span-2 md:col-span-1">
+						<div className="flex flex-row items-center gap-2 justify-between col-span-2 md:col-span-1 py-3 border-b border-border/60 last:border-b-0">
 							<span className="text-sm font-medium">Clean Cache</span>
 							<Switch
 								aria-label="Toggle clean cache"

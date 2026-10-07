@@ -125,7 +125,7 @@ export const ContainerModeToggle = ({
 }) => (
 	<fieldset
 		aria-label="Container source"
-		className="m-0 flex h-8 min-w-0 items-center rounded-lg border p-0.5 text-xs"
+		className="m-0 flex h-8 min-w-0 items-center rounded-lg p-0.5 text-xs bg-muted/40"
 	>
 		{(["native", "swarm"] as const).map((mode) => (
 			<button

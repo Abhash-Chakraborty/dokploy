@@ -107,7 +107,7 @@ export const ShowSchedules = ({ id, scheduleType = "application" }: Props) => {
 							return (
 								<div
 									key={schedule.scheduleId}
-									className="flex flex-col sm:flex-row sm:items-center flex-wrap sm:flex-nowrap gap-y-2 justify-between rounded-lg border p-3 transition-colors bg-muted/50 w-full"
+									className="flex flex-col sm:flex-row sm:items-center flex-wrap sm:flex-nowrap gap-y-2 justify-between transition-colors bg-muted/50 w-full py-3 border-b border-border/60 last:border-b-0"
 								>
 									<div className="flex items-start gap-3 w-full sm:w-auto">
 										<div className="flex shrink-0 h-9 w-9 items-center justify-center rounded-full bg-primary/5">

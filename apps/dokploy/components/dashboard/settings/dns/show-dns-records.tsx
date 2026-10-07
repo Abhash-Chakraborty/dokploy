@@ -363,7 +363,7 @@ export const ShowDnsRecords = ({ dnsProviderId, zoneId }: Props) => {
 										<Loader2 className="animate-spin size-4" />
 									</div>
 								) : data?.length === 0 ? (
-									<div className="flex min-h-[45vh] w-full flex-col items-center justify-center gap-4 rounded-lg border border-dashed p-8">
+									<div className="flex min-h-[45vh] w-full flex-col items-center justify-center gap-4 py-10">
 										<div className="rounded-full bg-muted p-4">
 											<ListTree className="size-10 text-muted-foreground" />
 										</div>
@@ -416,7 +416,7 @@ export const ShowDnsRecords = ({ dnsProviderId, zoneId }: Props) => {
 											</span>
 										</div>
 
-										<div className="overflow-hidden rounded-lg border">
+										<div className="overflow-hidden rounded-lg bg-muted/40">
 											<Table>
 												<TableHeader className="[&_tr]:border-b">
 													{table.getHeaderGroups().map((headerGroup) => (
