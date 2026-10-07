@@ -193,9 +193,7 @@ const Service = (
 											<TabsTrigger value="schedules">Schedules</TabsTrigger>
 										)}
 										{permissions?.volumeBackup.read && (
-											<TabsTrigger value="volume-backups">
-												Volume Backups
-											</TabsTrigger>
+											<TabsTrigger value="volume-backups">Backups</TabsTrigger>
 										)}
 										{permissions?.logs.read && (
 											<TabsTrigger value="logs">Logs</TabsTrigger>
@@ -314,7 +312,7 @@ const Service = (
 								)}
 								{permissions?.volumeBackup.read && (
 									<TabsContent value="volume-backups" className="w-full pt-2.5">
-										<div className="flex flex-col gap-4 rounded-lg bg-muted/40">
+										<div className="flex flex-col gap-4">
 											<ShowVolumeBackups
 												id={applicationId}
 												type="application"

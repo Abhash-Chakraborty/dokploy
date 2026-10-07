@@ -5,7 +5,6 @@ import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import type { ReactElement } from "react";
 import superjson from "superjson";
-import { ShowOverviewBackups } from "@/components/dashboard/overview/show-overview-backups";
 import { ShowOverviewDomains } from "@/components/dashboard/overview/show-overview-domains";
 import { ShowOverviewServices } from "@/components/dashboard/overview/show-overview-services";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
@@ -19,17 +18,12 @@ const DEFAULT_TAB = "services";
 const Overview = () => {
 	const router = useRouter();
 	const { data: permissions } = api.user.getPermissions.useQuery();
-	const canSeeBackups =
-		!!permissions?.backup.read && !!permissions?.volumeBackup.read;
 	const canSeeDomains = !!permissions?.domain.read;
 
 	const queryTab =
 		typeof router.query.tab === "string" ? router.query.tab : DEFAULT_TAB;
 	const activeTab =
-		(queryTab === "backups" && !canSeeBackups) ||
-		(queryTab === "domains" && !canSeeDomains)
-			? DEFAULT_TAB
-			: queryTab;
+		queryTab === "domains" && !canSeeDomains ? DEFAULT_TAB : queryTab;
 
 	const setTab = (value: string) => {
 		const { tab: _current, subtab: _subtab, ...query } = router.query;
@@ -47,23 +41,17 @@ const Overview = () => {
 		<PageContainer>
 			<PageHeader
 				title="Inventory"
-				description="Every service, backup and domain you can reach, in one place."
+				description="Every service and domain you can reach, in one place."
 				icon={<LayoutList className="size-5" />}
 			/>
 			<Tabs value={activeTab} onValueChange={setTab}>
 				<TabsList>
 					<TabsTrigger value="services">Services</TabsTrigger>
-					{canSeeBackups && <TabsTrigger value="backups">Backups</TabsTrigger>}
 					{canSeeDomains && <TabsTrigger value="domains">Domains</TabsTrigger>}
 				</TabsList>
 				<TabsContent value="services">
 					<ShowOverviewServices />
 				</TabsContent>
-				{canSeeBackups && (
-					<TabsContent value="backups">
-						<ShowOverviewBackups />
-					</TabsContent>
-				)}
 				{canSeeDomains && (
 					<TabsContent value="domains">
 						<ShowOverviewDomains />

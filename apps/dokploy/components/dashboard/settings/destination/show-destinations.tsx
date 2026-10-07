@@ -1,26 +1,44 @@
 import { Database, FolderUp, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { DialogAction } from "@/components/shared/dialog-action";
-import { PageContainer, PageHeader } from "@/components/shared/page-header";
+import {
+	PageContainer,
+	PageHeader,
+	SectionHeader,
+} from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { api } from "@/utils/api";
 import { HandleDestinations } from "./handle-destinations";
 
-export const ShowDestinations = () => {
+export const ShowDestinations = ({
+	embedded = false,
+}: {
+	embedded?: boolean;
+}) => {
 	const { data, isPending, refetch } = api.destination.all.useQuery();
 	const { mutateAsync, isPending: isRemoving } =
 		api.destination.remove.useMutation();
 	const { data: permissions } = api.user.getPermissions.useQuery();
 	return (
 		<PageContainer>
-			<PageHeader
-				title="S3 Destinations"
-				description="AWS S3, Cloudflare R2, Wasabi, DigitalOcean Spaces and more."
-				icon={<Database className="size-5" />}
-				actions={
-					permissions?.destination.create ? <HandleDestinations /> : undefined
-				}
-			/>
+			{embedded ? (
+				<SectionHeader
+					title="S3 storage"
+					description="Buckets that database dumps and volume backups are written to: AWS S3, Cloudflare R2, Wasabi, DigitalOcean Spaces and more."
+					actions={
+						permissions?.destination.create ? <HandleDestinations /> : undefined
+					}
+				/>
+			) : (
+				<PageHeader
+					title="S3 Destinations"
+					description="AWS S3, Cloudflare R2, Wasabi, DigitalOcean Spaces and more."
+					icon={<Database className="size-5" />}
+					actions={
+						permissions?.destination.create ? <HandleDestinations /> : undefined
+					}
+				/>
+			)}
 
 			{isPending ? (
 				<div className="flex flex-row gap-2 items-center justify-center text-sm text-muted-foreground min-h-[25vh]">
@@ -37,15 +55,13 @@ export const ShowDestinations = () => {
 				</div>
 			) : (
 				<div className="flex flex-col gap-2">
-					{data?.map((destination, index) => (
+					{data?.map((destination) => (
 						<div
 							key={destination.destinationId}
 							className="flex items-center justify-between py-3 border-b border-border/60 last:border-b-0"
 						>
 							<div className="flex flex-col gap-1">
-								<span className="text-sm font-medium">
-									{index + 1}. {destination.name}
-								</span>
+								<span className="text-sm font-medium">{destination.name}</span>
 								<span className="text-xs text-muted-foreground">
 									Created at:{" "}
 									{new Date(destination.createdAt).toLocaleDateString()}

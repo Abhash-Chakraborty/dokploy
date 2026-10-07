@@ -36,11 +36,14 @@ interface Props {
 	id: string;
 	databaseType?: Exclude<ServiceType, "application" | "redis"> | "web-server";
 	backupType?: "database" | "compose";
+	/** The surrounding page already names the section. */
+	hideHeading?: boolean;
 }
 export const ShowBackups = ({
 	id,
 	databaseType,
 	backupType = "database",
+	hideHeading = false,
 }: Props) => {
 	const [activeManualBackup, setActiveManualBackup] = useState<
 		string | undefined
@@ -97,13 +100,14 @@ export const ShowBackups = ({
 	return (
 		<Card className="bg-background">
 			<CardHeader className="flex flex-row items-center flex-wrap gap-4 justify-between">
-				<div className="flex flex-col gap-1">
-					<CardTitle className="text-xl">Backups</CardTitle>
-					<CardDescription>
-						Add backups to your database to save the data to a different
-						provider.
-					</CardDescription>
-				</div>
+				{!hideHeading && (
+					<div className="flex flex-col gap-1">
+						<CardTitle>Backups</CardTitle>
+						<CardDescription>
+							Scheduled copies of this database, sent to your storage.
+						</CardDescription>
+					</div>
+				)}
 
 				{postgres && postgres?.backups?.length > 0 && (
 					<div className="flex flex-col lg:flex-row gap-4 w-full lg:w-auto">
@@ -132,7 +136,7 @@ export const ShowBackups = ({
 							To create a backup it is required to set at least 1 provider.
 							Please, go to{" "}
 							<Link
-								href="/dashboard/settings/destinations"
+								href="/dashboard/backups?tab=storage"
 								className="text-foreground"
 							>
 								S3 Destinations

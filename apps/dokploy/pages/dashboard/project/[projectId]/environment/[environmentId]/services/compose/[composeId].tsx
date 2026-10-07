@@ -61,11 +61,14 @@ const Service = (
 	const { composeId, activeTab } = props;
 	const router = useRouter();
 	const { projectId, environmentId } = router.query;
-	const [tab, setTab] = useState<TabState>(activeTab);
+	// Volume backups live on the Backups tab now; old links still land there.
+	const normalizeTab = (value: string) =>
+		(value === "volumeBackups" ? "backups" : value) as TabState;
+	const [tab, setTab] = useState<TabState>(normalizeTab(activeTab));
 
 	useEffect(() => {
 		if (router.query.tab) {
-			setTab(router.query.tab as TabState);
+			setTab(normalizeTab(router.query.tab as string));
 		}
 	}, [router.query.tab]);
 
@@ -182,16 +185,12 @@ const Service = (
 										{permissions?.service.read && (
 											<TabsTrigger value="containers">Containers</TabsTrigger>
 										)}
-										{permissions?.service.create && (
+										{(permissions?.service.create ||
+											permissions?.volumeBackup.read) && (
 											<TabsTrigger value="backups">Backups</TabsTrigger>
 										)}
 										{permissions?.schedule.read && (
 											<TabsTrigger value="schedules">Schedules</TabsTrigger>
-										)}
-										{permissions?.volumeBackup.read && (
-											<TabsTrigger value="volumeBackups">
-												Volume Backups
-											</TabsTrigger>
 										)}
 										{permissions?.logs.read && (
 											<TabsTrigger value="logs">Logs</TabsTrigger>
@@ -221,10 +220,20 @@ const Service = (
 										</div>
 									</TabsContent>
 								)}
-								{permissions?.service.create && (
+								{(permissions?.service.create ||
+									permissions?.volumeBackup.read) && (
 									<TabsContent value="backups">
-										<div className="flex flex-col gap-4 pt-2.5">
-											<ShowBackups id={composeId} backupType="compose" />
+										<div className="flex flex-col pt-2.5">
+											{permissions?.service.create && (
+												<ShowBackups id={composeId} backupType="compose" />
+											)}
+											{permissions?.volumeBackup.read && (
+												<ShowVolumeBackups
+													id={composeId}
+													type="compose"
+													serverId={data?.serverId || ""}
+												/>
+											)}
 										</div>
 									</TabsContent>
 								)}
@@ -233,17 +242,6 @@ const Service = (
 									<TabsContent value="schedules">
 										<div className="flex flex-col gap-4 pt-2.5">
 											<ShowSchedules id={composeId} scheduleType="compose" />
-										</div>
-									</TabsContent>
-								)}
-								{permissions?.volumeBackup.read && (
-									<TabsContent value="volumeBackups">
-										<div className="flex flex-col gap-4 pt-2.5">
-											<ShowVolumeBackups
-												id={composeId}
-												type="compose"
-												serverId={data?.serverId || ""}
-											/>
 										</div>
 									</TabsContent>
 								)}
