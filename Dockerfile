@@ -32,7 +32,8 @@ RUN pnpm --filter=./apps/dokploy run build
 
 RUN pnpm --filter=./apps/dokploy --prod deploy --legacy /prod/dokploy
 
-RUN cp -R /usr/src/app/apps/dokploy/.next /prod/dokploy/.next
+RUN cp -R /usr/src/app/apps/dokploy/.next /prod/dokploy/.next \
+	&& rm -rf /prod/dokploy/.next/cache
 RUN cp -R /usr/src/app/apps/dokploy/dist /prod/dokploy/dist
 
 FROM base AS dokploy
