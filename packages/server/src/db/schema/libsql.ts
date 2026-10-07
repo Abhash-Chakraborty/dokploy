@@ -36,6 +36,8 @@ import {
 	UpdateConfigSwarmSchema,
 } from "./shared";
 import {
+	APP_NAME_MESSAGE,
+	APP_NAME_REGEX,
 	DATABASE_PASSWORD_MESSAGE,
 	DATABASE_PASSWORD_REGEX,
 	encryptedText,
@@ -116,7 +118,7 @@ export const libsqlRelations = relations(libsql, ({ one, many }) => ({
 const createSchema = createInsertSchema(libsql, {
 	libsqlId: z.string(),
 	name: z.string().min(1),
-	appName: z.string().min(1),
+	appName: z.string().min(1).max(63).regex(APP_NAME_REGEX, APP_NAME_MESSAGE),
 	createdAt: z.string(),
 	databaseUser: z.string().min(1),
 	databasePassword: z.string().regex(DATABASE_PASSWORD_REGEX, {

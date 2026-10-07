@@ -33,6 +33,8 @@ const HTTP_BLOCKED_PREFIXES = [
 	"/organization/update-role",
 	"/organization/delete-role",
 	"/organization/update-member-role",
+	// Bypasses the account deletion flow (audit, invitations, billing).
+	"/admin/remove-user",
 ];
 
 const SOCIAL_METHODS = new Set<LoginMethod>(["github", "google"]);

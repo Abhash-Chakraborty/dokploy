@@ -152,7 +152,6 @@ export const SaveGiteaProviderCompose = ({ composeId }: Props) => {
 			giteaId: data.giteaId,
 			composeId,
 			sourceType: "gitea",
-			composeStatus: "idle",
 			watchPaths: data.watchPaths,
 			enableSubmodules: data.enableSubmodules,
 		} as any)

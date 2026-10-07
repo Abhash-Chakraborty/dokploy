@@ -125,8 +125,11 @@ export const AddInvitation = () => {
 	const mode = form.watch("mode");
 
 	useEffect(() => {
-		form.reset();
-	}, [form, form.formState.isSubmitSuccessful, form.reset]);
+		if (!open) {
+			form.reset();
+			setError(null);
+		}
+	}, [open, form, form.reset]);
 
 	useEffect(() => {
 		if (isCloud && form.getValues("mode") === "credentials") {
@@ -234,7 +237,7 @@ export const AddInvitation = () => {
 											<FormLabel>Invite Method</FormLabel>
 											<Select
 												onValueChange={field.onChange}
-												defaultValue={field.value}
+												value={field.value}
 											>
 												<FormControl>
 													<SelectTrigger>

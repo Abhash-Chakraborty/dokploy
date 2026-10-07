@@ -5,7 +5,7 @@ import { api } from "@/utils/api";
 import { useWhitelabeling } from "@/utils/hooks/use-whitelabeling";
 import { ImpersonationBar } from "../dashboard/impersonation/impersonation-bar";
 import { AiSidebar } from "../shared/ai-sidebar";
-import { HubSpotWidget } from "../shared/HubSpotWidget";
+import { useHubSpotChat } from "../shared/analytics";
 import { RouteErrorBoundary } from "../shared/route-error-boundary";
 import Page from "./side";
 
@@ -28,6 +28,7 @@ export const DashboardLayout = ({ children, metaName }: Props) => {
 	});
 
 	const isChatEnabled = isCloud === true && currentPlan === "startup";
+	useHubSpotChat(isChatEnabled);
 
 	const { data: onboardingStatus } = api.project.onboardingStatus.useQuery();
 	const shouldRedirectToOnboarding =
@@ -57,12 +58,6 @@ export const DashboardLayout = ({ children, metaName }: Props) => {
 				<RouteErrorBoundary>{children}</RouteErrorBoundary>
 			</Page>
 			<AiSidebar />
-			{isChatEnabled && (
-				<>
-					<HubSpotWidget />
-				</>
-			)}
-
 			{haveRootAccess === true && <ImpersonationBar />}
 		</>
 	);

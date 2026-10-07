@@ -36,14 +36,14 @@ import { ValidateServer } from "./validate-server";
 
 interface Props {
 	serverId: string;
-	asButton?: boolean;
+	children?: React.ReactNode;
 	/** Docker and Swarm are already up, so this is a re-run, not a to-do. */
 	alreadyProvisioned?: boolean;
 }
 
 export const SetupServer = ({
 	serverId,
-	asButton = false,
+	children,
 	alreadyProvisioned = false,
 }: Props) => {
 	const [isOpen, setIsOpen] = useState(false);
@@ -88,25 +88,20 @@ export const SetupServer = ({
 
 	return (
 		<Dialog open={isOpen} onOpenChange={setIsOpen}>
-			{asButton ? (
+			{children ? (
+				<DialogTrigger asChild>{children}</DialogTrigger>
+			) : (
 				<DialogTrigger asChild>
-					<Button variant="outline" size="icon" className="h-9 w-9">
-						<Settings className="h-4 w-4" />
+					<Button className="w-full cursor-pointer " size="sm">
+						{alreadyProvisioned ? "Re-run setup" : "Setup Server"}{" "}
+						<Settings className="size-4" />
 					</Button>
 				</DialogTrigger>
-			) : (
-				<Button
-					className="w-full cursor-pointer "
-					size="sm"
-					onClick={() => {
-						setIsOpen(true);
-					}}
-				>
-					{alreadyProvisioned ? "Re-run setup" : "Setup Server"}{" "}
-					<Settings className="size-4" />
-				</Button>
 			)}
-			<DialogContent className="sm:max-w-4xl  ">
+			<DialogContent
+				className="sm:max-w-4xl  "
+				onCloseAutoFocus={(e) => e.preventDefault()}
+			>
 				<DialogHeader>
 					<div className="flex flex-col gap-1.5">
 						<DialogTitle className="flex items-center gap-2">
