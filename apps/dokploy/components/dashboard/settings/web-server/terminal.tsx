@@ -5,7 +5,6 @@ import { FitAddon } from "xterm-addon-fit";
 import "@xterm/xterm/css/xterm.css";
 import { ClipboardAddon } from "@xterm/addon-clipboard";
 import { fixMacOsAltKeys } from "@/lib/terminal-keyboard";
-import { getLocalServerData } from "./local-server-config";
 
 const RESIZE_MESSAGE_PREFIX = "\u0000dokploy-resize:";
 
@@ -81,11 +80,6 @@ export const Terminal: React.FC<Props> = ({ id, serverId, onStatusChange }) => {
 		const urlParams = new URLSearchParams();
 		urlParams.set("serverId", serverId);
 
-		if (serverId === "local") {
-			const { port, username } = getLocalServerData();
-			urlParams.set("port", port.toString());
-			urlParams.set("username", username);
-		}
 		urlParams.set("cols", String(term.cols));
 		urlParams.set("rows", String(term.rows));
 

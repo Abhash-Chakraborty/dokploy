@@ -6,6 +6,12 @@ import {
 	IS_CLOUD,
 	validateRequest,
 } from "@dokploy/server";
+import {
+	getLocalSsh,
+	hostOperatingSystem,
+	localSshCandidates,
+	saveLocalSsh,
+} from "@dokploy/server/services/abhash/local-terminal";
 import { Client, type ConnectConfig } from "ssh2";
 import { WebSocketServer } from "ws";
 import { getDockerHost } from "../utils/docker";
@@ -75,6 +81,18 @@ const describeSshError = (err: Error & { code?: string; level?: string }) => {
 	return `SSH connection failed: ${reason}${code ? ` (${code})` : ""}`;
 };
 
+const canLogIn = (config: ConnectConfig) =>
+	new Promise<boolean>((resolve) => {
+		const probe = new Client();
+		probe
+			.once("ready", () => {
+				probe.end();
+				resolve(true);
+			})
+			.once("error", () => resolve(false))
+			.connect({ ...config, readyTimeout: 8_000 });
+	});
+
 export const setupTerminalWebSocketServer = (
 	server: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse>,
 ) => {
@@ -128,14 +146,6 @@ export const setupTerminalWebSocketServer = (
 					ws.close();
 					return;
 				}
-				const port = Number(url.searchParams.get("port"));
-				const username = url.searchParams.get("username");
-
-				if (!Number.isInteger(port) || port < 1 || port > 65_535 || !username) {
-					ws.close(1008, "Invalid local SSH connection settings");
-					return;
-				}
-
 				try {
 					ws.send("Setting up private SSH key...\n");
 					const privateKey = await setupLocalServerSSHKey();
@@ -145,12 +155,44 @@ export const setupTerminalWebSocketServer = (
 						return;
 					}
 
+					const saved = await getLocalSsh();
+					const port = saved?.port ?? 22;
 					const webServerSettings = await getWebServerSettings();
 					const dockerHost = await getDockerHost(port, [
 						webServerSettings?.serverIp || "",
 					]);
 
 					ws.send(`Found Docker host: ${dockerHost}\n`);
+
+					let username = saved?.username;
+					if (!username) {
+						const candidates = localSshCandidates(await hostOperatingSystem());
+						ws.send(
+							`Looking for a host user that accepts Dokploy's key (${candidates.join(", ")})...\n`,
+						);
+						for (const candidate of candidates) {
+							if (
+								await canLogIn({
+									host: dockerHost,
+									port,
+									username: candidate,
+									privateKey,
+								})
+							) {
+								username = candidate;
+								break;
+							}
+						}
+						if (!username) {
+							ws.send(
+								`No host user accepts Dokploy's key yet. Run this on the server as the user Dokploy should log in as, then set that user under Host SSH settings:${COMMAND_TO_ALLOW_LOCAL_ACCESS}\n`,
+							);
+							ws.close();
+							return;
+						}
+						await saveLocalSsh({ port, username }, user.id);
+						ws.send(`Logging in as ${username}; saved for every browser.\n`);
+					}
 
 					connectionDetails = {
 						host: dockerHost,
@@ -159,8 +201,8 @@ export const setupTerminalWebSocketServer = (
 						privateKey,
 					};
 				} catch (error) {
-					console.error(`Error setting up private SSH key: ${error}`);
-					ws.send(`Error setting up private SSH key: ${error}\n`);
+					console.error(`Could not prepare the host terminal: ${error}`);
+					ws.send(`Could not prepare the host terminal: ${error}\n`);
 
 					if (
 						error instanceof Error &&
@@ -271,7 +313,7 @@ export const setupTerminalWebSocketServer = (
 					if (err.level === "client-authentication") {
 						if (isLocalServer) {
 							ws.send(
-								`Authentication failed: Please run the command below on your server to allow access. Make sure to run it as the same user as the one configured in connection settings:${COMMAND_TO_ALLOW_LOCAL_ACCESS}\nAfter running the command, reopen this window to reconnect. This procedure is required only once.`,
+								`Authentication failed: Please run the command below on your server to allow access. Make sure to run it as the same user as the one set under Host SSH settings:${COMMAND_TO_ALLOW_LOCAL_ACCESS}\nAfter running the command, reopen this window to reconnect. This procedure is required only once.`,
 							);
 						} else {
 							ws.send(

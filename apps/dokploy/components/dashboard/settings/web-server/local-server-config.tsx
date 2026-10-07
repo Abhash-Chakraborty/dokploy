@@ -1,7 +1,8 @@
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
 import { Settings } from "lucide-react";
-import { useId } from "react";
+import { useEffect, useId } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import {
 	Accordion,
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { api } from "@/utils/api";
 
 const Schema = z.object({
 	port: z.number().int().min(1, "Port must be higher than 0").max(65_535),
@@ -28,40 +30,34 @@ const Schema = z.object({
 
 type Schema = z.infer<typeof Schema>;
 
-const DEFAULT_LOCAL_SERVER_DATA: Schema = {
-	port: 22,
-	username: "root",
-};
-
-/** Returns local server data for use with local server terminal */
-export const getLocalServerData = () => {
-	try {
-		const localServerData = localStorage.getItem("localServerData");
-		const parsedLocalServerData = localServerData
-			? (JSON.parse(localServerData) as typeof DEFAULT_LOCAL_SERVER_DATA)
-			: DEFAULT_LOCAL_SERVER_DATA;
-
-		return parsedLocalServerData;
-	} catch {
-		return DEFAULT_LOCAL_SERVER_DATA;
-	}
-};
-
 interface Props {
 	onSave: () => void;
 }
 
 const LocalServerConfig = ({ onSave }: Props) => {
 	const formId = `local-terminal-settings-${useId().replaceAll(":", "")}`;
+	const utils = api.useUtils();
+	const { data: saved } = api.localTerminal.get.useQuery();
+	const { mutateAsync, isPending } = api.localTerminal.save.useMutation();
 	const form = useForm<Schema>({
-		defaultValues: getLocalServerData(),
+		defaultValues: { port: 22, username: "" },
 		resolver: zodResolver(Schema),
 	});
 
-	const onSubmit = (data: Schema) => {
-		localStorage.setItem("localServerData", JSON.stringify(data));
-		form.reset(data);
-		onSave();
+	useEffect(() => {
+		if (saved) form.reset(saved);
+	}, [saved, form]);
+
+	const onSubmit = async (data: Schema) => {
+		try {
+			await mutateAsync(data);
+			await utils.localTerminal.get.invalidate();
+			form.reset(data);
+			toast.success("Host SSH settings saved");
+			onSave();
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : "Could not save");
+		}
 	};
 
 	return (
@@ -130,7 +126,10 @@ const LocalServerConfig = ({ onSave }: Props) => {
 									<FormItem>
 										<FormLabel>Username</FormLabel>
 										<FormControl>
-											<Input placeholder="root" {...field} />
+											<Input
+												placeholder="Detected on first connect"
+												{...field}
+											/>
 										</FormControl>
 
 										<FormMessage />
@@ -145,6 +144,7 @@ const LocalServerConfig = ({ onSave }: Props) => {
 						type="submit"
 						className="ml-auto"
 						disabled={!form.formState.isDirty}
+						isLoading={isPending}
 					>
 						Save
 					</Button>

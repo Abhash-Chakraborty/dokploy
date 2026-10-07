@@ -11,6 +11,7 @@ import { abhashFleetRouter } from "./routers/abhash/fleet";
 import { abhashForwardAuthRouter } from "./routers/abhash/forward-auth";
 import { abhashJobsRouter } from "./routers/abhash/jobs";
 import { abhashLicenseKeyRouter } from "./routers/abhash/license-key";
+import { abhashLocalTerminalRouter } from "./routers/abhash/local-terminal";
 import { abhashMeshRouter } from "./routers/abhash/mesh";
 import { abhashMiddlewaresRouter } from "./routers/abhash/middlewares";
 import { abhashScimRouter } from "./routers/abhash/scim";
@@ -121,6 +122,7 @@ export const appRouter = createTRPCRouter({
 	ai: aiRouter,
 	organization: organizationRouter,
 	licenseKey: abhashLicenseKeyRouter,
+	localTerminal: abhashLocalTerminalRouter,
 	// SSO, SCIM and forward-auth are unmounted in this fork: their UI was
 	// removed, so leaving them routable exposed API surface nothing could
 	// reach. The router files stay in the tree to keep upstream merges clean —
