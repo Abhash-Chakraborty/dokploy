@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useCallback } from "react";
 import {
 	Tooltip,
 	TooltipContent,
@@ -209,5 +210,59 @@ export const LiveStatus = ({
 			href={state.detail ? logsHref : undefined}
 			className={className}
 		/>
+	);
+};
+
+interface LiveCount {
+	running: number;
+	desired: number;
+	restarting: number;
+}
+
+export const stateFromCount = (
+	count: LiveCount | undefined,
+	storedStatus?: string | null,
+): LiveState => {
+	if (storedStatus === "running")
+		return { tone: "deploying", label: "Deploying" };
+	if (!count) return storedState(storedStatus);
+	if (count.desired === 0) return { tone: "stopped", label: "Stopped" };
+	if (count.running >= count.desired && count.restarting === 0) {
+		return {
+			tone: "running",
+			label:
+				count.desired > 1
+					? `Running · ${count.running}/${count.desired}`
+					: "Running",
+		};
+	}
+	return {
+		tone: count.running === 0 ? "failed" : "restarting",
+		label: `${count.running}/${count.desired} running`,
+	};
+};
+
+/**
+ * Live replica counts for every service the caller can see, refreshed in the
+ * background. Lists use it so a crash loop shows up before anyone opens the
+ * service; without Docker access they fall back to the stored status.
+ */
+export const useLiveServices = () => {
+	const { data: permissions } = api.user.getPermissions.useQuery();
+	const { data } = api.live.services.useQuery(undefined, {
+		enabled: !!permissions?.docker.read,
+		refetchInterval: 15_000,
+	});
+	return useCallback(
+		(
+			appName?: string,
+			serverId?: string | null,
+			storedStatus?: string | null,
+		): LiveState => {
+			const server = data?.[serverId || "local"];
+			if (!server || !appName) return storedState(storedStatus);
+			return stateFromCount(server[appName], storedStatus);
+		},
+		[data],
 	);
 };
