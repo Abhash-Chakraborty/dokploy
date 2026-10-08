@@ -67,6 +67,8 @@ import { DnsRecordTypeBadge } from "./dns-record-type-badge";
 interface Props {
 	dnsProviderId: string;
 	zoneId: string;
+	/** The page shows the zone title and tabs; keep only the add button. */
+	embedded?: boolean;
 }
 
 const PAGE_SIZES = [10, 20, 50, 100];
@@ -94,7 +96,7 @@ const SortableHeader = ({
 	</Button>
 );
 
-export const ShowDnsRecords = ({ dnsProviderId, zoneId }: Props) => {
+export const ShowDnsRecords = ({ dnsProviderId, zoneId, embedded }: Props) => {
 	const utils = api.useUtils();
 	const [isPanelOpen, setIsPanelOpen] = useState(false);
 	const [editing, setEditing] = useState<DnsRecordValue | null>(null);
@@ -322,8 +324,18 @@ export const ShowDnsRecords = ({ dnsProviderId, zoneId }: Props) => {
 		<div className="w-full ">
 			<Card className=" border-none bg-transparent p-0 shadow-none">
 				<div className="w-full">
-					<div className="flex flex-wrap items-center justify-between gap-4 p-6">
-						<div className="flex flex-1 flex-row items-center gap-3">
+					<div
+						className={cn(
+							"flex flex-wrap items-center justify-between gap-4",
+							embedded ? "pb-4" : "p-6",
+						)}
+					>
+						<div
+							className={cn(
+								"flex flex-1 flex-row items-center gap-3",
+								embedded && "hidden",
+							)}
+						>
 							<Button variant="ghost" size="icon" asChild>
 								<Link href={`/dashboard/settings/dns/${dnsProviderId}`}>
 									<ArrowLeft className="size-4" />
@@ -353,7 +365,9 @@ export const ShowDnsRecords = ({ dnsProviderId, zoneId }: Props) => {
 						)}
 					</div>
 
-					<CardContent className="min-h-[60vh] border-t py-8">
+					<CardContent
+						className={cn("min-h-[60vh]", embedded ? "p-0" : "border-t py-8")}
+					>
 						{isError && <AlertBlock type="error">{error?.message}</AlertBlock>}
 						<div className="flex flex-col-reverse gap-4 lg:flex-row lg:items-start">
 							<div className="flex min-w-0 flex-1 flex-col gap-4">

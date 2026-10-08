@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/table";
 import type { AppRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
+import { useRefreshInterval } from "@/utils/hooks/use-platform-defaults";
 
 type DeploymentRow =
 	inferRouterOutputs<AppRouter>["deployment"]["allCentralized"][number];
@@ -162,6 +163,7 @@ interface ShowDeploymentsTableProps {
 export function ShowDeploymentsTable({
 	filters,
 }: ShowDeploymentsTableProps = {}) {
+	const refreshMs = useRefreshInterval("listsSeconds");
 	const [sorting, setSorting] = useState<SortingState>([
 		{ id: "createdAt", desc: true },
 	]);
@@ -184,7 +186,7 @@ export function ShowDeploymentsTable({
 
 	const { data: deploymentsList, isLoading } =
 		api.deployment.allCentralized.useQuery(undefined, {
-			refetchInterval: 5000,
+			refetchInterval: refreshMs,
 		});
 
 	const filteredData = useMemo(() => {

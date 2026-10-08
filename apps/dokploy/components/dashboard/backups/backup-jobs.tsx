@@ -12,6 +12,7 @@ import {
 import { describeCron } from "@/lib/cron-text";
 import { cn } from "@/lib/utils";
 import { api, type RouterOutputs } from "@/utils/api";
+import { useRefreshInterval } from "@/utils/hooks/use-platform-defaults";
 
 type Job = RouterOutputs["abhashBackups"]["jobs"][number];
 
@@ -62,8 +63,9 @@ const RunStatus = ({ job }: { job: Job }) => {
 
 export const BackupJobs = () => {
 	const utils = api.useUtils();
+	const refreshMs = useRefreshInterval("listsSeconds");
 	const { data: jobs, isPending } = api.abhashBackups.jobs.useQuery(undefined, {
-		refetchInterval: 15_000,
+		refetchInterval: refreshMs,
 	});
 	const postgres = api.backup.manualBackupPostgres.useMutation();
 	const mysql = api.backup.manualBackupMySql.useMutation();

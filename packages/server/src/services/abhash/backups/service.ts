@@ -16,6 +16,7 @@ import {
 	assertServiceInOrganization,
 	type OwnedServiceKind,
 } from "../ownership";
+import { getPlatformDefaults } from "../platform-defaults";
 import { execPooled } from "../ssh/pool";
 import { resolveSecretRefs } from "../vault/secrets";
 import { emitEvent } from "../webhooks";
@@ -261,7 +262,10 @@ export const runBackup = async (
 	const target = await resolveTarget(policy);
 	// WAL can only be replayed onto a physical copy, never onto a dump.
 	const physical = policy.walEnabled && policy.targetKind === "postgres";
-	const logical = dumpPlan(policy.targetKind, target);
+	const logical = dumpPlan(policy.targetKind, {
+		...target,
+		helperImage: (await getPlatformDefaults()).helperImage,
+	});
 	const plan = physical
 		? {
 				...logical,

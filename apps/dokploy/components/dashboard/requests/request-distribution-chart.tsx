@@ -6,6 +6,7 @@ import {
 	ChartTooltipContent,
 } from "@/components/ui/chart";
 import { api } from "@/utils/api";
+import { useRefreshInterval } from "@/utils/hooks/use-platform-defaults";
 
 export interface RequestDistributionChartProps {
 	dateRange?: {
@@ -27,6 +28,7 @@ const chartConfig = {
 export const RequestDistributionChart = ({
 	dateRange,
 }: RequestDistributionChartProps) => {
+	const refreshMs = useRefreshInterval("logsSeconds");
 	const { data: stats } = api.settings.readStats.useQuery(
 		{
 			dateRange: dateRange
@@ -37,7 +39,7 @@ export const RequestDistributionChart = ({
 				: undefined,
 		},
 		{
-			refetchInterval: 1333,
+			refetchInterval: refreshMs,
 		},
 	);
 

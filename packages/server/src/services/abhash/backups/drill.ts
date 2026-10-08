@@ -8,6 +8,7 @@ import {
 	type BackupTargetKind,
 	type DrillCheck,
 } from "../../../db/schema";
+import { getPlatformDefaults } from "../platform-defaults";
 import { emitEvent } from "../webhooks";
 import { dumpPlan, envPrefix, resticCommand } from "./restic";
 import {
@@ -223,7 +224,10 @@ export const runDrill = async (
 	const env = await repositoryEnv(repository);
 	for (const value of Object.values(env)) redact(value);
 	const target = await resolveTarget(policy);
-	const plan = dumpPlan(policy.targetKind, target);
+	const plan = dumpPlan(policy.targetKind, {
+		...target,
+		helperImage: (await getPlatformDefaults()).helperImage,
+	});
 
 	const previous = await db.query.abhashBackupRun.findFirst({
 		where: and(

@@ -1,5 +1,6 @@
 import { db } from "../db";
 import { execAsync, execAsyncRemote } from "../utils/process/execAsync";
+import { getPlatformDefaults } from "./abhash/platform-defaults";
 
 export interface FleetServerRow {
 	/** `null` for the Dokploy host itself, which has no server record. */
@@ -35,8 +36,6 @@ export interface FleetOverview {
 		traefikVersions: string[];
 	};
 }
-
-const PROBE_TIMEOUT_MS = 12_000;
 
 /**
  * One round trip per server. Every field is optional on purpose: a host part
@@ -102,11 +101,12 @@ const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> =>
 
 const probeOne = async (
 	base: Pick<FleetServerRow, "serverId" | "name" | "ipAddress" | "serverType">,
+	timeoutMs: number,
 ): Promise<FleetServerRow> => {
 	try {
 		const { stdout } = await withTimeout(
 			base.serverId ? execAsyncRemote(base.serverId, PROBE) : execAsync(PROBE),
-			PROBE_TIMEOUT_MS,
+			timeoutMs,
 		);
 
 		const raw = JSON.parse(stdout.trim().split("\n").pop() ?? "{}") as RawProbe;
@@ -189,7 +189,10 @@ export const getFleetOverview = async (
 		});
 	}
 
-	const rows = await Promise.all(targets.map(probeOne));
+	const { fleetProbeTimeoutSeconds } = await getPlatformDefaults();
+	const rows = await Promise.all(
+		targets.map((target) => probeOne(target, fleetProbeTimeoutSeconds * 1000)),
+	);
 	const reachable = rows.filter((row) => row.reachable);
 
 	return {

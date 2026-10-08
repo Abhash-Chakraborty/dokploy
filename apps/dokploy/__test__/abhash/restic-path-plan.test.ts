@@ -8,9 +8,17 @@ describe("dumpPlan for folders", () => {
 			path: "/opt/dokploy-adguard",
 		});
 		expect(plan.command).toBe(
-			"docker run --rm -v '/opt/dokploy-adguard:/data:ro' alpine:3.20 tar -cf - -C /data .",
+			"docker run --rm -v '/opt/dokploy-adguard:/data:ro' 'alpine:3.20' tar -cf - -C /data .",
 		);
 		expect(plan.filename).toBe("-opt-dokploy-adguard.tar");
+	});
+
+	it("uses the helper image from the platform defaults", () => {
+		const plan = dumpPlan("volume", {
+			appName: "data",
+			helperImage: "registry.local/busybox:1.37",
+		});
+		expect(plan.command).toContain("'registry.local/busybox:1.37' tar");
 	});
 
 	it("quotes a path with spaces", () => {
