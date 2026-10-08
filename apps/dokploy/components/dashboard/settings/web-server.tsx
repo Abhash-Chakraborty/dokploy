@@ -1,5 +1,5 @@
 import copy from "copy-to-clipboard";
-import { CopyIcon, ServerIcon } from "lucide-react";
+import { CopyIcon } from "lucide-react";
 import { toast } from "sonner";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { api } from "@/utils/api";
@@ -20,7 +20,6 @@ export const WebServer = () => {
 			<PageHeader
 				title="Dokploy server"
 				description="Reload or clean the web server."
-				icon={<ServerIcon className="size-5" />}
 			/>
 			<div className="space-y-6">
 				<div className="grid md:grid-cols-2 gap-4">

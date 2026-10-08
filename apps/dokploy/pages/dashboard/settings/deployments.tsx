@@ -1,6 +1,5 @@
 import { IS_CLOUD, validateRequest } from "@dokploy/server";
 import { createServerSideHelpers } from "@trpc/react-query/server";
-import { Hammer } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
 import superjson from "superjson";
@@ -19,7 +18,6 @@ const Page = () => {
 			<PageHeader
 				title="Builds"
 				description="How many deployments may build at the same time on each server. Builds of the same service always run one after another."
-				icon={<Hammer className="size-5" />}
 				actions={
 					<InfoTooltip
 						variant="warning"

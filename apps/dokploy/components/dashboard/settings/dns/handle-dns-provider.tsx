@@ -354,7 +354,10 @@ export const HandleDnsProvider = ({ dnsProviderId }: Props) => {
 										</FormControl>
 										<FormDescription>
 											Create a token scoped to Zone → DNS → Edit for the zones
-											you want Dokploy to manage. Avoid the Global API Key.
+											you want Dokploy to manage. To control caching from the
+											zone's Caching tab, also grant Zone Settings → Edit, Cache
+											Rules → Edit and Cache Purge → Purge. Avoid the Global API
+											Key.
 										</FormDescription>
 										<FormMessage />
 									</FormItem>

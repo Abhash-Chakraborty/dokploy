@@ -14,6 +14,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/utils/api";
+import { useRefreshInterval } from "@/utils/hooks/use-platform-defaults";
 export const DockerLogs = dynamic(
 	() =>
 		import("@/components/dashboard/docker/logs/docker-logs-id").then(
@@ -37,6 +38,7 @@ export const ShowDockerLogsCompose = ({
 	serverId,
 	serviceId,
 }: Props) => {
+	const refreshMs = useRefreshInterval("logsSeconds");
 	const { data, isPending } = api.docker.getContainersByAppNameMatch.useQuery(
 		{
 			appName,
@@ -45,7 +47,7 @@ export const ShowDockerLogsCompose = ({
 		},
 		{
 			enabled: !!appName,
-			refetchInterval: 5000,
+			refetchInterval: refreshMs,
 		},
 	);
 	const [containerId, setContainerId] = useState<string | undefined>();

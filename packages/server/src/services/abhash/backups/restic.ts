@@ -79,8 +79,11 @@ export const dumpPlan = (
 		username?: string;
 		password?: string;
 		path?: string;
+		/** Image for reading volumes and folders; see platform defaults. */
+		helperImage?: string;
 	},
 ): DumpPlan => {
+	const helper = target.helperImage ?? "alpine:3.20";
 	const container = containerOf(target.appName);
 	switch (kind) {
 		case "postgres":
@@ -108,7 +111,7 @@ export const dumpPlan = (
 			};
 		case "volume":
 			return {
-				command: `docker run --rm -v ${shellQuote(target.appName)}:/data:ro alpine:3.20 tar -cf - -C /data .`,
+				command: `docker run --rm -v ${shellQuote(target.appName)}:/data:ro ${shellQuote(helper)} tar -cf - -C /data .`,
 				filename: `${target.appName}.tar`,
 			};
 		case "path":
@@ -117,7 +120,7 @@ export const dumpPlan = (
 				// Read through a container: the SSH user can run Docker but often
 				// cannot read root-owned data (AdGuard's /opt folder failed with
 				// "Permission denied" when tar ran as that user).
-				command: `docker run --rm -v ${shellQuote(`${target.path ?? "/etc/dokploy"}:/data:ro`)} alpine:3.20 tar -cf - -C /data .`,
+				command: `docker run --rm -v ${shellQuote(`${target.path ?? "/etc/dokploy"}:/data:ro`)} ${shellQuote(helper)} tar -cf - -C /data .`,
 				filename: `${(target.path ?? "dokploy").replace(/\W+/g, "-")}.tar`,
 			};
 		default:

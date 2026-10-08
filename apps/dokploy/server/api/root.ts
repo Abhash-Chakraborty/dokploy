@@ -4,6 +4,7 @@ import { abhashAgentsRouter } from "./routers/abhash/agents";
 import { abhashAnsibleRouter } from "./routers/abhash/ansible";
 import { abhashAuditLogRouter } from "./routers/abhash/audit-log";
 import { abhashBackupsRouter } from "./routers/abhash/backups";
+import { abhashCloudflareCacheRouter } from "./routers/abhash/cloudflare-cache";
 import { abhashCustomRoleRouter } from "./routers/abhash/custom-role";
 import { abhashEnginesRouter } from "./routers/abhash/engines";
 import { abhashFirewallRouter } from "./routers/abhash/firewall";
@@ -15,6 +16,7 @@ import { abhashLiveRouter } from "./routers/abhash/live";
 import { abhashLocalTerminalRouter } from "./routers/abhash/local-terminal";
 import { abhashMeshRouter } from "./routers/abhash/mesh";
 import { abhashMiddlewaresRouter } from "./routers/abhash/middlewares";
+import { abhashPlatformDefaultsRouter } from "./routers/abhash/platform-defaults";
 import { abhashScimRouter } from "./routers/abhash/scim";
 import { abhashSsoRouter } from "./routers/abhash/sso";
 import { abhashVaultRouter } from "./routers/abhash/vault";
@@ -124,6 +126,8 @@ export const appRouter = createTRPCRouter({
 	organization: organizationRouter,
 	licenseKey: abhashLicenseKeyRouter,
 	localTerminal: abhashLocalTerminalRouter,
+	cloudflareCache: abhashCloudflareCacheRouter,
+	platformDefaults: abhashPlatformDefaultsRouter,
 	live: abhashLiveRouter,
 	// SSO, SCIM and forward-auth are unmounted in this fork: their UI was
 	// removed, so leaving them routable exposed API surface nothing could

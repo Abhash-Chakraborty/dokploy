@@ -7,6 +7,7 @@ import { PageHeader, SectionHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { extractServices } from "@/lib/services";
 import { api } from "@/utils/api";
+import { useRefreshInterval } from "@/utils/hooks/use-platform-defaults";
 
 type DeploymentStatus = "idle" | "running" | "done" | "error";
 
@@ -70,11 +71,12 @@ export const ShowHome = () => {
 	const { data: homeStats } = api.project.homeStats.useQuery();
 	const { data: permissions } = api.user.getPermissions.useQuery();
 	const canReadDeployments = !!permissions?.deployment.read;
+	const refreshMs = useRefreshInterval("listsSeconds");
 	const { data: deployments } = api.deployment.allCentralized.useQuery(
 		undefined,
 		{
 			enabled: canReadDeployments,
-			refetchInterval: 10000,
+			refetchInterval: refreshMs,
 		},
 	);
 

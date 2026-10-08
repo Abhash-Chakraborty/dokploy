@@ -303,7 +303,6 @@ export const AnsibleRuns = () => {
 	return (
 		<section className="flex flex-col gap-4">
 			<PageHeader
-				icon={<ScrollText className="size-5" />}
 				title="Ansible"
 				description="Playbooks run in a throwaway container, with host keys pinned."
 				actions={

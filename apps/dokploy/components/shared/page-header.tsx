@@ -23,7 +23,6 @@ interface PageHeaderProps {
 	description?: ReactNode;
 	/** Action buttons rendered top-right, next to the heading. */
 	actions?: ReactNode;
-	icon?: ReactNode;
 	className?: string;
 }
 
@@ -36,28 +35,24 @@ export const PageHeader = ({
 	title,
 	description,
 	actions,
-	icon,
 	className,
 }: PageHeaderProps) => {
 	return (
 		<div
 			className={cn(
-				"flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+				"flex flex-col gap-3 pt-4 pb-2 sm:flex-row sm:items-end sm:justify-between",
 				className,
 			)}
 		>
-			<div className="flex items-center gap-3 min-w-0">
-				{icon && <span className="shrink-0 text-muted-foreground">{icon}</span>}
-				<div className="min-w-0">
-					{title ? (
-						<h1 className="text-xl font-semibold tracking-tight truncate">
-							{title}
-						</h1>
-					) : null}
-					{description && (
-						<p className="text-sm text-muted-foreground">{description}</p>
-					)}
-				</div>
+			<div className="min-w-0">
+				{title ? (
+					<h1 className="truncate text-[22px] font-semibold leading-tight tracking-tight">
+						{title}
+					</h1>
+				) : null}
+				{description && (
+					<p className="mt-1 text-sm text-muted-foreground">{description}</p>
+				)}
 			</div>
 			{actions && (
 				<div className="flex shrink-0 items-center gap-2">{actions}</div>

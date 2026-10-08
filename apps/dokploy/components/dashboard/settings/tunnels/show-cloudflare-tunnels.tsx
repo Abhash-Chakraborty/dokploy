@@ -203,7 +203,6 @@ export const ShowCloudflareTunnels = () => {
 			<PageHeader
 				title="Cloudflare tunnels"
 				description="Serve a host that has no public IP and no open inbound ports. The connector dials out to Cloudflare's edge."
-				icon={<Cloud className="size-5" />}
 				actions={<AddTunnel onDone={() => refetch()} />}
 			/>
 			<div>

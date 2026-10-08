@@ -1,4 +1,4 @@
-import { Boxes, Copy, Plus, Trash2 } from "lucide-react";
+import { Copy, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -436,7 +436,6 @@ export const EnginesPage = () => {
 	return (
 		<section className="flex flex-col gap-6">
 			<PageHeader
-				icon={<Boxes className="size-5" />}
 				title={
 					<span className="flex items-center gap-2">
 						Databases and services

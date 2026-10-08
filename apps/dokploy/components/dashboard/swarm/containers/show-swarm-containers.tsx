@@ -1,16 +1,11 @@
-import {
-	AlertTriangle,
-	Container,
-	Info,
-	Loader2,
-	RefreshCw,
-} from "lucide-react";
+import { AlertTriangle, Info, Loader2, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { CardTitle } from "@/components/ui/card";
 import { api } from "@/utils/api";
+import { useRefreshInterval } from "@/utils/hooks/use-platform-defaults";
 import {
 	NoRunningContainers,
 	NoServices,
@@ -26,6 +21,7 @@ interface Props {
 }
 
 export const ShowSwarmContainers = ({ serverId }: Props) => {
+	const refreshMs = useRefreshInterval("listsSeconds");
 	const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
 
 	const {
@@ -65,7 +61,7 @@ export const ShowSwarmContainers = ({ serverId }: Props) => {
 		api.swarm.getContainerStats.useQuery(
 			{ serverId },
 			{
-				refetchInterval: 5000,
+				refetchInterval: refreshMs,
 				enabled: applicationList.length > 0 && !nodesError && !appsError,
 			},
 		);
@@ -260,7 +256,6 @@ export const ShowSwarmContainers = ({ serverId }: Props) => {
 			<header className="flex items-center flex-wrap gap-4 justify-between">
 				<div className="space-y-1">
 					<CardTitle className="text-xl flex flex-row gap-2">
-						<Container className="size-6 text-muted-foreground self-center" />
 						Container Breakdown by Node
 					</CardTitle>
 					<p className="text-sm text-muted-foreground">

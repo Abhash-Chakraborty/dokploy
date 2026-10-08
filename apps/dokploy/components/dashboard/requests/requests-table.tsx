@@ -50,6 +50,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { api } from "@/utils/api";
+import { useRefreshInterval } from "@/utils/hooks/use-platform-defaults";
 import { columns, getStatusColor } from "./columns";
 import type { LogEntry } from "./show-requests";
 import { DataTableFacetedFilter } from "./status-request-filter";
@@ -90,6 +91,7 @@ export interface RequestsTableProps {
 }
 
 export const RequestsTable = ({ dateRange }: RequestsTableProps) => {
+	const refreshMs = useRefreshInterval("logsSeconds");
 	const [statusFilter, setStatusFilter] = useState<string[]>([]);
 	const [search, setSearch] = useState("");
 	const [selectedRow, setSelectedRow] = useState<LogEntry>();
@@ -121,7 +123,7 @@ export const RequestsTable = ({ dateRange }: RequestsTableProps) => {
 				: undefined,
 		},
 		{
-			refetchInterval: 1333,
+			refetchInterval: refreshMs,
 		},
 	);
 

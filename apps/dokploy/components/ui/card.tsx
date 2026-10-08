@@ -4,6 +4,9 @@ import { cn } from "@/lib/utils";
 
 // A card is a flat section of the page, not a box: nesting cards used to stack
 // frames inside frames. Grids of selectable items ask for variant="tile".
+// Stacked sections get their hairline from globals.css, which can tell a
+// stack from a grid; a sibling rule here pushed every card but the first in a
+// grid down by a section gap.
 function Card({
 	className,
 	size = "default",
@@ -20,9 +23,6 @@ function Card({
 			data-variant={variant}
 			className={cn(
 				"group/card flex flex-col text-sm text-card-foreground",
-				// Consecutive sections are told apart by space and one hairline.
-				variant === "section" &&
-					"[[data-slot=card][data-variant=section]+&]:mt-8 [[data-slot=card][data-variant=section]+&]:border-t [[data-slot=card][data-variant=section]+&]:pt-8",
 				variant === "tile" &&
 					"rounded-lg bg-muted/60 transition-colors hover:bg-muted *:[img:first-child]:rounded-t-lg *:[img:last-child]:rounded-b-lg",
 				className,

@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { api } from "@/utils/api";
+import { useRefreshInterval } from "@/utils/hooks/use-platform-defaults";
 
 type Tone = "running" | "deploying" | "restarting" | "failed" | "stopped";
 
@@ -192,10 +193,11 @@ export const LiveStatus = ({
 }: LiveStatusProps) => {
 	const { data: permissions } = api.user.getPermissions.useQuery();
 	const canRead = !!permissions?.docker.read;
+	const refreshMs = useRefreshInterval("liveStatusSeconds");
 	const { data: tasks, isLoading } =
 		api.docker.getServiceContainersByAppName.useQuery(
 			{ appName: appName ?? "", serverId: serverId ?? undefined },
-			{ enabled: !!appName && canRead, refetchInterval: 10_000 },
+			{ enabled: !!appName && canRead, refetchInterval: refreshMs },
 		);
 	if (!appName) return null;
 	if (!canRead || (isLoading && !tasks)) {
@@ -249,9 +251,10 @@ export const stateFromCount = (
  */
 export const useLiveServices = () => {
 	const { data: permissions } = api.user.getPermissions.useQuery();
+	const refreshMs = useRefreshInterval("liveStatusSeconds");
 	const { data } = api.live.services.useQuery(undefined, {
 		enabled: !!permissions?.docker.read,
-		refetchInterval: 15_000,
+		refetchInterval: refreshMs,
 	});
 	return useCallback(
 		(

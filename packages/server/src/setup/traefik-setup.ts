@@ -10,6 +10,7 @@ import path from "node:path";
 import type { ContainerCreateOptions, CreateServiceOptions } from "dockerode";
 import { stringify } from "yaml";
 import { paths } from "../constants";
+import { getPlatformDefaults } from "../services/abhash/platform-defaults";
 import { getRemoteDocker } from "../utils/servers/remote-docker";
 import type { FileConfig } from "../utils/traefik/file-types";
 import type { MainTraefikConfig } from "../utils/traefik/types";
@@ -94,7 +95,10 @@ export const initializeStandaloneTraefik = async ({
 		.catch(() => null);
 	// Keep the version that is running: hosts upgraded by hand run a newer
 	// Traefik than the pinned default, and recreating must never downgrade.
-	const imageName = previous?.Config?.Image ?? `traefik:v${TRAEFIK_VERSION}`;
+	const imageName =
+		previous?.Config?.Image ??
+		(await getPlatformDefaults()).traefikImage ??
+		`traefik:v${TRAEFIK_VERSION}`;
 
 	const exposedPorts: Record<string, {}> = {
 		[`${TRAEFIK_PORT}/tcp`]: {},
@@ -194,7 +198,8 @@ export const initializeTraefikService = async ({
 	serverId,
 }: TraefikOptions) => {
 	const { MAIN_TRAEFIK_PATH, DYNAMIC_TRAEFIK_PATH } = paths(!!serverId);
-	const imageName = `traefik:v${TRAEFIK_VERSION}`;
+	const imageName =
+		(await getPlatformDefaults()).traefikImage ?? `traefik:v${TRAEFIK_VERSION}`;
 	const appName = "dokploy-traefik";
 
 	const settings: CreateServiceOptions = {

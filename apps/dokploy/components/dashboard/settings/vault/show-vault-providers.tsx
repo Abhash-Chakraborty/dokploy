@@ -43,7 +43,6 @@ export const ShowVaultProviders = ({
 						{/* Inside the Secrets tabs the tab label is the heading already. */}
 						{!embedded && (
 							<CardTitle className="text-xl flex flex-row gap-2">
-								<Vault className="size-6 text-muted-foreground self-center" />
 								Secrets Providers
 							</CardTitle>
 						)}

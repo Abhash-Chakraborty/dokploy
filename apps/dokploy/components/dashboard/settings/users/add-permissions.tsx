@@ -27,7 +27,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
-import { api, type RouterOutputs } from "@/utils/api";
+import { api } from "@/utils/api";
 
 export { extractServices, type Services } from "@/lib/services";
 

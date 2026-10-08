@@ -1,4 +1,3 @@
-import { Users } from "lucide-react";
 import { useRouter } from "next/router";
 import { AddInvitation } from "@/components/dashboard/settings/users/add-invitation";
 import { ShowInvitations } from "@/components/dashboard/settings/users/show-invitations";
@@ -28,7 +27,6 @@ export const OrganizationAccess = () => {
 			<PageHeader
 				title="Members & access"
 				description="Who is in this organization, their teams, and what they can reach."
-				icon={<Users className="size-5" />}
 				actions={canInvite ? <AddInvitation /> : undefined}
 			/>
 			<EngineSwitch />

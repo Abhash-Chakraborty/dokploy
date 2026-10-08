@@ -49,7 +49,6 @@ export const ShowUsers = () => {
 			<PageHeader
 				title="Users"
 				description="Add your users to your Dokploy account."
-				icon={<Users className="size-5" />}
 			/>
 			<div className="space-y-2">
 				{isPending ? (

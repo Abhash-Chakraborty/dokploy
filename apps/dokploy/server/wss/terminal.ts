@@ -64,6 +64,8 @@ const describeSshError = (err: Error & { code?: string; level?: string }) => {
 			"the server refused the connection — check that sshd is running and the port is correct",
 		ETIMEDOUT:
 			"the connection timed out — check the host address, firewall rules and security groups",
+		"client-timeout":
+			"no SSH greeting arrived in time — a firewall is probably dropping the connection",
 		EHOSTUNREACH:
 			"the host is unreachable from the panel — check networking and firewall rules",
 		ENETUNREACH: "the network is unreachable from the panel",
@@ -73,6 +75,7 @@ const describeSshError = (err: Error & { code?: string; level?: string }) => {
 
 	const reason =
 		known[code] ??
+		(err.level ? known[err.level] : undefined) ??
 		detail ??
 		(err.level
 			? `the SSH client reported "${err.level}"`
@@ -81,15 +84,16 @@ const describeSshError = (err: Error & { code?: string; level?: string }) => {
 	return `SSH connection failed: ${reason}${code ? ` (${code})` : ""}`;
 };
 
-const canLogIn = (config: ConnectConfig) =>
-	new Promise<boolean>((resolve) => {
+/** Resolves to null when the login works, otherwise to the ssh2 error. */
+const tryLogIn = (config: ConnectConfig) =>
+	new Promise<(Error & { code?: string; level?: string }) | null>((resolve) => {
 		const probe = new Client();
 		probe
 			.once("ready", () => {
 				probe.end();
-				resolve(true);
+				resolve(null);
 			})
-			.once("error", () => resolve(false))
+			.once("error", (error) => resolve(error))
 			.connect({ ...config, readyTimeout: 8_000 });
 	});
 
@@ -157,12 +161,22 @@ export const setupTerminalWebSocketServer = (
 
 					const saved = await getLocalSsh();
 					const port = saved?.port ?? 22;
-					const webServerSettings = await getWebServerSettings();
-					const dockerHost = await getDockerHost(port, [
-						webServerSettings?.serverIp || "",
-					]);
-
-					ws.send(`Found Docker host: ${dockerHost}\n`);
+					let dockerHost = saved?.host;
+					if (dockerHost) {
+						ws.send(
+							`Using host ${dockerHost}:${port} from Host SSH settings\n`,
+						);
+					} else {
+						const webServerSettings = await getWebServerSettings();
+						dockerHost = await getDockerHost(port, [
+							webServerSettings?.serverIp || "",
+						]).catch((error: Error) => {
+							throw new Error(
+								`${error.message}. If SSH listens elsewhere on this host (another address or port, for example a VPN-only listener), set it under Host SSH settings above the terminal.`,
+							);
+						});
+						ws.send(`Found Docker host: ${dockerHost}\n`);
+					}
 
 					let username = saved?.username;
 					if (!username) {
@@ -171,16 +185,24 @@ export const setupTerminalWebSocketServer = (
 							`Looking for a host user that accepts Dokploy's key (${candidates.join(", ")})...\n`,
 						);
 						for (const candidate of candidates) {
-							if (
-								await canLogIn({
-									host: dockerHost,
-									port,
-									username: candidate,
-									privateKey,
-								})
-							) {
+							const failure = await tryLogIn({
+								host: dockerHost,
+								port,
+								username: candidate,
+								privateKey,
+							});
+							if (!failure) {
 								username = candidate;
 								break;
+							}
+							// Only a refused key is worth trying the next user for; a
+							// network failure would fail the same way for every user.
+							if (failure.level !== "client-authentication") {
+								ws.send(
+									`${describeSshError(failure)}\nCheck the host address and port under Host SSH settings above the terminal.\n`,
+								);
+								ws.close();
+								return;
 							}
 						}
 						if (!username) {
@@ -190,7 +212,7 @@ export const setupTerminalWebSocketServer = (
 							ws.close();
 							return;
 						}
-						await saveLocalSsh({ port, username }, user.id);
+						await saveLocalSsh({ host: saved?.host, port, username }, user.id);
 						ws.send(`Logging in as ${username}; saved for every browser.\n`);
 					}
 

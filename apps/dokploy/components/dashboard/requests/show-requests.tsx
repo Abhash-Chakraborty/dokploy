@@ -1,9 +1,5 @@
 import { format } from "date-fns";
-import {
-	AlertCircle,
-	ArrowDownUp,
-	Calendar as CalendarIcon,
-} from "lucide-react";
+import { AlertCircle, Calendar as CalendarIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -89,7 +85,6 @@ export const ShowRequests = () => {
 				<div className="flex w-full flex-col">
 					<CardHeader className="px-0">
 						<CardTitle className="text-xl flex flex-row gap-2">
-							<ArrowDownUp className="size-6 text-muted-foreground self-center" />
 							Requests
 						</CardTitle>
 						<CardDescription>

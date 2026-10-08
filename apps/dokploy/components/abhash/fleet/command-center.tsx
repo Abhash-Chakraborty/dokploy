@@ -4,7 +4,6 @@ import {
 	Brush,
 	Play,
 	RefreshCw,
-	ServerCog,
 	ShieldAlert,
 	Terminal,
 } from "lucide-react";
@@ -230,7 +229,6 @@ export const CommandCenter = () => {
 	return (
 		<section className="flex flex-col gap-4">
 			<PageHeader
-				icon={<ServerCog className="size-5" />}
 				title={
 					<span className="flex items-center gap-2">
 						Command centre

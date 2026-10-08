@@ -51,14 +51,14 @@ export function TimeBadge() {
 	}).format(time);
 
 	return (
-		<div className="inline-flex items-center rounded-full p-1 text-xs whitespace-nowrap max-w-full overflow-hidden gap-1 rounded-lg bg-muted/40">
-			<div className="inline-flex items-center px-1 gap-1">
-				<span className="hidden sm:inline">Server Time:</span>
-				<span className="font-medium tabular-nums">{formattedTime}</span>
-			</div>
-			<span className="hidden sm:inline text-primary/70 rounded-full bg-foreground/5 px-1.5 py-0.5 rounded-lg bg-muted/40">
-				{serverTime.timezone} | {getUtcOffset(serverTime.timezone)}
+		<span
+			className="hidden shrink-0 items-center gap-1.5 font-mono text-xs text-muted-foreground tabular-nums sm:inline-flex"
+			title={`Server time · ${serverTime.timezone}`}
+		>
+			<span className="text-foreground/80">{formattedTime}</span>
+			<span className="hidden lg:inline">
+				{serverTime.timezone} · {getUtcOffset(serverTime.timezone)}
 			</span>
-		</div>
+		</span>
 	);
 }

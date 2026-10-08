@@ -650,3 +650,15 @@ body[data-scroll-locked] [data-slot="sidebar-inset"] {
 		}
 	}
 }
+
+@layer components {
+	/* Stacked sections are told apart by space and one hairline. Grids and
+	   rows space their items with gap, so they are left alone. */
+	:where(:not(.grid, .flex:not(.flex-col)))
+		> [data-slot="card"][data-variant="section"]
+		+ [data-slot="card"][data-variant="section"] {
+		margin-top: 2rem;
+		border-top: 1px solid var(--border);
+		padding-top: 2rem;
+	}
+}

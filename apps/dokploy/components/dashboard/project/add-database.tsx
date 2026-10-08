@@ -47,10 +47,12 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { slugify } from "@/lib/slug";
 import { api } from "@/utils/api";
+import { usePlatformDefaults } from "@/utils/hooks/use-platform-defaults";
 import { APP_NAME_MESSAGE, APP_NAME_REGEX } from "@/utils/schema";
 
 type DbType = z.infer<typeof mySchema>["type"];
 
+// Used until the configured defaults load; Settings → Defaults overrides them.
 const dockerImageDefaultPlaceholder: Record<DbType, string> = {
 	mongo: "mongo:8.2",
 	libsql: "ghcr.io/tursodatabase/libsql-server:v0.24.32",
@@ -259,9 +261,14 @@ export const AddDatabase = ({ environmentId, projectName }: Props) => {
 		redis: redisMutation,
 	};
 
+	const platformDefaults = usePlatformDefaults();
+	const defaultImages = {
+		...dockerImageDefaultPlaceholder,
+		...platformDefaults?.databaseImages,
+	};
+
 	const onSubmit = async (data: AddDatabase) => {
-		const defaultDockerImage =
-			data.dockerImage || dockerImageDefaultPlaceholder[data.type];
+		const defaultDockerImage = data.dockerImage || defaultImages[data.type];
 
 		let promise: Promise<unknown> | null = null;
 		const commonParams = {
@@ -738,7 +745,7 @@ export const AddDatabase = ({ environmentId, projectName }: Props) => {
 												<FormLabel>Docker image</FormLabel>
 												<FormControl>
 													<Input
-														placeholder={`Default ${dockerImageDefaultPlaceholder[type]}`}
+														placeholder={`Default ${defaultImages[type]}`}
 														{...field}
 													/>
 												</FormControl>

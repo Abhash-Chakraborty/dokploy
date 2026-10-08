@@ -1,4 +1,3 @@
-import { loadStripe } from "@stripe/stripe-js";
 import { ArrowRightIcon, CheckIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -11,9 +10,14 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/utils/api";
 import { displayFont } from "../font";
 
-const stripePromise = loadStripe(
-	process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
-);
+// Loaded on demand: at module scope it fetched js.stripe.com on every page
+// that imports this file, self-hosted installs included, and threw without a key.
+const getStripe = async () => {
+	const key = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+	if (!key) return null;
+	const { loadStripe } = await import("@stripe/stripe-js");
+	return loadStripe(key);
+};
 
 type Tier = "hobby" | "startup";
 
@@ -74,7 +78,7 @@ export const PlanStep = ({ onNext }: Props) => {
 		if (!productId) return;
 		setLoading(`checkout:${tier}`);
 		try {
-			const stripe = await stripePromise;
+			const stripe = await getStripe();
 			const session = await createCheckoutSession({
 				tier,
 				productId,

@@ -8,7 +8,7 @@ import {
 	type SortingState,
 	useReactTable,
 } from "@tanstack/react-table";
-import { Activity, ArrowUpDown, Loader2, RefreshCw } from "lucide-react";
+import { ArrowUpDown, Loader2, RefreshCw } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -251,7 +251,6 @@ export const ShowDockerEvents = ({ serverId }: Props) => {
 						<div className="flex flex-wrap items-center justify-between gap-2">
 							<div>
 								<CardTitle className="text-xl flex flex-row gap-2">
-									<Activity className="size-6 text-muted-foreground self-center" />
 									Docker Events
 								</CardTitle>
 								<CardDescription>

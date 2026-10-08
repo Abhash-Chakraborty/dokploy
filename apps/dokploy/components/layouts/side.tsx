@@ -1,11 +1,9 @@
 "use client";
 
-import dynamic from "next/dynamic";
-
-
 import type { inferRouterOutputs } from "@trpc/server";
 import {
 	Activity,
+	ArrowLeft,
 	BarChartHorizontalBigIcon,
 	Bell,
 	BlocksIcon,
@@ -34,7 +32,6 @@ import {
 	KeyRound,
 	Layers,
 	LayoutGrid,
-	Loader2,
 	Lock,
 	LockKeyhole,
 	type LucideIcon,
@@ -43,10 +40,12 @@ import {
 	Palette,
 	Rocket,
 	ScrollText,
+	Search,
 	Server,
 	ServerCog,
 	Settings,
 	ShieldCheck,
+	SlidersHorizontal,
 	SquareTerminal,
 	Star,
 	Tags,
@@ -55,6 +54,7 @@ import {
 	Users,
 	Waypoints,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -65,6 +65,7 @@ import {
 	BreadcrumbItem,
 	BreadcrumbLink,
 	BreadcrumbList,
+	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import {
 	Collapsible,
@@ -91,14 +92,15 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
 import {
 	SIDEBAR_COOKIE_NAME,
 	Sidebar,
 	SidebarContent,
 	SidebarFooter,
 	SidebarGroup,
+	SidebarGroupLabel,
 	SidebarHeader,
+	SidebarInput,
 	SidebarInset,
 	SidebarMenu,
 	SidebarMenuButton,
@@ -111,21 +113,15 @@ import {
 	SidebarTrigger,
 	useSidebar,
 } from "@/components/ui/sidebar";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import type { AppRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
 import { DialogAction } from "../shared/dialog-action";
 import { Logo } from "../shared/logo";
-import { VersionFooter } from "../shared/version-footer";
 import { Button } from "../ui/button";
 import { TimeBadge } from "../ui/time-badge";
-import { SettingsNav, type SettingsNavGroup } from "./settings-nav";
+import { HeaderSlotProvider, useHeaderSlotHost } from "./header-slot";
 import { UserNav } from "./user-nav";
 
 // Rarely opened, and they pull in the form, billing and markdown libraries:
@@ -417,6 +413,15 @@ const MENU: Menu = {
 					icon: Activity,
 					isEnabled: ({ permissions, isCloud }) =>
 						!!(permissions?.organization.update && !isCloud),
+				},
+				{
+					title: "Defaults",
+					url: "/dashboard/settings/defaults",
+					description:
+						"Images, refresh rates and timeouts Dokploy uses when you don't pick one.",
+					icon: SlidersHorizontal,
+					isEnabled: ({ auth, isCloud }) =>
+						!isCloud && (auth?.role === "owner" || auth?.role === "admin"),
 				},
 				{
 					title: "Builds",
@@ -741,8 +746,9 @@ function SidebarLogo() {
 	return (
 		<>
 			{isLoading ? (
-				<div className="flex flex-row gap-2 items-center justify-center text-sm text-muted-foreground min-h-[5vh] pt-4">
-					<Loader2 className="animate-spin size-4" />
+				<div className="flex h-9 items-center gap-2 px-2">
+					<div className="size-6 shrink-0 animate-pulse rounded-md bg-muted" />
+					<div className="h-3 w-24 animate-pulse rounded bg-muted group-data-[collapsible=icon]:hidden" />
 				</div>
 			) : (
 				<SidebarMenu
@@ -759,11 +765,11 @@ function SidebarLogo() {
 						>
 							<PopoverTrigger asChild>
 								<SidebarMenuButton
-									size={isCollapsed ? "sm" : "lg"}
+									size="sm"
 									className={cn(
 										"data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground",
-										isCollapsed &&
-											"flex justify-center items-center p-2 h-10 w-10 mx-auto",
+										"h-9",
+										isCollapsed && "mx-auto size-8 justify-center p-0",
 									)}
 								>
 									<div
@@ -774,7 +780,7 @@ function SidebarLogo() {
 									>
 										<div
 											className={cn(
-												"flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-background",
+												"flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-background ring-1 ring-border",
 											)}
 										>
 											<Logo
@@ -1056,6 +1062,136 @@ function MobileCloser() {
 	return null;
 }
 
+type SettingsNavGroup = { title: string; items: SingleNavItem[] };
+
+function NavEntry({ item, pathname }: { item: NavItem; pathname: string }) {
+	if (item.isSingle !== false) {
+		const isActive = isActiveRoute({ itemUrl: item.url, pathname });
+		return (
+			<SidebarMenuItem>
+				<SidebarMenuButton asChild tooltip={item.title} isActive={isActive}>
+					<Link href={item.url}>
+						{item.icon && <item.icon />}
+						<span>{item.title}</span>
+					</Link>
+				</SidebarMenuButton>
+			</SidebarMenuItem>
+		);
+	}
+	const isActive = item.items.some((sub) =>
+		isActiveRoute({ itemUrl: sub.url, pathname }),
+	);
+	return (
+		<Collapsible asChild defaultOpen={isActive} className="group/collapsible">
+			<SidebarMenuItem>
+				<CollapsibleTrigger asChild>
+					<SidebarMenuButton tooltip={item.title}>
+						<item.icon />
+						<span>{item.title}</span>
+						<ChevronRight className="ml-auto text-muted-foreground transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+					</SidebarMenuButton>
+				</CollapsibleTrigger>
+				<CollapsibleContent>
+					<SidebarMenuSub>
+						{item.items.map((sub) => (
+							<SidebarMenuSubItem key={sub.title}>
+								<SidebarMenuSubButton
+									asChild
+									isActive={isActiveRoute({ itemUrl: sub.url, pathname })}
+								>
+									<Link href={sub.url} title={sub.description}>
+										<span>{sub.title}</span>
+									</Link>
+								</SidebarMenuSubButton>
+							</SidebarMenuSubItem>
+						))}
+					</SidebarMenuSub>
+				</CollapsibleContent>
+			</SidebarMenuItem>
+		</Collapsible>
+	);
+}
+
+// Remembered so "Back" returns to the page settings were opened from.
+let lastPageOutsideSettings = "/dashboard/home";
+
+/** The sidebar's settings mode: replaces the main menu instead of nesting a second one. */
+function SettingsSidebarNav({
+	groups,
+	pathname,
+}: {
+	groups: SettingsNavGroup[];
+	pathname: string;
+}) {
+	const [query, setQuery] = useState("");
+	const q = query.trim().toLowerCase();
+	const filtered = q
+		? groups
+				.map((group) => ({
+					...group,
+					items: group.items.filter((item) =>
+						`${group.title} ${item.title} ${item.description ?? ""}`
+							.toLowerCase()
+							.includes(q),
+					),
+				}))
+				.filter((group) => group.items.length > 0)
+		: groups;
+
+	return (
+		<>
+			<SidebarGroup className="gap-2 pb-0">
+				<SidebarMenu>
+					<SidebarMenuItem>
+						<SidebarMenuButton asChild tooltip="Back">
+							<Link href={lastPageOutsideSettings}>
+								<ArrowLeft />
+								<span>Back</span>
+							</Link>
+						</SidebarMenuButton>
+					</SidebarMenuItem>
+				</SidebarMenu>
+				<div className="relative group-data-[collapsible=icon]:hidden">
+					<Search className="pointer-events-none absolute top-1/2 left-2 z-10 size-3.5 -translate-y-1/2 text-muted-foreground" />
+					<SidebarInput
+						aria-label="Search settings"
+						placeholder="Search settings"
+						value={query}
+						onChange={(event) => setQuery(event.target.value)}
+						className="pl-7"
+					/>
+				</div>
+			</SidebarGroup>
+			{filtered.map((group) => (
+				<SidebarGroup key={group.title} className="py-1">
+					<SidebarGroupLabel>{group.title}</SidebarGroupLabel>
+					<SidebarMenu>
+						{group.items.map((item) => (
+							<SidebarMenuItem key={item.url}>
+								<SidebarMenuButton
+									asChild
+									tooltip={item.title}
+									isActive={isActiveRoute({ itemUrl: item.url, pathname })}
+								>
+									<Link href={item.url} title={item.description}>
+										{item.icon && <item.icon />}
+										<span>{item.title}</span>
+									</Link>
+								</SidebarMenuButton>
+							</SidebarMenuItem>
+						))}
+					</SidebarMenu>
+				</SidebarGroup>
+			))}
+			{filtered.length === 0 && (
+				<p className="px-4 py-2 text-[13px] text-muted-foreground">
+					Nothing matches “{query}”.
+				</p>
+			)}
+		</>
+	);
+}
+
 export default function Page({ children }: Props) {
 	const [defaultOpen, setDefaultOpen] = useState<boolean | undefined>(
 		undefined,
@@ -1080,7 +1216,6 @@ export default function Page({ children }: Props) {
 		refetchOnWindowFocus: false,
 	});
 
-	const includesProjects = pathname?.includes("/dashboard/project");
 	const { data: isCloud } = api.settings.isCloud.useQuery();
 
 	const { home: filteredHome, settings: filteredSettings } =
@@ -1091,13 +1226,16 @@ export default function Page({ children }: Props) {
 			whitelabeling,
 		});
 
+	// Settings first: the home menu's "Settings" entry also points at a
+	// settings page and would otherwise win.
 	const activeItem = findActiveNavItem(
-		[...filteredHome, ...filteredSettings],
+		[...filteredSettings, ...filteredHome],
 		pathname,
 	);
 	// The sidebar never swaps: service sections are tabs on the service page,
 	// and settings sections are listed inside the settings pages.
 	const visibleNavigation = filteredHome;
+	const headerSlot = useHeaderSlotHost();
 	const settingsGroups: SettingsNavGroup[] = filteredSettings.map((item) =>
 		item.isSingle === false
 			? { title: item.title, items: item.items }
@@ -1106,9 +1244,10 @@ export default function Page({ children }: Props) {
 	const isSettings = settingsGroups.some((group) =>
 		group.items.some((item) => isActiveRoute({ itemUrl: item.url, pathname })),
 	);
+	if (!isSettings && pathname) lastPageOutsideSettings = pathname;
 
 	if (!isLoaded) {
-		return <div className="w-full h-screen bg-background" />; // Placeholder mientras se carga
+		return <div className="w-full h-screen bg-background" />;
 	}
 
 	return (
@@ -1130,117 +1269,24 @@ export default function Page({ children }: Props) {
 		>
 			<MobileCloser />
 			<Sidebar collapsible="icon" variant="sidebar">
-				<SidebarHeader>
-					<div className="flex items-center justify-between gap-2">
-						<LogoWrapper />
-						<SidebarTrigger className="shrink-0 group-data-[collapsible=icon]:hidden" />
-					</div>
+				<SidebarHeader className="h-12 justify-center py-0">
+					<LogoWrapper />
 				</SidebarHeader>
 				<SidebarContent>
-					<SidebarGroup>
-						<SidebarMenu>
-							{visibleNavigation.map((item) => {
-								const isSingle = item.isSingle !== false;
-								const isActive = isSingle
-									? isActiveRoute({ itemUrl: item.url, pathname }) ||
-										(item.title === "Settings" && isSettings)
-									: item.items.some((item) =>
-											isActiveRoute({ itemUrl: item.url, pathname }),
-										);
-
-								return (
-									<Collapsible
-										key={item.title}
-										asChild
-										defaultOpen={isActive}
-										className="group/collapsible"
-									>
-										<SidebarMenuItem>
-											{isSingle ? (
-												<SidebarMenuButton
-													asChild
-													tooltip={item.title}
-													isActive={isActive}
-												>
-													<Link
-														href={item.url}
-														className="flex w-full items-center gap-2"
-													>
-														{item.icon && <item.icon />}
-														<span>{item.title}</span>
-													</Link>
-												</SidebarMenuButton>
-											) : (
-												<>
-													<CollapsibleTrigger asChild>
-														<SidebarMenuButton
-															tooltip={item.title}
-															isActive={isActive}
-														>
-															{item.icon && <item.icon />}
-
-															<span>{item.title}</span>
-															{item.items?.length && (
-																<ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-															)}
-														</SidebarMenuButton>
-													</CollapsibleTrigger>
-													<CollapsibleContent>
-														<SidebarMenuSub>
-															{item.items?.map((subItem) => {
-																const isSubItemActive = isActiveRoute({
-																	itemUrl: subItem.url,
-																	pathname,
-																});
-																const link = (
-																	<SidebarMenuSubButton
-																		asChild
-																		isActive={isSubItemActive}
-																	>
-																		<Link
-																			href={subItem.url}
-																			className="flex w-full items-center"
-																		>
-																			<span>{subItem.title}</span>
-																		</Link>
-																	</SidebarMenuSubButton>
-																);
-																return (
-																	<SidebarMenuSubItem key={subItem.title}>
-																		{subItem.description ? (
-																			// The app-wide provider opens instantly, which
-																			// flashes a tooltip for every row the pointer
-																			// crosses on the way down the list.
-																			<Tooltip delayDuration={400}>
-																				<TooltipTrigger asChild>
-																					{link}
-																				</TooltipTrigger>
-																				<TooltipContent
-																					side="right"
-																					className="max-w-64"
-																				>
-																					{subItem.description}
-																				</TooltipContent>
-																			</Tooltip>
-																		) : (
-																			link
-																		)}
-																	</SidebarMenuSubItem>
-																);
-															})}
-														</SidebarMenuSub>
-													</CollapsibleContent>
-												</>
-											)}
-										</SidebarMenuItem>
-									</Collapsible>
-								);
-							})}
-						</SidebarMenu>
-					</SidebarGroup>
+					{isSettings ? (
+						<SettingsSidebarNav groups={settingsGroups} pathname={pathname} />
+					) : (
+						<SidebarGroup>
+							<SidebarMenu>
+								{visibleNavigation.map((item) => (
+									<NavEntry key={item.title} item={item} pathname={pathname} />
+								))}
+							</SidebarMenu>
+						</SidebarGroup>
+					)}
 				</SidebarContent>
-				<SidebarFooter>
-					<SidebarMenu className="flex flex-col gap-2">
+				<SidebarFooter className="gap-1">
+					<SidebarMenu className="gap-0.5">
 						{!isCloud && permissions?.organization.update && (
 							<SidebarMenuItem>
 								<UpdateServerButton />
@@ -1254,60 +1300,62 @@ export default function Page({ children }: Props) {
 						<SidebarMenuItem>
 							<UserNav />
 						</SidebarMenuItem>
-						{whitelabeling?.footerText && (
-							<div className="px-3 text-center text-xs text-foreground truncate group-data-[collapsible=icon]:hidden">
-								{whitelabeling.footerText}
-							</div>
-						)}
 					</SidebarMenu>
+					{whitelabeling?.footerText && (
+						<div className="truncate px-2 text-center text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
+							{whitelabeling.footerText}
+						</div>
+					)}
 				</SidebarFooter>
 				<SidebarRail />
 			</Sidebar>
 			<SidebarInset>
 				{isCloud === true && <TrialBanner />}
-				{!includesProjects && (
-					<header className="flex h-12 shrink-0 items-center gap-2">
-						<div className="flex items-center justify-between w-full px-4 sm:px-8">
-							<div className="flex items-center gap-2">
-								{/* Only show this outer toggle when the sidebar is collapsed;
-								    the in-sidebar toggle handles the expanded state, so there
-								    is always exactly one visible collapse button. */}
-								<SidebarTrigger className="-ml-1 flex md:hidden md:group-has-[[data-collapsible=icon]]/sidebar-wrapper:flex" />
-								<Separator
-									orientation="vertical"
-									className="mr-2 h-4 block md:hidden md:group-has-[[data-collapsible=icon]]/sidebar-wrapper:block"
-								/>
-								<Breadcrumb>
-									<BreadcrumbList>
-										<BreadcrumbItem className="block">
-											<BreadcrumbLink asChild>
-												<Link
-													href={activeItem?.url || "/"}
-													className="flex items-center gap-1.5"
-												>
-													{activeItem?.title}
-												</Link>
-											</BreadcrumbLink>
-										</BreadcrumbItem>
-									</BreadcrumbList>
-								</Breadcrumb>
-							</div>
-							{!isCloud && <TimeBadge />}
-						</div>
+				<HeaderSlotProvider value={headerSlot.value}>
+					<header className="sticky top-0 z-20 flex h-12 shrink-0 items-center gap-3 bg-background/85 px-4 backdrop-blur-sm sm:px-8">
+						<SidebarTrigger className="-ml-1.5 text-muted-foreground" />
+						<span aria-hidden className="h-4 w-px shrink-0 bg-border" />
+						<div
+							ref={headerSlot.setTarget}
+							className={cn(
+								"min-w-0 flex-1 items-center",
+								headerSlot.claimed ? "flex" : "hidden",
+							)}
+						/>
+						{!headerSlot.claimed && (
+							<Breadcrumb className="min-w-0 flex-1">
+								<BreadcrumbList>
+									{isSettings && (
+										<>
+											<BreadcrumbItem>
+												<BreadcrumbLink asChild>
+													<Link href="/dashboard/settings/profile">Settings</Link>
+												</BreadcrumbLink>
+											</BreadcrumbItem>
+											<BreadcrumbSeparator />
+										</>
+									)}
+									<BreadcrumbItem>
+										<BreadcrumbLink asChild>
+											<Link href={activeItem?.url || "/"}>
+												{activeItem?.title}
+											</Link>
+										</BreadcrumbLink>
+									</BreadcrumbItem>
+								</BreadcrumbList>
+							</Breadcrumb>
+						)}
+						{!isCloud && <TimeBadge />}
 					</header>
-				)}
-
-				<div className="flex w-full min-w-0 flex-col overflow-x-hidden px-4 pb-6 sm:px-8">
-					{isSettings ? (
-						<div className="mx-auto flex w-full max-w-6xl flex-col gap-6 lg:flex-row lg:gap-10">
-							<SettingsNav groups={settingsGroups} pathname={pathname ?? ""} />
-							<div className="min-w-0 flex-1">{children}</div>
-						</div>
-					) : (
-						children
-					)}
-				</div>
-				<VersionFooter />
+					<main
+						className={cn(
+							"flex w-full min-w-0 flex-1 flex-col overflow-x-hidden px-4 pt-2 pb-10 sm:px-8",
+							isSettings && "mx-auto max-w-5xl",
+						)}
+					>
+						{children}
+					</main>
+				</HeaderSlotProvider>
 			</SidebarInset>
 		</SidebarProvider>
 	);

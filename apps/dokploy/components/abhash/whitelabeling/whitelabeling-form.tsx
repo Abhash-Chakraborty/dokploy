@@ -1,5 +1,5 @@
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
-import { Palette, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -232,7 +232,6 @@ export const WhitelabelingForm = () => {
 			<PageHeader
 				title="Whitelabeling"
 				description="Rebrand the dashboard, sign-in page and link previews."
-				icon={<Palette className="size-5" />}
 				actions={
 					<DialogAction
 						title="Reset branding?"

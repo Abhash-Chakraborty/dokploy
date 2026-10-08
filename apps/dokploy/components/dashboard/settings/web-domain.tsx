@@ -3,7 +3,6 @@ import {
 	VALID_HOSTNAME_REGEX,
 } from "@dokploy/server/utils/hostname-validation";
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
-import { GlobeIcon } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -120,7 +119,6 @@ export const WebDomain = () => {
 			<PageHeader
 				title="Server Domain"
 				description="Add a domain to your server application."
-				icon={<GlobeIcon className="size-5" />}
 			/>
 			<div className="space-y-2">
 				{/* Warning for GitHub webhook URL changes */}

@@ -22,6 +22,7 @@ import {
 import { api } from "@/utils/api";
 
 const Schema = z.object({
+	host: z.string().trim(),
 	port: z.number().int().min(1, "Port must be higher than 0").max(65_535),
 	username: z.string().min(1, "Username is required"),
 });
@@ -32,7 +33,7 @@ interface Props {
 	onSave: () => void;
 }
 
-/** SSH user and port the panel uses for this host's terminal. */
+/** Address, port and user the panel uses for this host's terminal. */
 const LocalServerConfig = ({ onSave }: Props) => {
 	const formId = `local-terminal-settings-${useId().replaceAll(":", "")}`;
 	const [open, setOpen] = useState(false);
@@ -40,17 +41,17 @@ const LocalServerConfig = ({ onSave }: Props) => {
 	const { data: saved } = api.localTerminal.get.useQuery();
 	const { mutateAsync, isPending } = api.localTerminal.save.useMutation();
 	const form = useForm<Schema>({
-		defaultValues: { port: 22, username: "" },
+		defaultValues: { host: "", port: 22, username: "" },
 		resolver: zodResolver(Schema),
 	});
 
 	useEffect(() => {
-		if (saved) form.reset(saved);
+		if (saved) form.reset({ ...saved, host: saved.host ?? "" });
 	}, [saved, form]);
 
 	const onSubmit = async (data: Schema) => {
 		try {
-			await mutateAsync(data);
+			await mutateAsync({ ...data, host: data.host || undefined });
 			await utils.localTerminal.get.invalidate();
 			form.reset(data);
 			toast.success("Host SSH settings saved");
@@ -64,17 +65,24 @@ const LocalServerConfig = ({ onSave }: Props) => {
 	return (
 		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTrigger asChild>
-				<Button variant="ghost" size="sm" title="SSH user for this host">
+				<Button
+					variant="ghost"
+					size="sm"
+					title="How Dokploy logs in to this host"
+				>
 					<UserCog className="size-4" />
-					{saved ? `${saved.username} · port ${saved.port}` : "SSH user: auto"}
+					{saved
+						? `${saved.username}@${saved.host ?? "auto"}:${saved.port}`
+						: "Host SSH: auto"}
 				</Button>
 			</PopoverTrigger>
 			<PopoverContent align="end" className="w-80">
 				<div className="flex flex-col gap-1">
-					<span className="text-[13px] font-medium">Host SSH user</span>
+					<span className="text-[13px] font-medium">Host SSH</span>
 					<span className="text-xs text-muted-foreground">
-						Found on first connect and shared by every browser. Change it if
-						Dokploy's key is authorised for another user.
+						How Dokploy reaches this machine. Leave the address empty to find it
+						automatically; set it when SSH only listens on another address or
+						port, such as a VPN interface.
 					</span>
 				</div>
 				<Form {...form}>
@@ -83,6 +91,19 @@ const LocalServerConfig = ({ onSave }: Props) => {
 						onSubmit={form.handleSubmit(onSubmit)}
 						className="grid grid-cols-[1fr_88px] gap-3"
 					>
+						<FormField
+							control={form.control}
+							name="host"
+							render={({ field }) => (
+								<FormItem className="col-span-2">
+									<FormLabel>Address</FormLabel>
+									<FormControl>
+										<Input placeholder="auto" {...field} />
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
 						<FormField
 							control={form.control}
 							name="username"

@@ -1,6 +1,5 @@
 import { validateRequest } from "@dokploy/server";
 import { createServerSideHelpers } from "@trpc/react-query/server";
-import { KeyRound } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import type { ReactElement } from "react";
@@ -32,7 +31,6 @@ const Page = () => {
 	return (
 		<PageContainer>
 			<PageHeader
-				icon={<KeyRound className="size-5" />}
 				title="Secrets"
 				description="Values your services read by reference, so they are never written into a config in plain text."
 			/>

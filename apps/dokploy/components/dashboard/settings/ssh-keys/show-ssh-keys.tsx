@@ -18,7 +18,6 @@ export const ShowDestinations = () => {
 			<PageHeader
 				title="SSH Keys"
 				description="Access your servers, git private repositories, and more."
-				icon={<KeyRound className="size-5" />}
 				actions={permissions?.sshKeys.create ? <HandleSSHKeys /> : undefined}
 			/>
 

@@ -4,6 +4,7 @@ import { ContainerPicker } from "@/components/dashboard/application/logs/show";
 import { resolveContainerSelection } from "@/components/dashboard/docker/logs/utils";
 import { AlertBlock } from "@/components/shared/alert-block";
 import { api } from "@/utils/api";
+import { useRefreshInterval } from "@/utils/hooks/use-platform-defaults";
 export const DockerLogs = dynamic(
 	() =>
 		import("@/components/dashboard/docker/logs/docker-logs-id").then(
@@ -25,6 +26,7 @@ export const ShowDockerLogsStack = ({
 	serverId,
 	serviceId,
 }: Props) => {
+	const refreshMs = useRefreshInterval("logsSeconds");
 	const [option, setOption] = useState<"swarm" | "native">("native");
 	const [containerId, setContainerId] = useState<string | undefined>();
 
@@ -36,7 +38,7 @@ export const ShowDockerLogsStack = ({
 			},
 			{
 				enabled: !!appName && option === "swarm",
-				refetchInterval: 5000,
+				refetchInterval: refreshMs,
 			},
 		);
 
@@ -49,7 +51,7 @@ export const ShowDockerLogsStack = ({
 			},
 			{
 				enabled: !!appName && option === "native",
-				refetchInterval: 5000,
+				refetchInterval: refreshMs,
 			},
 		);
 

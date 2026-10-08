@@ -1,6 +1,6 @@
 import copy from "copy-to-clipboard";
 import { format, isPast } from "date-fns";
-import { Loader2, Mail, MoreHorizontal, Users } from "lucide-react";
+import { Loader2, MoreHorizontal, Users } from "lucide-react";
 import { toast } from "sonner";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +37,6 @@ export const ShowInvitations = () => {
 			<PageHeader
 				title="Invitations"
 				description="Create invitations to your organization."
-				icon={<Mail className="size-5" />}
 				actions={<AddInvitation />}
 			/>
 			<div className="space-y-2">

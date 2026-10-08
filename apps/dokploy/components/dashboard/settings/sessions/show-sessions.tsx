@@ -300,7 +300,6 @@ export const ShowSessions = () => {
 					<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
 						<div className="flex flex-col gap-1.5">
 							<CardTitle className="text-xl flex flex-row gap-2">
-								<Smartphone className="size-6 text-muted-foreground self-center" />
 								Sessions
 							</CardTitle>
 							<CardDescription>

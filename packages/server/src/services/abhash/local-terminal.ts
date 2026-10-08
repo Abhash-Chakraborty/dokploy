@@ -1,7 +1,10 @@
 import { docker } from "../../constants";
 import { getSetting, setSetting } from "./flags";
 
-export type LocalSsh = { port: number; username: string };
+// An empty host means "find it": the panel probes the usual Docker gateway
+// addresses. Hosts that keep SSH off the Docker bridges (a VPN-only listener,
+// a non-default port) need it set explicitly.
+export type LocalSsh = { host?: string; port: number; username: string };
 
 const LOCAL_SSH_SETTING = "terminal.localSsh";
 
