@@ -35,9 +35,9 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import { extractServices } from "@/lib/services";
 import { api } from "@/utils/api";
 import { useUrl } from "@/utils/hooks/use-url";
-import { extractServices } from "../users/add-permissions";
 
 interface Props {
 	serverId?: string;

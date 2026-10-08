@@ -2,10 +2,10 @@ import { formatDistanceToNow } from "date-fns";
 import { ArrowRight, Server } from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useMemo } from "react";
-import { extractServices } from "@/components/dashboard/settings/users/add-permissions";
 import { StatusPill, useLiveServices } from "@/components/shared/live-status";
 import { PageHeader, SectionHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
+import { extractServices } from "@/lib/services";
 import { api } from "@/utils/api";
 
 type DeploymentStatus = "idle" | "running" | "done" | "error";

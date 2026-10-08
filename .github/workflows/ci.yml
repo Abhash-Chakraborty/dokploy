@@ -2,7 +2,7 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, development]
   # The nightly upstream sync dispatches this on its branch: PRs opened with
   # GITHUB_TOKEN do not trigger pull_request workflows.
   workflow_dispatch:
@@ -93,3 +93,52 @@ jobs:
       - run: psql "$DATABASE_URL" -c "DELETE FROM drizzle.__drizzle_migrations WHERE created_at > 1788995453103"
       - run: pnpm --filter=dokploy run migration:run
       - run: pnpm --filter=dokploy run test:integration
+
+  # Builds the release image natively and boots it, so a bundler or Dockerfile
+  # change cannot reach main unless the app really starts and serves its JS.
+  image-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - name: Prepare env file
+        run: |
+          cp apps/dokploy/.env.production.example .env.production
+          cp apps/dokploy/.env.production.example apps/dokploy/.env.production
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: dokploy:ci
+          cache-from: type=gha,scope=dokploy-release-amd64
+      - name: Boot and probe
+        run: |
+          set -euo pipefail
+          docker network create ci
+          docker run -d --name pg --network ci -e POSTGRES_USER=dokploy \
+            -e POSTGRES_PASSWORD=ci -e POSTGRES_DB=dokploy postgres:16
+          docker run -d --name redis --network ci redis:7-alpine
+          docker run -d --name app --network ci -p 3000:3000 \
+            -e DATABASE_URL=postgres://dokploy:ci@pg:5432/dokploy \
+            -e REDIS_URL=redis://redis:6379 \
+            -e BETTER_AUTH_SECRET=ci-secret \
+            -e BETTER_AUTH_URL=http://localhost:3000 \
+            dokploy:ci
+          code=000
+          for _ in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/ || true)
+            case "$code" in 200 | 302 | 307) break ;; esac
+            sleep 3
+          done
+          docker logs --tail 40 app
+          case "$code" in 200 | 302 | 307) ;; *) echo "::error::app did not start ($code)"; exit 1 ;; esac
+          for path in /register /dashboard/home /api/trpc/settings.health; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:3000$path")
+            echo "$path -> $code"
+          done
+          # The client bundle must load, or every page is blank.
+          js=$(curl -s http://localhost:3000/register | grep -oE '/_next/static/[^"]+\.js' | head -1)
+          [ -n "$js" ] || { echo "::error::no script in /register"; exit 1; }
+          curl -sf -o /dev/null "http://localhost:3000$js"
+          echo "client bundle ok: $js"

@@ -5,33 +5,20 @@ import type {
 	GetServerSidePropsContext,
 	InferGetServerSidePropsType,
 } from "next";
+import dynamic from "next/dynamic";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ReactElement, useEffect, useState } from "react";
 import superjson from "superjson";
-import { ShowImport } from "@/components/dashboard/application/advanced/import/show-import";
-import { ShowVolumes } from "@/components/dashboard/application/advanced/volumes/show-volumes";
-import { ShowDeployments } from "@/components/dashboard/application/deployments/show-deployments";
-import { ShowDomains } from "@/components/dashboard/application/domains/show-domains";
-import { ShowEnvironment } from "@/components/dashboard/application/environment/show-environment";
 import { ShowIconSettings } from "@/components/dashboard/application/icon/show-icon-settings";
-import { ShowPatches } from "@/components/dashboard/application/patches/show-patches";
-import { ShowSchedules } from "@/components/dashboard/application/schedules/show-schedules";
-import { ShowVolumeBackups } from "@/components/dashboard/application/volume-backups/show-volume-backups";
 import { AddCommandCompose } from "@/components/dashboard/compose/advanced/add-command";
 import { IsolatedDeploymentTab } from "@/components/dashboard/compose/advanced/add-isolation";
 import { FreshVolumes } from "@/components/dashboard/compose/advanced/fresh-volumes";
 import { ComposeServiceActions } from "@/components/dashboard/compose/containers/compose-service-actions";
-import { ShowComposeContainers } from "@/components/dashboard/compose/containers/show-compose-containers";
 import { DeleteService } from "@/components/dashboard/compose/delete-service";
 import { ShowGeneralCompose } from "@/components/dashboard/compose/general/show";
-import { ShowDockerLogsCompose } from "@/components/dashboard/compose/logs/show";
-import { ShowDockerLogsStack } from "@/components/dashboard/compose/logs/show-stack";
 import { UpdateCompose } from "@/components/dashboard/compose/update-compose";
-import { ShowBackups } from "@/components/dashboard/database/backups/show-backups";
-import { ComposeFreeMonitoring } from "@/components/dashboard/monitoring/free/container/show-free-compose-monitoring";
-import { ComposePaidMonitoring } from "@/components/dashboard/monitoring/paid/container/show-paid-compose-monitoring";
 import { AssignComposeNetworks } from "@/components/dashboard/networks/assign-compose-networks";
 import { TransferService } from "@/components/dashboard/shared/transfer-service";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
@@ -43,6 +30,79 @@ import { UseKeyboardNav } from "@/hooks/use-keyboard-nav";
 import { appRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
 import { useWhitelabeling } from "@/utils/hooks/use-whitelabeling";
+
+// Tabs load on demand: only one is visible, and together they pull in
+// the editor, terminal and chart libraries.
+const ShowImport = dynamic(() =>
+	import("@/components/dashboard/application/advanced/import/show-import").then(
+		(m) => m.ShowImport,
+	),
+);
+const ShowVolumes = dynamic(() =>
+	import(
+		"@/components/dashboard/application/advanced/volumes/show-volumes"
+	).then((m) => m.ShowVolumes),
+);
+const ShowDeployments = dynamic(() =>
+	import(
+		"@/components/dashboard/application/deployments/show-deployments"
+	).then((m) => m.ShowDeployments),
+);
+const ShowDomains = dynamic(() =>
+	import("@/components/dashboard/application/domains/show-domains").then(
+		(m) => m.ShowDomains,
+	),
+);
+const ShowEnvironment = dynamic(() =>
+	import(
+		"@/components/dashboard/application/environment/show-environment"
+	).then((m) => m.ShowEnvironment),
+);
+const ShowPatches = dynamic(() =>
+	import("@/components/dashboard/application/patches/show-patches").then(
+		(m) => m.ShowPatches,
+	),
+);
+const ShowSchedules = dynamic(() =>
+	import("@/components/dashboard/application/schedules/show-schedules").then(
+		(m) => m.ShowSchedules,
+	),
+);
+const ShowVolumeBackups = dynamic(() =>
+	import(
+		"@/components/dashboard/application/volume-backups/show-volume-backups"
+	).then((m) => m.ShowVolumeBackups),
+);
+const ShowComposeContainers = dynamic(() =>
+	import(
+		"@/components/dashboard/compose/containers/show-compose-containers"
+	).then((m) => m.ShowComposeContainers),
+);
+const ShowDockerLogsCompose = dynamic(() =>
+	import("@/components/dashboard/compose/logs/show").then(
+		(m) => m.ShowDockerLogsCompose,
+	),
+);
+const ShowDockerLogsStack = dynamic(() =>
+	import("@/components/dashboard/compose/logs/show-stack").then(
+		(m) => m.ShowDockerLogsStack,
+	),
+);
+const ShowBackups = dynamic(() =>
+	import("@/components/dashboard/database/backups/show-backups").then(
+		(m) => m.ShowBackups,
+	),
+);
+const ComposeFreeMonitoring = dynamic(() =>
+	import(
+		"@/components/dashboard/monitoring/free/container/show-free-compose-monitoring"
+	).then((m) => m.ComposeFreeMonitoring),
+);
+const ComposePaidMonitoring = dynamic(() =>
+	import(
+		"@/components/dashboard/monitoring/paid/container/show-paid-compose-monitoring"
+	).then((m) => m.ComposePaidMonitoring),
+);
 
 type TabState =
 	| "projects"

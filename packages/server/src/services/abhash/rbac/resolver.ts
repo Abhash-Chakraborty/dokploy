@@ -48,6 +48,20 @@ const requireMember = async (userId: string, organizationId: string) => {
 	return row;
 };
 
+// A page's tRPC batch runs a dozen permission checks for the same person.
+// Each request builds its own session object, so keying on it caches the
+// member row for one request only: role changes still apply immediately.
+const memberCache = new WeakMap<object, Promise<MemberRow>>();
+const memberFor = (ctx: RbacCtx) => {
+	const key = ctx.session as object;
+	const hit = memberCache.get(key);
+	if (hit) return hit;
+	const pending = requireMember(ctx.user.id, ctx.session.activeOrganizationId);
+	memberCache.set(key, pending);
+	pending.catch(() => memberCache.delete(key));
+	return pending;
+};
+
 const isPrivileged = (row: MemberRow) =>
 	row.role === "owner" || row.role === "admin";
 
@@ -173,7 +187,7 @@ export const checkPermission = async (
 	permissions: Permissions,
 ) => {
 	const orgId = ctx.session.activeOrganizationId;
-	const row = await requireMember(ctx.user.id, orgId);
+	const row = await memberFor(ctx);
 	if (isPrivileged(row)) return checkPrivileged(row, orgId, permissions);
 
 	const bindings = await bindingsFor(row.userId, orgId);
@@ -207,7 +221,7 @@ export const checkScoped = async (
 	message = "You don't have access to this resource",
 ) => {
 	const orgId = ctx.session.activeOrganizationId;
-	const row = await requireMember(ctx.user.id, orgId);
+	const row = await memberFor(ctx);
 	const needed = merge(permissions, scopedOnly(ctx.abhashRequired));
 	if (isPrivileged(row)) return checkPrivileged(row, orgId, needed);
 
@@ -228,7 +242,7 @@ export const checkScoped = async (
 
 export const resolvePermissions = async (ctx: RbacCtx) => {
 	const orgId = ctx.session.activeOrganizationId;
-	const row = await requireMember(ctx.user.id, orgId);
+	const row = await memberFor(ctx);
 	const privileged = isPrivileged(row);
 	const bindings = privileged ? [] : await bindingsFor(row.userId, orgId);
 	const orgRoles = await rolesFor([row.role], row, orgId);

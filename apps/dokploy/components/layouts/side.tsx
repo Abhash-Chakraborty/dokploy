@@ -1,4 +1,7 @@
-"use client";
+import dynamic from "next/dynamic";
+
+("use client");
+
 import type { inferRouterOutputs } from "@trpc/server";
 import {
 	Activity,
@@ -116,17 +119,35 @@ import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import type { AppRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
-import { ActivityButton } from "../abhash/jobs/activity";
-import { TrialBanner } from "../dashboard/billing/trial-banner";
-import { AddOrganization } from "../dashboard/organization/handle-organization";
 import { DialogAction } from "../shared/dialog-action";
 import { Logo } from "../shared/logo";
 import { VersionFooter } from "../shared/version-footer";
 import { Button } from "../ui/button";
 import { TimeBadge } from "../ui/time-badge";
 import { SettingsNav, type SettingsNavGroup } from "./settings-nav";
-import { UpdateServerButton } from "./update-server";
 import { UserNav } from "./user-nav";
+
+// Rarely opened, and they pull in the form, billing and markdown libraries:
+// fetched after the page is interactive instead of before it.
+const ActivityButton = dynamic(
+	() => import("../abhash/jobs/activity").then((m) => m.ActivityButton),
+	{ ssr: false },
+);
+const TrialBanner = dynamic(
+	() => import("../dashboard/billing/trial-banner").then((m) => m.TrialBanner),
+	{ ssr: false },
+);
+const AddOrganization = dynamic(
+	() =>
+		import("../dashboard/organization/handle-organization").then(
+			(m) => m.AddOrganization,
+		),
+	{ ssr: false },
+);
+const UpdateServerButton = dynamic(
+	() => import("./update-server").then((m) => m.UpdateServerButton),
+	{ ssr: false },
+);
 
 // The types of the queries we are going to use
 type AuthQueryOutput = inferRouterOutputs<AppRouter>["user"]["get"];

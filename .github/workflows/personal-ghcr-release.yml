@@ -20,34 +20,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-publish-release:
+  # Each architecture builds on its own native runner. Building arm64 under
+  # QEMU on an x86 runner made every release take about 53 minutes.
+  meta:
     runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+      version: ${{ steps.meta.outputs.version }}
+      tags: ${{ steps.meta.outputs.tags }}
+      is_release: ${{ steps.meta.outputs.is_release }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-
-      - name: Set up Node
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24.17.0
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Prepare env file
-        run: |
-          cp apps/dokploy/.env.production.example .env.production
-          cp apps/dokploy/.env.production.example apps/dokploy/.env.production
 
       - name: Compute tags
         id: meta
@@ -87,28 +71,113 @@ jobs:
               ;;
           esac
 
+          echo "image=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
           echo "is_release=${IS_RELEASE}" >> "$GITHUB_OUTPUT"
-          echo "platforms=linux/amd64,linux/arm64" >> "$GITHUB_OUTPUT"
-          echo "cache-scope=dokploy-release-multiarch" >> "$GITHUB_OUTPUT"
 
-      - name: Build and push image
+  build:
+    needs: meta
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+            arch: amd64
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare env file
+        run: |
+          cp apps/dokploy/.env.production.example .env.production
+          cp apps/dokploy/.env.production.example apps/dokploy/.env.production
+
+      - name: Build and push by digest
+        id: build
         uses: docker/build-push-action@v7
         with:
           context: .
-          platforms: ${{ steps.meta.outputs.platforms }}
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          cache-from: type=gha,scope=${{ steps.meta.outputs.cache-scope }}
-          cache-to: type=gha,scope=${{ steps.meta.outputs.cache-scope }},mode=max
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,name=${{ needs.meta.outputs.image }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=dokploy-release-${{ matrix.arch }}
+          cache-to: type=gha,scope=dokploy-release-${{ matrix.arch }},mode=max
 
+      - name: Export digest
+        run: |
+          mkdir -p "${RUNNER_TEMP}/digests"
+          digest="${{ steps.build.outputs.digest }}"
+          touch "${RUNNER_TEMP}/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: [meta, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digest-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create multi-arch tags
+        working-directory: ${{ runner.temp }}/digests
+        env:
+          IMAGE: ${{ needs.meta.outputs.image }}
+          TAGS: ${{ needs.meta.outputs.tags }}
+        run: |
+          set -euo pipefail
+          tag_args=()
+          IFS=',' read -ra tags <<< "${TAGS}"
+          for tag in "${tags[@]}"; do tag_args+=(-t "${tag}"); done
+          sources=()
+          for digest in *; do sources+=("${IMAGE}@sha256:${digest}"); done
+          docker buildx imagetools create "${tag_args[@]}" "${sources[@]}"
+          docker buildx imagetools inspect "${tags[0]}"
+
+  release:
+    needs: [meta, publish]
+    if: github.ref_name == 'main' && needs.meta.outputs.is_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
       - name: Create GitHub release for main
-        if: github.ref_name == 'main' && steps.meta.outputs.is_release == 'true'
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ steps.meta.outputs.version }}
-          name: ${{ steps.meta.outputs.version }}
+          tag_name: ${{ needs.meta.outputs.version }}
+          name: ${{ needs.meta.outputs.version }}
           generate_release_notes: true
           draft: false
           prerelease: false

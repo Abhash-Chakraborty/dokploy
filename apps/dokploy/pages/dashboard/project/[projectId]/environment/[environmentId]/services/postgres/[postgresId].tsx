@@ -5,22 +5,15 @@ import type {
 	GetServerSidePropsContext,
 	InferGetServerSidePropsType,
 } from "next";
+import dynamic from "next/dynamic";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ReactElement, useState } from "react";
 import superjson from "superjson";
-import { ShowEnvironment } from "@/components/dashboard/application/environment/show-environment";
-import { ShowDockerLogs } from "@/components/dashboard/application/logs/show";
 import { DeleteService } from "@/components/dashboard/compose/delete-service";
-import { ShowBackups } from "@/components/dashboard/database/backups/show-backups";
-import { ContainerFreeMonitoring } from "@/components/dashboard/monitoring/free/container/show-free-container-monitoring";
-import { ContainerPaidMonitoring } from "@/components/dashboard/monitoring/paid/container/show-paid-container-monitoring";
-import { ShowExternalPostgresCredentials } from "@/components/dashboard/postgres/general/show-external-postgres-credentials";
 import { ShowGeneralPostgres } from "@/components/dashboard/postgres/general/show-general-postgres";
-import { ShowInternalPostgresCredentials } from "@/components/dashboard/postgres/general/show-internal-postgres-credentials";
 import { UpdatePostgres } from "@/components/dashboard/postgres/update-postgres";
-import { ShowDatabaseAdvancedSettings } from "@/components/dashboard/shared/show-database-advanced-settings";
 import { TransferService } from "@/components/dashboard/shared/transfer-service";
 import { PostgresqlIcon } from "@/components/icons/data-tools-icons";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
@@ -31,6 +24,49 @@ import { UseKeyboardNav } from "@/hooks/use-keyboard-nav";
 import { appRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
 import { useWhitelabeling } from "@/utils/hooks/use-whitelabeling";
+
+// Tabs load on demand: only one is visible, and together they pull in
+// the editor, terminal and chart libraries.
+const ShowEnvironment = dynamic(() =>
+	import(
+		"@/components/dashboard/application/environment/show-environment"
+	).then((m) => m.ShowEnvironment),
+);
+const ShowDockerLogs = dynamic(() =>
+	import("@/components/dashboard/application/logs/show").then(
+		(m) => m.ShowDockerLogs,
+	),
+);
+const ShowBackups = dynamic(() =>
+	import("@/components/dashboard/database/backups/show-backups").then(
+		(m) => m.ShowBackups,
+	),
+);
+const ContainerFreeMonitoring = dynamic(() =>
+	import(
+		"@/components/dashboard/monitoring/free/container/show-free-container-monitoring"
+	).then((m) => m.ContainerFreeMonitoring),
+);
+const ContainerPaidMonitoring = dynamic(() =>
+	import(
+		"@/components/dashboard/monitoring/paid/container/show-paid-container-monitoring"
+	).then((m) => m.ContainerPaidMonitoring),
+);
+const ShowExternalPostgresCredentials = dynamic(() =>
+	import(
+		"@/components/dashboard/postgres/general/show-external-postgres-credentials"
+	).then((m) => m.ShowExternalPostgresCredentials),
+);
+const ShowInternalPostgresCredentials = dynamic(() =>
+	import(
+		"@/components/dashboard/postgres/general/show-internal-postgres-credentials"
+	).then((m) => m.ShowInternalPostgresCredentials),
+);
+const ShowDatabaseAdvancedSettings = dynamic(() =>
+	import("@/components/dashboard/shared/show-database-advanced-settings").then(
+		(m) => m.ShowDatabaseAdvancedSettings,
+	),
+);
 
 type TabState = "projects" | "monitoring" | "settings" | "backups" | "advanced";
 

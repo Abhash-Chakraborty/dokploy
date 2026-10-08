@@ -5,35 +5,18 @@ import type {
 	GetServerSidePropsContext,
 	InferGetServerSidePropsType,
 } from "next";
+import dynamic from "next/dynamic";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ReactElement, useEffect, useState } from "react";
 import superjson from "superjson";
-import { ShowClusterSettings } from "@/components/dashboard/application/advanced/cluster/show-cluster-settings";
 import { AddCommand } from "@/components/dashboard/application/advanced/general/add-command";
-import { ShowPorts } from "@/components/dashboard/application/advanced/ports/show-port";
-import { ShowRedirects } from "@/components/dashboard/application/advanced/redirects/show-redirects";
-import { ShowSecurity } from "@/components/dashboard/application/advanced/security/show-security";
-import { ShowBuildServer } from "@/components/dashboard/application/advanced/show-build-server";
-import { ShowResources } from "@/components/dashboard/application/advanced/show-resources";
-import { ShowTraefikConfig } from "@/components/dashboard/application/advanced/traefik/show-traefik-config";
-import { ShowVolumes } from "@/components/dashboard/application/advanced/volumes/show-volumes";
-import { ShowDeployments } from "@/components/dashboard/application/deployments/show-deployments";
-import { ShowDomains } from "@/components/dashboard/application/domains/show-domains";
-import { ShowEnvironment } from "@/components/dashboard/application/environment/show";
 import { ShowGeneralApplication } from "@/components/dashboard/application/general/show";
 import { ShowIconSettings } from "@/components/dashboard/application/icon/show-icon-settings";
-import { ShowDockerLogs } from "@/components/dashboard/application/logs/show";
-import { ShowPatches } from "@/components/dashboard/application/patches/show-patches";
-import { ShowPreviewDeployments } from "@/components/dashboard/application/preview-deployments/show-preview-deployments";
 import { RolloutStatus } from "@/components/dashboard/application/rollout-status";
-import { ShowSchedules } from "@/components/dashboard/application/schedules/show-schedules";
 import { UpdateApplication } from "@/components/dashboard/application/update-application";
-import { ShowVolumeBackups } from "@/components/dashboard/application/volume-backups/show-volume-backups";
 import { DeleteService } from "@/components/dashboard/compose/delete-service";
-import { ContainerFreeMonitoring } from "@/components/dashboard/monitoring/free/container/show-free-container-monitoring";
-import { ContainerPaidMonitoring } from "@/components/dashboard/monitoring/paid/container/show-paid-container-monitoring";
 import { AssignNetworks } from "@/components/dashboard/networks/assign-networks";
 import { TransferService } from "@/components/dashboard/shared/transfer-service";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
@@ -44,6 +27,99 @@ import { UseKeyboardNav } from "@/hooks/use-keyboard-nav";
 import { appRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
 import { useWhitelabeling } from "@/utils/hooks/use-whitelabeling";
+
+// Tabs load on demand: only one is visible, and together they pull in
+// the editor, terminal and chart libraries.
+const ShowClusterSettings = dynamic(() =>
+	import(
+		"@/components/dashboard/application/advanced/cluster/show-cluster-settings"
+	).then((m) => m.ShowClusterSettings),
+);
+const ShowPorts = dynamic(() =>
+	import("@/components/dashboard/application/advanced/ports/show-port").then(
+		(m) => m.ShowPorts,
+	),
+);
+const ShowRedirects = dynamic(() =>
+	import(
+		"@/components/dashboard/application/advanced/redirects/show-redirects"
+	).then((m) => m.ShowRedirects),
+);
+const ShowSecurity = dynamic(() =>
+	import(
+		"@/components/dashboard/application/advanced/security/show-security"
+	).then((m) => m.ShowSecurity),
+);
+const ShowBuildServer = dynamic(() =>
+	import("@/components/dashboard/application/advanced/show-build-server").then(
+		(m) => m.ShowBuildServer,
+	),
+);
+const ShowResources = dynamic(() =>
+	import("@/components/dashboard/application/advanced/show-resources").then(
+		(m) => m.ShowResources,
+	),
+);
+const ShowTraefikConfig = dynamic(() =>
+	import(
+		"@/components/dashboard/application/advanced/traefik/show-traefik-config"
+	).then((m) => m.ShowTraefikConfig),
+);
+const ShowVolumes = dynamic(() =>
+	import(
+		"@/components/dashboard/application/advanced/volumes/show-volumes"
+	).then((m) => m.ShowVolumes),
+);
+const ShowDeployments = dynamic(() =>
+	import(
+		"@/components/dashboard/application/deployments/show-deployments"
+	).then((m) => m.ShowDeployments),
+);
+const ShowDomains = dynamic(() =>
+	import("@/components/dashboard/application/domains/show-domains").then(
+		(m) => m.ShowDomains,
+	),
+);
+const ShowEnvironment = dynamic(() =>
+	import("@/components/dashboard/application/environment/show").then(
+		(m) => m.ShowEnvironment,
+	),
+);
+const ShowDockerLogs = dynamic(() =>
+	import("@/components/dashboard/application/logs/show").then(
+		(m) => m.ShowDockerLogs,
+	),
+);
+const ShowPatches = dynamic(() =>
+	import("@/components/dashboard/application/patches/show-patches").then(
+		(m) => m.ShowPatches,
+	),
+);
+const ShowPreviewDeployments = dynamic(() =>
+	import(
+		"@/components/dashboard/application/preview-deployments/show-preview-deployments"
+	).then((m) => m.ShowPreviewDeployments),
+);
+const ShowSchedules = dynamic(() =>
+	import("@/components/dashboard/application/schedules/show-schedules").then(
+		(m) => m.ShowSchedules,
+	),
+);
+const ShowVolumeBackups = dynamic(() =>
+	import(
+		"@/components/dashboard/application/volume-backups/show-volume-backups"
+	).then((m) => m.ShowVolumeBackups),
+);
+const ContainerFreeMonitoring = dynamic(() =>
+	import(
+		"@/components/dashboard/monitoring/free/container/show-free-container-monitoring"
+	).then((m) => m.ContainerFreeMonitoring),
+);
+const ContainerPaidMonitoring = dynamic(() =>
+	import(
+		"@/components/dashboard/monitoring/paid/container/show-paid-container-monitoring"
+	).then((m) => m.ContainerPaidMonitoring),
+);
 
 type TabState =
 	| "projects"

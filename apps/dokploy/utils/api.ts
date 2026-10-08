@@ -73,7 +73,20 @@ const links =
 
 export const api = createTRPCNext<AppRouter>({
 	config() {
-		return { links };
+		return {
+			links,
+			queryClientConfig: {
+				defaultOptions: {
+					queries: {
+						// Each page asks for the user, permissions and settings from a
+						// dozen components; with the default staleTime of 0 every window
+						// focus refetched all of them. Live views poll on their own.
+						staleTime: 15_000,
+						retry: 1,
+					},
+				},
+			},
+		};
 	},
 	ssr: false,
 	transformer: superjson,

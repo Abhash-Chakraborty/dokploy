@@ -1,10 +1,6 @@
 import { ChevronDown, Plus } from "lucide-react";
 import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
-import {
-	extractServices,
-	type Services,
-} from "@/components/dashboard/settings/users/add-permissions";
 import { Button } from "@/components/ui/button";
 import {
 	CommandDialog,
@@ -20,6 +16,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { extractServices, type Services } from "@/lib/services";
 import { api } from "@/utils/api";
 
 type Mode = "database" | "volume";

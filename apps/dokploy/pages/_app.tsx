@@ -32,14 +32,13 @@ const MyApp = ({
 
 	return (
 		<>
-			<style jsx global>
-				{`
-					:root {
-						--font-inter: ${geist.style.fontFamily};
-						--font-geist-mono: ${geistMono.style.fontFamily};
-					}
-				`}
-			</style>
+			<style
+				// Plain style tag: Turbopack does not bundle styled-jsx.
+				// biome-ignore lint/security/noDangerouslySetInnerHtml: static font variables
+				dangerouslySetInnerHTML={{
+					__html: `:root{--font-inter:${geist.style.fontFamily};--font-geist-mono:${geistMono.style.fontFamily};}`,
+				}}
+			/>
 			<TooltipProvider>
 				<ThemeProvider
 					attribute="class"
