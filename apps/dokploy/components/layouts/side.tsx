@@ -1,6 +1,7 @@
+"use client";
+
 import dynamic from "next/dynamic";
 
-("use client");
 
 import type { inferRouterOutputs } from "@trpc/server";
 import {
