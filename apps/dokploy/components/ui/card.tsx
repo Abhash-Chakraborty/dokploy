@@ -85,7 +85,10 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="card-content"
-			className={cn("px-0 group-data-[variant=tile]/card:px-4 group-data-[variant=tile]/card:pb-4", className)}
+			className={cn(
+				"px-0 group-data-[variant=tile]/card:px-4 group-data-[variant=tile]/card:pb-4",
+				className,
+			)}
 			{...props}
 		/>
 	);
@@ -95,7 +98,10 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="card-footer"
-			className={cn("flex items-center gap-2 pt-4 group-data-[variant=tile]/card:px-4 group-data-[variant=tile]/card:pb-4", className)}
+			className={cn(
+				"flex items-center gap-2 pt-4 group-data-[variant=tile]/card:px-4 group-data-[variant=tile]/card:pb-4",
+				className,
+			)}
 			{...props}
 		/>
 	);

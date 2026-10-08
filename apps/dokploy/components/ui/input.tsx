@@ -138,9 +138,7 @@ function Input({
 				inputElement
 			)}
 			{errorMessage && (
-				<span className="text-xs text-destructive">
-					{errorMessage}
-				</span>
+				<span className="text-xs text-destructive">{errorMessage}</span>
 			)}
 		</>
 	);

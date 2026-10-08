@@ -1106,7 +1106,10 @@ function PermissionEditor({
 				{resources.map(([resource, actions]) => {
 					const meta = RESOURCE_META[resource];
 					return (
-						<div key={resource} className="rounded-lg p-3 space-y-3 bg-muted/40">
+						<div
+							key={resource}
+							className="rounded-lg p-3 space-y-3 bg-muted/40"
+						>
 							<div>
 								<p className="text-sm font-medium">{meta?.label || resource}</p>
 								{meta?.description && (

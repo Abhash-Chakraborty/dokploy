@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-	ageInSeconds,
-	deriveLiveState,
-} from "@/components/shared/live-status";
+import { ageInSeconds, deriveLiveState } from "@/components/shared/live-status";
 
 const task = (state: string, currentState: string, error = "") => ({
 	name: "svc.1",
@@ -40,13 +37,19 @@ describe("deriveLiveState", () => {
 	it("counts replicas", () => {
 		expect(
 			deriveLiveState(
-				[task("running", "Running 3 minutes ago"), task("running", "Starting 2 seconds ago")],
+				[
+					task("running", "Running 3 minutes ago"),
+					task("running", "Starting 2 seconds ago"),
+				],
 				"done",
 			).label,
 		).toBe("Starting");
 		expect(
 			deriveLiveState(
-				[task("running", "Running 3 minutes ago"), task("running", "Running 3 minutes ago")],
+				[
+					task("running", "Running 3 minutes ago"),
+					task("running", "Running 3 minutes ago"),
+				],
 				"done",
 			).label,
 		).toBe("Running · 2/2");

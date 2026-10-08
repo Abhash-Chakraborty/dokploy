@@ -384,10 +384,7 @@ export const AddImport = ({ environmentId, projectName }: Props) => {
 										</div>
 										<div className="grid grid-cols-1 gap-3">
 											{templateInfo.template.domains.map((domain, index) => (
-												<div
-													key={index}
-													className="rounded-lg p-3 bg-muted/40"
-												>
+												<div key={index} className="rounded-lg p-3 bg-muted/40">
 													<div className="font-medium">
 														{domain.serviceName}
 													</div>
