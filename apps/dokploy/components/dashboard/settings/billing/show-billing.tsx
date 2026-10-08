@@ -1,4 +1,3 @@
-import { loadStripe } from "@stripe/stripe-js";
 import clsx from "clsx";
 import {
 	AlertTriangle,
@@ -42,9 +41,14 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { api } from "@/utils/api";
 
-const stripePromise = loadStripe(
-	process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
-);
+// Loaded on demand: at module scope it fetched js.stripe.com on every page
+// that imports this file, self-hosted installs included, and threw without a key.
+const getStripe = async () => {
+	const key = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+	if (!key) return null;
+	const { loadStripe } = await import("@stripe/stripe-js");
+	return loadStripe(key);
+};
 
 /** Precio legacy / Hobby: $4.50/mo primer servidor, $3.50 siguientes; anual $45.90 primero, $35.70 siguientes. */
 export const calculatePrice = (count: number, isAnnual = false) => {
@@ -189,7 +193,7 @@ export const ShowBilling = () => {
 		tier: "legacy" | "hobby" | "startup",
 		productId: string,
 	) => {
-		const stripe = await stripePromise;
+		const stripe = await getStripe();
 		const serverQuantity =
 			tier === "startup"
 				? startupServerQuantity
@@ -240,7 +244,6 @@ export const ShowBilling = () => {
 					<CardHeader className="flex flex-row items-start justify-between">
 						<div>
 							<CardTitle className="text-xl flex flex-row gap-2">
-								<CreditCard className="size-6 text-muted-foreground self-center" />
 								Billing
 							</CardTitle>
 							<CardDescription>
