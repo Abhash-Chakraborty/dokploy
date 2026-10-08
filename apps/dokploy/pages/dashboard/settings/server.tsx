@@ -4,7 +4,6 @@ import type { GetServerSidePropsContext } from "next";
 import Link from "next/link";
 import type { ReactElement } from "react";
 import superjson from "superjson";
-import { ServerPreflight } from "@/components/dashboard/settings/servers/server-preflight";
 import { WebDomain } from "@/components/dashboard/settings/web-domain";
 import { WebServer } from "@/components/dashboard/settings/web-server";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
@@ -15,7 +14,6 @@ const Page = () => {
 		<div className="flex w-full flex-col gap-8">
 			<WebServer />
 			<WebDomain />
-			<ServerPreflight />
 			<p className="text-[13px] text-muted-foreground">
 				Backups of Dokploy itself are on the{" "}
 				<Link
@@ -24,7 +22,15 @@ const Page = () => {
 				>
 					Backups
 				</Link>{" "}
-				page, next to every other backup.
+				page, next to every other backup. Host checks (Docker, Swarm, Traefik)
+				are on{" "}
+				<Link
+					href="/dashboard/system-health"
+					className="text-foreground underline underline-offset-4"
+				>
+					System health
+				</Link>
+				.
 			</p>
 		</div>
 	);

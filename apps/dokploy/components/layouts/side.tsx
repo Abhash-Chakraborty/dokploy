@@ -1250,10 +1250,10 @@ export default function Page({ children }: Props) {
 								{/* Only show this outer toggle when the sidebar is collapsed;
 								    the in-sidebar toggle handles the expanded state, so there
 								    is always exactly one visible collapse button. */}
-								<SidebarTrigger className="-ml-1 hidden group-has-[[data-collapsible=icon]]/sidebar-wrapper:flex" />
+								<SidebarTrigger className="-ml-1 flex md:hidden md:group-has-[[data-collapsible=icon]]/sidebar-wrapper:flex" />
 								<Separator
 									orientation="vertical"
-									className="mr-2 h-4 hidden group-has-[[data-collapsible=icon]]/sidebar-wrapper:block"
+									className="mr-2 h-4 block md:hidden md:group-has-[[data-collapsible=icon]]/sidebar-wrapper:block"
 								/>
 								<Breadcrumb>
 									<BreadcrumbList>
