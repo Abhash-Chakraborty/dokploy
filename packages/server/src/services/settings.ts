@@ -5,7 +5,7 @@ import {
 	execAsyncRemote,
 } from "@dokploy/server/utils/process/execAsync";
 import { spawnAsync } from "@dokploy/server/utils/process/spawnAsync";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 import semver from "semver";
 import { db } from "../db";
@@ -753,7 +753,8 @@ export const writeTraefikSetup = async (input: TraefikOptions) => {
 export const reconnectServicesToTraefik = async (serverId?: string) => {
 	const composeResult = await db.query.compose.findMany({
 		where: and(
-			...(serverId ? [eq(compose.serverId, serverId)] : []),
+			// Only this host's stacks: their networks do not exist elsewhere.
+			serverId ? eq(compose.serverId, serverId) : isNull(compose.serverId),
 			eq(compose.isolatedDeployment, true),
 		),
 	});
