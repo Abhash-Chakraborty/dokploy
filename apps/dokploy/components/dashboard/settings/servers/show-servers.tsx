@@ -191,7 +191,7 @@ export const ShowServers = () => {
 	) => (
 		// max-w-0 with a width makes an auto-layout table truncate this cell
 		// instead of letting a long probe error push the other columns away.
-		<TableCell className="w-[34%] max-w-0 py-3">
+		<TableCell className="w-[34%] min-w-56 max-w-0 py-3">
 			<div className="flex min-w-0 items-center gap-2.5">
 				<span
 					className={cn(
