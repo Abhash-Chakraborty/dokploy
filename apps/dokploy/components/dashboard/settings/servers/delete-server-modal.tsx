@@ -121,7 +121,10 @@ export const DeleteServerModal = ({
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>{children}</DialogTrigger>
-			<DialogContent className="max-w-lg">
+			<DialogContent
+				className="max-w-lg"
+				onCloseAutoFocus={(e) => e.preventDefault()}
+			>
 				<DialogHeader>
 					<DialogTitle>Delete Server</DialogTitle>
 					<DialogDescription>
@@ -149,7 +152,7 @@ export const DeleteServerModal = ({
 							{services?.map((service) => (
 								<div
 									key={`${service.type}-${service.id}`}
-									className="flex items-center justify-between gap-2 rounded-lg border p-2"
+									className="flex items-center justify-between gap-2 py-3 border-b border-border/60 last:border-b-0"
 								>
 									<div className="flex min-w-0 flex-col gap-1">
 										<span className="truncate text-sm font-medium">

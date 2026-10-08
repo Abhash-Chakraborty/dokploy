@@ -1,12 +1,14 @@
 import copy from "copy-to-clipboard";
 import { format } from "date-fns";
 import {
+	Activity,
 	Clock,
 	Copy,
 	Key,
 	KeyIcon,
 	Loader2,
 	Network,
+	Pencil,
 	ServerIcon,
 	Terminal,
 	Trash2,
@@ -189,7 +191,7 @@ export const ShowServers = () => {
 																		copy(server.ipAddress);
 																		toast.success("IP copied to clipboard");
 																	}}
-																	className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs hover:bg-muted transition-colors"
+																	className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs hover:bg-muted transition-colors bg-muted/40"
 																	title="Copy IP"
 																>
 																	{server.ipAddress}
@@ -286,14 +288,17 @@ export const ShowServers = () => {
 																			)}
 
 																		<Tooltip>
-																			<TooltipTrigger asChild>
-																				<div>
-																					<HandleServers
-																						serverId={server.serverId}
-																						asButton={true}
-																					/>
-																				</div>
-																			</TooltipTrigger>
+																			<HandleServers serverId={server.serverId}>
+																				<TooltipTrigger asChild>
+																					<Button
+																						variant="outline"
+																						size="icon"
+																						className="h-9 w-9"
+																					>
+																						<Pencil className="h-4 w-4" />
+																					</Button>
+																				</TooltipTrigger>
+																			</HandleServers>
 																			<TooltipContent>
 																				<p>Edit Server</p>
 																			</TooltipContent>
@@ -301,14 +306,19 @@ export const ShowServers = () => {
 
 																		{server.sshKeyId && !isBuildServer && (
 																			<Tooltip>
-																				<TooltipTrigger asChild>
-																					<div>
-																						<ShowServerActions
-																							serverId={server.serverId}
-																							asButton={true}
-																						/>
-																					</div>
-																				</TooltipTrigger>
+																				<ShowServerActions
+																					serverId={server.serverId}
+																				>
+																					<TooltipTrigger asChild>
+																						<Button
+																							variant="outline"
+																							size="icon"
+																							className="h-9 w-9"
+																						>
+																							<Activity className="h-4 w-4" />
+																						</Button>
+																					</TooltipTrigger>
+																				</ShowServerActions>
 																				<TooltipContent>
 																					<p>Web Server Actions</p>
 																				</TooltipContent>

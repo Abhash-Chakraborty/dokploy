@@ -5,7 +5,6 @@ import { FitAddon } from "xterm-addon-fit";
 import "@xterm/xterm/css/xterm.css";
 import { ClipboardAddon } from "@xterm/addon-clipboard";
 import { fixMacOsAltKeys } from "@/lib/terminal-keyboard";
-import { getLocalServerData } from "./local-server-config";
 
 const RESIZE_MESSAGE_PREFIX = "\u0000dokploy-resize:";
 
@@ -81,11 +80,6 @@ export const Terminal: React.FC<Props> = ({ id, serverId, onStatusChange }) => {
 		const urlParams = new URLSearchParams();
 		urlParams.set("serverId", serverId);
 
-		if (serverId === "local") {
-			const { port, username } = getLocalServerData();
-			urlParams.set("port", port.toString());
-			urlParams.set("username", username);
-		}
 		urlParams.set("cols", String(term.cols));
 		urlParams.set("rows", String(term.rows));
 
@@ -151,8 +145,12 @@ export const Terminal: React.FC<Props> = ({ id, serverId, onStatusChange }) => {
 
 	return (
 		<div className="flex h-full min-h-0 flex-col">
-			<div className="h-full w-full rounded-b-xl bg-[#090b0e] p-3 shadow-inner">
-				<div id={id} ref={termRef} className="h-full min-h-64 rounded-xl" />
+			<div className="h-full w-full p-3">
+				<div
+					id={id}
+					ref={termRef}
+					className="h-full w-full min-h-64 rounded-xl"
+				/>
 			</div>
 		</div>
 	);

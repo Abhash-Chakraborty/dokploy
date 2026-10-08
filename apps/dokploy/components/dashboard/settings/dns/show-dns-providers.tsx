@@ -61,7 +61,7 @@ export const ShowDnsProviders = () => {
 							return (
 								<li
 									key={provider.dnsProviderId}
-									className="group relative flex items-center gap-3 rounded-lg border bg-background px-4 py-3 transition-colors duration-150 ease-out hover:border-foreground/20 hover:bg-muted/50 focus-within:border-ring"
+									className="group relative flex items-center gap-3 rounded-lg px-4 py-3 transition-colors duration-150 ease-out hover:border-foreground/20 hover:bg-muted/50 focus-within:border-ring bg-muted/40"
 								>
 									<Link
 										href={href}

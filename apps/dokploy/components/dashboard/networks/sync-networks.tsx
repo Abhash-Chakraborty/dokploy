@@ -161,7 +161,7 @@ export const SyncNetworks = ({ serverId }: Props) => {
 									<label
 										key={dockerNetwork.name}
 										htmlFor={`import-network-${dockerNetwork.name}`}
-										className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border p-3"
+										className="flex cursor-pointer items-center justify-between gap-3 py-3 border-b border-border/60 last:border-b-0"
 									>
 										<div className="flex items-center gap-3">
 											<Checkbox
@@ -206,7 +206,7 @@ export const SyncNetworks = ({ serverId }: Props) => {
 									{data.changed.map((changed) => (
 										<div
 											key={changed.networkId}
-											className="flex items-center justify-between gap-3 rounded-lg border border-dashed p-3"
+											className="flex items-center justify-between gap-3 py-10"
 										>
 											<div className="flex items-center gap-3">
 												<span className="text-sm">{changed.name}</span>
@@ -245,7 +245,7 @@ export const SyncNetworks = ({ serverId }: Props) => {
 									{data.missing.map((stale) => (
 										<div
 											key={stale.networkId}
-											className="flex items-center justify-between gap-3 rounded-lg border border-dashed p-3"
+											className="flex items-center justify-between gap-3 py-10"
 										>
 											<span className="text-sm">{stale.name}</span>
 											<div className="flex items-center gap-2">

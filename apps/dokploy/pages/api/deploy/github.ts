@@ -26,6 +26,14 @@ import {
 const getGithubRepositoryOwner = (githubBody: any) =>
 	githubBody?.repository?.owner?.name ?? githubBody?.repository?.owner?.login;
 
+export const config = {
+	api: {
+		bodyParser: {
+			sizeLimit: "25mb",
+		},
+	},
+};
+
 export default async function handler(
 	req: NextApiRequest,
 	res: NextApiResponse,
@@ -463,7 +471,7 @@ export default async function handler(
 				await createSecurityBlockedComment({
 					owner,
 					repository,
-					prNumber: Number.parseInt(prNumber),
+					prNumber: Number.parseInt(prNumber, 10),
 					prAuthor,
 					permission: userPermission,
 					githubId: githubResult.githubId,

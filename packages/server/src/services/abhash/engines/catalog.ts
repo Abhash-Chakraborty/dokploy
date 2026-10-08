@@ -623,7 +623,8 @@ volumes:
 			"Three-member replica set with keyfile authentication, for transactions and failover.",
 		useFor:
 			"MongoDB when you need transactions or change streams, which require a replica set. For a simple MongoDB, use the built-in one in a project.",
-		versions: ["8.0", "7.0"],
+		// 8.0 refuses to start on Linux 6.19+ (SERVER-121912).
+		versions: ["8.2", "7.0"],
 		fields: [
 			{
 				name: "memoryMb",

@@ -302,7 +302,7 @@ export const ShowDockerEvents = ({ serverId }: Props) => {
 								</SelectContent>
 							</Select>
 						</div>
-						<div className="rounded-md border overflow-x-auto">
+						<div className="overflow-x-auto">
 							<Table>
 								<TableHeader>
 									{table.getHeaderGroups().map((headerGroup) => (

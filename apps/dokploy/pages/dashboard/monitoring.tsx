@@ -30,7 +30,7 @@ const Dashboard = () => {
 				icon={<BarChartHorizontalBigIcon className="size-5" />}
 			/>
 			{isPending ? (
-				<div className="rounded-xl border bg-background flex px-4 min-h-[50vh] justify-center items-center gap-2 text-muted-foreground">
+				<div className="rounded-xl flex px-4 min-h-[50vh] justify-center items-center gap-2 text-muted-foreground bg-muted/40">
 					Loading...
 					<Loader2 className="h-4 w-4 animate-spin" />
 				</div>

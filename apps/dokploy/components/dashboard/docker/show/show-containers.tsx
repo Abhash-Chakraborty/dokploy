@@ -117,7 +117,7 @@ export const ShowContainers = ({ serverId }: Props) => {
 							</DropdownMenuContent>
 						</DropdownMenu>
 					</div>
-					<div className="rounded-md border">
+					<div className="rounded-md bg-muted/40">
 						{isPending ? (
 							<div className="w-full flex-col gap-2 flex items-center justify-center h-[55vh]">
 								<span className="text-muted-foreground text-lg font-medium">

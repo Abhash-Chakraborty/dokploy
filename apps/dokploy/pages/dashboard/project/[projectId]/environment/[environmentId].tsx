@@ -52,9 +52,13 @@ import { AlertBlock } from "@/components/shared/alert-block";
 import { DateTooltip } from "@/components/shared/date-tooltip";
 import { DialogAction } from "@/components/shared/dialog-action";
 import { FocusShortcutInput } from "@/components/shared/focus-shortcut-input";
-import { StatusTooltip } from "@/components/shared/status-tooltip";
+import {
+	StatusPill,
+	storedState,
+	useLiveServices,
+} from "@/components/shared/live-status";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Command,
@@ -105,6 +109,7 @@ import { api } from "@/utils/api";
 import { useWhitelabeling } from "@/utils/hooks/use-whitelabeling";
 
 export type Services = {
+	appName?: string;
 	serverId?: string | null;
 	serverName?: string | null;
 	name: string;
@@ -153,6 +158,7 @@ export const extractServicesFromEnvironment = (
 			}
 			return {
 				name: item.name,
+				appName: item.appName,
 				type: "application",
 				id: item.applicationId,
 				createdAt: item.createdAt,
@@ -168,6 +174,7 @@ export const extractServicesFromEnvironment = (
 	const mariadb: Services[] =
 		environment.mariadb?.map((item) => ({
 			name: item.name,
+			appName: item.appName,
 			type: "mariadb",
 			id: item.mariadbId,
 			createdAt: item.createdAt,
@@ -180,6 +187,7 @@ export const extractServicesFromEnvironment = (
 	const postgres: Services[] =
 		environment.postgres?.map((item) => ({
 			name: item.name,
+			appName: item.appName,
 			type: "postgres",
 			id: item.postgresId,
 			createdAt: item.createdAt,
@@ -192,6 +200,7 @@ export const extractServicesFromEnvironment = (
 	const mongo: Services[] =
 		environment.mongo?.map((item) => ({
 			name: item.name,
+			appName: item.appName,
 			type: "mongo",
 			id: item.mongoId,
 			createdAt: item.createdAt,
@@ -204,6 +213,7 @@ export const extractServicesFromEnvironment = (
 	const redis: Services[] =
 		environment.redis?.map((item) => ({
 			name: item.name,
+			appName: item.appName,
 			type: "redis",
 			id: item.redisId,
 			createdAt: item.createdAt,
@@ -216,6 +226,7 @@ export const extractServicesFromEnvironment = (
 	const mysql: Services[] =
 		environment.mysql?.map((item) => ({
 			name: item.name,
+			appName: item.appName,
 			type: "mysql",
 			id: item.mysqlId,
 			createdAt: item.createdAt,
@@ -244,6 +255,7 @@ export const extractServicesFromEnvironment = (
 			}
 			return {
 				name: item.name,
+				appName: item.appName,
 				type: "compose",
 				id: item.composeId,
 				createdAt: item.createdAt,
@@ -259,6 +271,7 @@ export const extractServicesFromEnvironment = (
 	const libsql: Services[] =
 		environment.libsql?.map((item) => ({
 			name: item.name,
+			appName: item.appName,
 			type: "libsql",
 			id: item.libsqlId,
 			createdAt: item.createdAt,
@@ -290,6 +303,7 @@ const EnvironmentPage = (
 	props: InferGetServerSidePropsType<typeof getServerSideProps>,
 ) => {
 	const utils = api.useUtils();
+	const liveState = useLiveServices();
 	const [isBulkActionLoading, setIsBulkActionLoading] = useState(false);
 	const { projectId, environmentId } = props;
 	const { data: auth } = api.user.get.useQuery();
@@ -1620,18 +1634,18 @@ const EnvironmentPage = (
 									</div>
 								) : (
 									<div className="flex w-full flex-col gap-4">
-										<div className="grid grid-cols-1 gap-3 pb-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+										<div className="flex flex-col pb-6">
 											{filteredServices?.map((service) => (
 												<ContextMenu key={service.id}>
 													<ContextMenuTrigger asChild>
 														<Link
 															href={`/dashboard/project/${projectId}/environment/${environmentId}/services/${service.type}/${service.id}`}
-															className="block h-full"
+															className="block"
 														>
-															<Card className="group relative flex h-full cursor-pointer flex-col gap-3 bg-transparent p-4 transition-colors hover:bg-muted/40">
-																<div className="flex items-start gap-3">
+															<div className="group relative flex cursor-pointer items-center gap-4 border-b border-border/60 px-2 py-2.5 transition-colors hover:bg-muted/40">
+																<div className="flex min-w-0 flex-1 items-center gap-3">
 																	<div
-																		className="relative flex size-9 shrink-0 items-center justify-center rounded-md border bg-muted/30 text-muted-foreground"
+																		className="relative flex size-8 shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground"
 																		onClick={(e) =>
 																			handleServiceSelect(service.id, e)
 																		}
@@ -1707,10 +1721,9 @@ const EnvironmentPage = (
 																	</div>
 																	<div className="min-w-0 flex-1">
 																		<div className="flex items-center justify-between gap-2">
-																			<span className="truncate text-sm font-medium">
+																			<span className="truncate text-[13px] font-medium">
 																				{service.name}
 																			</span>
-																			<StatusTooltip status={service.status} />
 																		</div>
 																		{service.description ? (
 																			<p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
@@ -1723,7 +1736,18 @@ const EnvironmentPage = (
 																		)}
 																	</div>
 																</div>
-																<div className="mt-auto flex items-center justify-between gap-2 border-t pt-3 text-xs text-muted-foreground">
+																<StatusPill
+																	state={
+																		service.appName
+																			? liveState(
+																					service.appName,
+																					service.serverId,
+																					service.status,
+																				)
+																			: storedState(service.status)
+																	}
+																/>
+																<div className="hidden w-64 shrink-0 items-center justify-between gap-4 text-xs text-muted-foreground md:flex">
 																	<span className="flex min-w-0 items-center gap-1.5">
 																		<ServerIcon className="size-3 shrink-0" />
 																		<span className="truncate">
@@ -1734,7 +1758,7 @@ const EnvironmentPage = (
 																		Created
 																	</DateTooltip>
 																</div>
-															</Card>
+															</div>
 														</Link>
 													</ContextMenuTrigger>
 													{service.type !== "libsql" && (

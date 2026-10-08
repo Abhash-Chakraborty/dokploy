@@ -131,7 +131,7 @@ const ShowVolumeConfig = ({
 						<Loader2 className="animate-spin size-4" />
 					</div>
 				) : (
-					<div className="text-wrap rounded-lg border p-4 overflow-y-auto text-sm bg-card max-h-[80vh]">
+					<div className="text-wrap rounded-lg p-4 overflow-y-auto text-sm max-h-[80vh] bg-muted/40">
 						<code>
 							<pre className="whitespace-pre-wrap wrap-break-word">
 								<CodeEditor
@@ -332,7 +332,7 @@ export const ShowVolumes = ({ serverId }: Props) => {
 								<Loader2 className="animate-spin size-4" />
 							</div>
 						) : !volumes?.length ? (
-							<div className="flex min-h-[45vh] w-full flex-col items-center justify-center gap-4 rounded-lg border border-dashed p-8">
+							<div className="flex min-h-[45vh] w-full flex-col items-center justify-center gap-4 py-10">
 								<div className="rounded-full bg-muted p-4">
 									<HardDrive className="size-10 text-muted-foreground" />
 								</div>
@@ -353,7 +353,7 @@ export const ShowVolumes = ({ serverId }: Props) => {
 										className="max-w-xs"
 									/>
 								</div>
-								<div className="rounded-md border overflow-x-auto">
+								<div className="overflow-x-auto">
 									<Table>
 										<TableHeader>
 											{table.getHeaderGroups().map((headerGroup) => (

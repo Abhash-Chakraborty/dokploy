@@ -39,7 +39,9 @@ if (process.env.NODE_ENV === "production" && !IS_CLOUD) {
 	console.log("✅ initialization complete");
 }
 
-const app = next({ dev, turbopack: process.env.TURBOPACK === "1" });
+// Turbopack compiles the dev server several times faster and in far less
+// memory than webpack; TURBOPACK=0 falls back if a dependency needs webpack.
+const app = next({ dev, turbopack: process.env.TURBOPACK !== "0" });
 const handle = app.getRequestHandler();
 void app.prepare().then(async () => {
 	try {

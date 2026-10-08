@@ -207,7 +207,7 @@ export const MiddlewaresPage = () => {
 					Loading…
 				</p>
 			) : !rows?.length ? (
-				<div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-14 text-center">
+				<div className="flex flex-col items-center gap-2 text-center py-10">
 					<Layers className="size-8 text-muted-foreground" />
 					<p className="text-sm font-medium">No middlewares yet</p>
 					<p className="max-w-sm text-sm text-muted-foreground">
@@ -216,7 +216,7 @@ export const MiddlewaresPage = () => {
 					</p>
 				</div>
 			) : (
-				<div className="overflow-hidden rounded-lg border">
+				<div className="overflow-hidden rounded-lg bg-muted/40">
 					<Table>
 						<TableHeader>
 							<TableRow>
@@ -463,7 +463,7 @@ const MiddlewareDialog = ({
 						/>
 					</div>
 
-					<fieldset className="grid gap-3 rounded-lg border p-3">
+					<fieldset className="grid gap-3 rounded-lg p-3 bg-muted/40">
 						<legend className="px-1 text-sm font-medium">Settings</legend>
 						{kind === "rateLimit" && (
 							<div className="grid gap-3 sm:grid-cols-3">
@@ -698,7 +698,7 @@ const MiddlewareDialog = ({
 						)}
 					</fieldset>
 
-					<fieldset className="grid gap-3 rounded-lg border p-3">
+					<fieldset className="grid gap-3 rounded-lg p-3 bg-muted/40">
 						<legend className="px-1 text-sm font-medium">Applies to</legend>
 						{(
 							[
@@ -739,7 +739,7 @@ const MiddlewareDialog = ({
 							</label>
 						))}
 						{scope === "projects" && (
-							<div className="grid max-h-40 gap-1.5 overflow-y-auto rounded-md border p-2 sm:grid-cols-2">
+							<div className="grid max-h-40 gap-1.5 overflow-y-auto rounded-md p-2 sm:grid-cols-2 bg-muted/40">
 								{projects.map((project) => (
 									<Label
 										key={project.projectId}
@@ -781,7 +781,7 @@ const MiddlewareDialog = ({
 					</fieldset>
 
 					{row && (
-						<details className="rounded-lg border px-3 py-2 text-sm">
+						<details className="rounded-lg px-3 py-2 text-sm bg-muted/40">
 							<summary className="cursor-pointer text-muted-foreground">
 								What Traefik receives
 							</summary>

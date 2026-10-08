@@ -27,7 +27,7 @@ export const ShowRegistry = () => {
 					<Loader2 className="animate-spin size-4" />
 				</div>
 			) : data?.length === 0 ? (
-				<div className="flex flex-col items-center gap-3 min-h-[25vh] justify-center rounded-lg border border-dashed">
+				<div className="flex flex-col items-center gap-3 min-h-[25vh] justify-center py-10">
 					<Package className="size-8 self-center text-muted-foreground" />
 					<span className="text-base text-muted-foreground text-center">
 						You don't have any registry configurations
@@ -39,7 +39,7 @@ export const ShowRegistry = () => {
 					{data?.map((registry, index) => (
 						<div
 							key={registry.registryId}
-							className="flex items-center justify-between rounded-lg border bg-background px-4 py-3"
+							className="flex items-center justify-between py-3 border-b border-border/60 last:border-b-0"
 						>
 							<div className="flex gap-2 flex-col">
 								<span className="text-sm font-medium">

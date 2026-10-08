@@ -1,4 +1,4 @@
-import { RotateCcw, Server } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { api } from "@/utils/api";
 import LocalServerConfig from "../dashboard/settings/web-server/local-server-config";
 import type { TerminalConnectionStatus } from "../dashboard/settings/web-server/terminal";
@@ -117,85 +118,103 @@ export const TerminalView = ({
 
 	return (
 		<div
-			className={
-				fillHeight
-					? `flex min-h-0 flex-1 flex-col gap-3 ${className ?? ""}`
-					: className
-			}
-		>
-			{showSelector && (
-				<div className="flex items-center justify-between gap-2 pb-3">
-					<TerminalServerSelect
-						value={serverId}
-						onChange={handleServerChange}
-						className="w-64"
-					/>
-				</div>
+			className={cn(
+				"flex flex-col",
+				fillHeight ? "min-h-0 flex-1" : heightClassName,
+				className,
 			)}
-
-			{isLocalServer && <LocalServerConfig onSave={reconnect} />}
-
-			{/* A flex column, so the title bar takes its height and the canvas gets
-			    the rest. Sized any other way the bar pushes the canvas past the
-			    bottom edge and overflow-hidden eats the last few lines. */}
-			<div
-				className={
-					fillHeight
-						? "flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-[#090b0e] shadow-2xl shadow-black/20"
-						: `${heightClassName} flex flex-col overflow-hidden rounded-xl border border-white/10 bg-[#090b0e] shadow-2xl shadow-black/20`
-				}
-			>
-				<div className="flex h-11 shrink-0 items-center justify-between border-b border-white/10 bg-[#111419] px-3 text-slate-300">
-					<div className="flex min-w-0 items-center gap-2 font-mono text-xs">
-						<span className="flex gap-1.5" aria-hidden="true">
-							<span className="size-2.5 rounded-full bg-rose-400/80" />
-							<span className="size-2.5 rounded-full bg-amber-300/80" />
-							<span className="size-2.5 rounded-full bg-emerald-400/80" />
-						</span>
-						<span className="mx-1 h-4 w-px bg-white/10" />
-						<Server className="size-3.5 shrink-0" />
-						<span className="truncate">
-							{isLocalServer ? "dokploy-host" : serverId}
-						</span>
-					</div>
-					<div className="flex items-center gap-2">
-						<div
-							className="flex items-center gap-1.5 text-[11px] font-medium capitalize"
-							aria-live="polite"
-						>
-							<span
-								className={`size-2 rounded-full ${
-									connectionStatus === "connected"
-										? "bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,.7)]"
-										: connectionStatus === "connecting"
-											? "animate-pulse bg-amber-300"
-											: "bg-rose-400"
-								}`}
-							/>
-							{connectionStatus}
-						</div>
-						<Button
-							type="button"
-							variant="ghost"
-							size="icon"
-							className="size-7 text-slate-300 hover:bg-white/10 hover:text-white"
-							onClick={reconnect}
-							aria-label="Reconnect terminal"
-							title="Reconnect terminal"
-						>
-							<RotateCcw className="size-3.5" />
-						</Button>
-					</div>
-				</div>
-				<div className="min-h-0 flex-1">
-					<Terminal
-						id={terminalId}
-						key={terminalKey}
-						serverId={serverId}
-						onStatusChange={setConnectionStatus}
-					/>
+		>
+			<div className="flex flex-wrap items-center gap-1 pb-2">
+				{showSelector && (
+					<TerminalHostPicker value={serverId} onChange={handleServerChange} />
+				)}
+				<div className="ml-auto flex items-center gap-1">
+					{isLocalServer && <LocalServerConfig onSave={reconnect} />}
+					<Button
+						type="button"
+						variant="ghost"
+						size="icon-sm"
+						onClick={reconnect}
+						aria-label="Reconnect terminal"
+						title="Reconnect"
+					>
+						<RotateCcw className="size-4" />
+					</Button>
 				</div>
 			</div>
+			<div className="min-h-0 flex-1 overflow-hidden rounded-lg bg-[#070708]">
+				<Terminal
+					id={terminalId}
+					key={terminalKey}
+					serverId={serverId}
+					onStatusChange={setConnectionStatus}
+				/>
+			</div>
+			<div
+				className="flex items-center gap-2 pt-2 text-xs text-muted-foreground"
+				aria-live="polite"
+			>
+				<span
+					className={cn(
+						"size-1.5 rounded-full",
+						connectionStatus === "connected"
+							? "bg-status-running"
+							: connectionStatus === "connecting"
+								? "animate-pulse bg-status-restarting"
+								: "bg-status-failed",
+					)}
+				/>
+				<span className="capitalize">{connectionStatus}</span>
+				<span aria-hidden>·</span>
+				<span className="font-mono">
+					{isLocalServer ? "this server" : serverId}
+				</span>
+			</div>
+		</div>
+	);
+};
+
+/** One pill per host, so switching servers is a single click. */
+export const TerminalHostPicker = ({
+	value,
+	onChange,
+}: {
+	value: string;
+	onChange: (value: string) => void;
+}) => {
+	const { data: servers } = api.server.all.useQuery();
+	const hosts = [
+		{ id: "local", name: "This server", active: true },
+		...(servers ?? []).map((server) => ({
+			id: server.serverId,
+			name: server.name,
+			active: server.serverStatus === "active" && !!server.sshKeyId,
+		})),
+	];
+	return (
+		<div className="flex flex-wrap items-center gap-1" role="tablist">
+			{hosts.map((host) => (
+				<button
+					key={host.id}
+					type="button"
+					role="tab"
+					aria-selected={value === host.id}
+					disabled={!host.active}
+					onClick={() => onChange(host.id)}
+					className={cn(
+						"inline-flex h-8 items-center gap-2 rounded-md px-2.5 text-[13px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50",
+						value === host.id && "bg-accent text-foreground",
+					)}
+				>
+					<span
+						className={cn(
+							"size-1.5 rounded-full",
+							host.active ? "bg-status-running" : "bg-status-stopped",
+						)}
+					/>
+					{host.name}
+				</button>
+			))}
 		</div>
 	);
 };

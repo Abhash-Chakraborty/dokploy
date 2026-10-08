@@ -105,9 +105,7 @@ const probeOne = async (
 ): Promise<FleetServerRow> => {
 	try {
 		const { stdout } = await withTimeout(
-			base.serverId
-				? execAsyncRemote(base.serverId, PROBE)
-				: execAsync(PROBE),
+			base.serverId ? execAsyncRemote(base.serverId, PROBE) : execAsync(PROBE),
 			PROBE_TIMEOUT_MS,
 		);
 

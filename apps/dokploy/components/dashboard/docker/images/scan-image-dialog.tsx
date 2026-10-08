@@ -113,7 +113,7 @@ export const ScanImageDialog = ({ imageRef, serverId }: Props) => {
 							</span>
 						</div>
 
-						<div className="overflow-x-auto rounded-lg border">
+						<div className="overflow-x-auto">
 							<table className="w-full text-sm">
 								<thead>
 									<tr className="border-b bg-muted/40 text-left text-xs uppercase text-muted-foreground">

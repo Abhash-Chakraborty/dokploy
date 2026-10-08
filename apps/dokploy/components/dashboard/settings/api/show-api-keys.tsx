@@ -40,7 +40,7 @@ export const ShowApiKeys = () => {
 						data.user.apiKeys.map((apiKey) => (
 							<div
 								key={apiKey.id}
-								className="flex flex-col gap-2 p-4 border rounded-lg"
+								className="flex flex-col gap-2 p-4 rounded-lg bg-muted/40"
 							>
 								<div className="flex justify-between items-start">
 									<div className="flex flex-col gap-1">

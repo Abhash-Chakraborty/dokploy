@@ -1,15 +1,10 @@
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
-import { Settings } from "lucide-react";
-import { useId } from "react";
+import { UserCog } from "lucide-react";
+import { useEffect, useId, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
-import {
-	Accordion,
-	AccordionContent,
-	AccordionItem,
-	AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
 	Form,
 	FormControl,
@@ -19,7 +14,12 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
+import { api } from "@/utils/api";
 
 const Schema = z.object({
 	port: z.number().int().min(1, "Port must be higher than 0").max(65_535),
@@ -28,129 +28,109 @@ const Schema = z.object({
 
 type Schema = z.infer<typeof Schema>;
 
-const DEFAULT_LOCAL_SERVER_DATA: Schema = {
-	port: 22,
-	username: "root",
-};
-
-/** Returns local server data for use with local server terminal */
-export const getLocalServerData = () => {
-	try {
-		const localServerData = localStorage.getItem("localServerData");
-		const parsedLocalServerData = localServerData
-			? (JSON.parse(localServerData) as typeof DEFAULT_LOCAL_SERVER_DATA)
-			: DEFAULT_LOCAL_SERVER_DATA;
-
-		return parsedLocalServerData;
-	} catch {
-		return DEFAULT_LOCAL_SERVER_DATA;
-	}
-};
-
 interface Props {
 	onSave: () => void;
 }
 
+/** SSH user and port the panel uses for this host's terminal. */
 const LocalServerConfig = ({ onSave }: Props) => {
 	const formId = `local-terminal-settings-${useId().replaceAll(":", "")}`;
+	const [open, setOpen] = useState(false);
+	const utils = api.useUtils();
+	const { data: saved } = api.localTerminal.get.useQuery();
+	const { mutateAsync, isPending } = api.localTerminal.save.useMutation();
 	const form = useForm<Schema>({
-		defaultValues: getLocalServerData(),
+		defaultValues: { port: 22, username: "" },
 		resolver: zodResolver(Schema),
 	});
 
-	const onSubmit = (data: Schema) => {
-		localStorage.setItem("localServerData", JSON.stringify(data));
-		form.reset(data);
-		onSave();
+	useEffect(() => {
+		if (saved) form.reset(saved);
+	}, [saved, form]);
+
+	const onSubmit = async (data: Schema) => {
+		try {
+			await mutateAsync(data);
+			await utils.localTerminal.get.invalidate();
+			form.reset(data);
+			toast.success("Host SSH settings saved");
+			setOpen(false);
+			onSave();
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : "Could not save");
+		}
 	};
 
 	return (
-		<Accordion
-			collapsible
-			type="single"
-			className="rounded-lg border bg-muted/20 px-3"
-		>
-			<AccordionItem value="connectionSettings">
-				<AccordionTrigger
-					className={cn(
-						buttonVariants({ variant: "ghost" }),
-						"hover:no-underline px-1 mb-2 active:hover:transform-none",
-					)}
-				>
-					<div className="flex flex-row items-center gap-2 justify-between w-full">
-						<div className="flex flex-row gap-2 items-center">
-							<Settings className="h-4 w-4" />
-							<span className="dark:hover:text-white">Host SSH settings</span>
-						</div>
-					</div>
-				</AccordionTrigger>
-
-				<AccordionContent className="px-1 flex flex-col gap-2">
-					<Form {...form}>
-						<form
-							id={formId}
-							onSubmit={form.handleSubmit(onSubmit)}
-							className="w-full grid grid-cols-2 gap-4"
-						>
-							<FormField
-								control={form.control}
-								name="port"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Port</FormLabel>
-										<FormControl>
-											<Input
-												{...field}
-												type="number"
-												min={1}
-												max={65_535}
-												onChange={(e) => {
-													const value = e.target.value;
-													if (value === "") {
-														field.onChange(1);
-													} else {
-														const number = Number.parseInt(value, 10);
-														if (!Number.isNaN(number)) {
-															field.onChange(number);
-														}
-													}
-												}}
-											/>
-										</FormControl>
-
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="username"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Username</FormLabel>
-										<FormControl>
-											<Input placeholder="root" {...field} />
-										</FormControl>
-
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						</form>
-					</Form>
-
-					<Button
-						form={formId}
-						type="submit"
-						className="ml-auto"
-						disabled={!form.formState.isDirty}
+		<Popover open={open} onOpenChange={setOpen}>
+			<PopoverTrigger asChild>
+				<Button variant="ghost" size="sm" title="SSH user for this host">
+					<UserCog className="size-4" />
+					{saved ? `${saved.username} · port ${saved.port}` : "SSH user: auto"}
+				</Button>
+			</PopoverTrigger>
+			<PopoverContent align="end" className="w-80">
+				<div className="flex flex-col gap-1">
+					<span className="text-[13px] font-medium">Host SSH user</span>
+					<span className="text-xs text-muted-foreground">
+						Found on first connect and shared by every browser. Change it if
+						Dokploy's key is authorised for another user.
+					</span>
+				</div>
+				<Form {...form}>
+					<form
+						id={formId}
+						onSubmit={form.handleSubmit(onSubmit)}
+						className="grid grid-cols-[1fr_88px] gap-3"
 					>
-						Save
-					</Button>
-				</AccordionContent>
-			</AccordionItem>
-		</Accordion>
+						<FormField
+							control={form.control}
+							name="username"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>User</FormLabel>
+									<FormControl>
+										<Input placeholder="ubuntu" {...field} />
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="port"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Port</FormLabel>
+									<FormControl>
+										<Input
+											{...field}
+											type="number"
+											min={1}
+											max={65_535}
+											onChange={(e) => {
+												const number = Number.parseInt(e.target.value, 10);
+												field.onChange(Number.isNaN(number) ? 1 : number);
+											}}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+					</form>
+				</Form>
+				<Button
+					form={formId}
+					type="submit"
+					className="ml-auto"
+					disabled={!form.formState.isDirty}
+					isLoading={isPending}
+				>
+					Save and reconnect
+				</Button>
+			</PopoverContent>
+		</Popover>
 	);
 };
 

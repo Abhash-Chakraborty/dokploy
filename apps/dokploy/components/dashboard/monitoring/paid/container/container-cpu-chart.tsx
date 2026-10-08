@@ -84,7 +84,7 @@ export const ContainerCPUChart = ({ data }: Props) => {
 								if (active && payload && payload.length) {
 									const data = payload?.[0]?.payload;
 									return (
-										<div className="rounded-lg border bg-background p-2 shadow-xs">
+										<div className="rounded-lg p-2 bg-muted/40">
 											<div className="grid grid-cols-2 gap-2">
 												<div className="flex flex-col">
 													<span className="text-[0.70rem] uppercase text-muted-foreground">

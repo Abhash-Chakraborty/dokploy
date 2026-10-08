@@ -40,7 +40,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
 
 		return (
 			<div className="flex min-h-[50vh] w-full items-center justify-center p-6">
-				<div className="flex w-full max-w-lg flex-col items-center gap-4 rounded-xl border border-dashed bg-background p-8 text-center">
+				<div className="flex w-full max-w-lg flex-col items-center gap-4 text-center py-10">
 					<AlertTriangle className="size-8 text-muted-foreground" />
 					<div className="flex flex-col gap-1.5">
 						<h2 className="text-base font-medium">

@@ -205,7 +205,7 @@ export const ShowEnvironment = ({ applicationId }: Props) => {
 							control={form.control}
 							name="createEnvFile"
 							render={({ field }) => (
-								<FormItem className="flex flex-row items-center justify-between p-3 border rounded-lg shadow-xs">
+								<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 									<div className="space-y-0.5">
 										<FormLabel>Create Environment File</FormLabel>
 										<FormDescription>

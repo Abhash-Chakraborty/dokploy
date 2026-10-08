@@ -84,9 +84,9 @@ export const ShowPatches = ({ id, type }: Props) => {
 
 	return (
 		<Card className="bg-background">
-			<CardHeader className="flex flex-row items-center justify-between">
-				<div>
-					<CardTitle>Patches</CardTitle>
+			<CardHeader className="flex flex-row items-center flex-wrap gap-4 justify-between">
+				<div className="flex flex-col gap-1">
+					<CardTitle className="text-xl">Patches</CardTitle>
 					<CardDescription>
 						Apply code patches to your repository during build. Patches are
 						applied after cloning the repository and before building.
@@ -106,7 +106,7 @@ export const ShowPatches = ({ id, type }: Props) => {
 						<Loader2 className="h-6 w-6 animate-spin" />
 					</div>
 				) : patches?.length === 0 ? (
-					<div className="flex min-h-[40vh] w-full flex-col items-center justify-center gap-4 rounded-lg border border-dashed p-8">
+					<div className="flex min-h-[40vh] w-full flex-col items-center justify-center gap-4 py-10">
 						<div className="rounded-full bg-muted p-4">
 							<FilePlus2 className="h-10 w-10 text-muted-foreground" />
 						</div>

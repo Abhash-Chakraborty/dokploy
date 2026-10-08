@@ -199,7 +199,7 @@ export const ForwardAuthSettings = () => {
 				</div>
 			</div>
 			{gates && gates.length > 0 && (
-				<ul className="divide-y rounded-md border">
+				<ul className="divide-y divide-border/60">
 					{gates.map((g) => (
 						<li key={g.id} className="flex flex-col gap-1 px-4 py-3">
 							<div className="flex items-center gap-2">

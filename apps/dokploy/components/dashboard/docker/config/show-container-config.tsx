@@ -42,7 +42,7 @@ export const ShowContainerConfig = ({ containerId, serverId }: Props) => {
 						See in detail the config of this container
 					</DialogDescription>
 				</DialogHeader>
-				<div className="text-wrap rounded-lg border p-4 overflow-y-auto text-sm bg-card max-h-[80vh]">
+				<div className="text-wrap rounded-lg p-4 overflow-y-auto text-sm max-h-[80vh] bg-muted/40">
 					<code>
 						<pre className="whitespace-pre-wrap wrap-break-word">
 							<CodeEditor

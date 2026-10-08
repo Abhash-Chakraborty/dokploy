@@ -55,7 +55,7 @@ export const DrawerLogs = ({ isOpen, onClose, filteredLogs }: Props) => {
 				<div
 					ref={scrollRef}
 					onScroll={handleScroll}
-					className="h-[720px] overflow-y-auto space-y-0 border p-4 bg-[#fafafa] dark:bg-[#050506] rounded custom-logs-scrollbar"
+					className="h-[720px] overflow-y-auto space-y-0 p-4 bg-[#fafafa] dark:bg-[#050506] rounded custom-logs-scrollbar bg-muted/40"
 				>
 					{" "}
 					{filteredLogs.length > 0 ? (

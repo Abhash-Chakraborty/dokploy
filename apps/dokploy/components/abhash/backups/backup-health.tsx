@@ -475,7 +475,7 @@ const WalCell = ({ policy }: { policy: Policy }) => {
 							onChange={(event) => setWhen(event.target.value)}
 						/>
 					</div>
-					<div className="flex items-center justify-between rounded-md border p-3">
+					<div className="flex items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 						<div>
 							<p className="text-sm font-medium">Replace the live database</p>
 							<p className="text-xs text-muted-foreground">
@@ -560,7 +560,7 @@ export const BackupHealth = ({ embedded = false }: { embedded?: boolean }) => {
 					{data.repositories.map((repository) => (
 						<li
 							key={repository.id}
-							className="flex items-center gap-2 rounded-md border px-3 py-2 text-xs"
+							className="flex items-center gap-2 rounded-md px-3 py-2 text-xs bg-muted/40"
 						>
 							<span className="font-medium">{repository.name}</span>
 							<code className="text-muted-foreground">
@@ -592,7 +592,7 @@ export const BackupHealth = ({ embedded = false }: { embedded?: boolean }) => {
 				</ul>
 			)}
 
-			<ul className="divide-y rounded-md border">
+			<ul className="divide-y divide-border/60">
 				{data?.policies.length === 0 && (
 					<li className="p-6 text-center text-sm text-muted-foreground">
 						No backups yet.

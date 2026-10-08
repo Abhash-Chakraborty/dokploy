@@ -33,6 +33,9 @@ RUN pnpm --filter=./apps/dokploy --prod deploy --legacy /prod/dokploy
 
 RUN cp -R /usr/src/app/apps/dokploy/.next /prod/dokploy/.next \
 	&& rm -rf /prod/dokploy/.next/cache
+# Turbopack's links to external server packages point into the monorepo's
+# store; re-point them into the deployed node_modules as seen at /app.
+RUN node scripts/relink-next-externals.mjs /prod/dokploy /app
 RUN cp -R /usr/src/app/apps/dokploy/dist /prod/dokploy/dist
 
 FROM base AS dokploy

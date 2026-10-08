@@ -155,7 +155,9 @@ export const getShell = () => {
 /** Returns private SSH key for dokploy local server terminal. Uses already created SSH key or generates a new SSH key.
  */
 export const setupLocalServerSSHKey = async () => {
-	const { SSH_PATH } = paths(true);
+	// The key lives next to this process, not on a remote server, so no
+	// paths(true): in dev that resolves to the real /etc/dokploy of the host.
+	const { SSH_PATH } = paths();
 	const sshKeyPath = path.join(SSH_PATH, "auto_generated-dokploy-local");
 	const publicKeyPath = `${sshKeyPath}.pub`;
 

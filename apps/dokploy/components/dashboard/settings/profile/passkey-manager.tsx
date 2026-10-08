@@ -132,7 +132,7 @@ export const PasskeyManager = () => {
 						{passkeys.map((pk) => (
 							<li
 								key={pk.id}
-								className="flex items-center justify-between rounded-md border px-3 py-2"
+								className="flex items-center justify-between py-3 border-b border-border/60 last:border-b-0"
 							>
 								<div className="flex items-center gap-2 min-w-0">
 									<Fingerprint className="size-4 shrink-0 text-muted-foreground" />

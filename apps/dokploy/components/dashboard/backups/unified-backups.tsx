@@ -70,7 +70,7 @@ export const UnifiedBackups = () => {
 			{isLoading ? (
 				<p className="text-sm text-muted-foreground">Loading…</p>
 			) : filtered.length === 0 ? (
-				<div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-12 text-center">
+				<div className="flex flex-col items-center gap-2 text-center py-10">
 					<HardDrive className="size-8 text-muted-foreground" />
 					<p className="text-sm text-muted-foreground">
 						No backups configured yet.

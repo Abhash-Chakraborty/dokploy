@@ -315,7 +315,7 @@ export const ShowPreviewSettings = ({ applicationId }: Props) => {
 										control={form.control}
 										name="previewHttps"
 										render={({ field }) => (
-											<FormItem className="flex flex-row items-center justify-between p-3 mt-4 border rounded-lg shadow-xs">
+											<FormItem className="flex flex-row items-center justify-between mt-4 py-3 border-b border-border/60 last:border-b-0">
 												<div className="space-y-0.5">
 													<FormLabel>HTTPS</FormLabel>
 													<FormDescription>
@@ -383,7 +383,7 @@ export const ShowPreviewSettings = ({ applicationId }: Props) => {
 									)}
 								</div>
 								<div className="grid gap-4 lg:grid-cols-2">
-									<div className="flex flex-row items-center justify-between rounded-lg border p-4 col-span-2">
+									<div className="flex flex-row items-center justify-between col-span-2 py-3 border-b border-border/60 last:border-b-0">
 										<div className="space-y-0.5">
 											<FormLabel className="text-base">
 												Enable preview deployments
@@ -421,7 +421,7 @@ export const ShowPreviewSettings = ({ applicationId }: Props) => {
 										control={form.control}
 										name="previewRequireCollaboratorPermissions"
 										render={({ field }) => (
-											<FormItem className="flex flex-row items-center justify-between p-3 mt-4 border rounded-lg shadow-xs col-span-2">
+											<FormItem className="flex flex-row items-center justify-between mt-4 col-span-2 py-3 border-b border-border/60 last:border-b-0">
 												<div className="space-y-0.5">
 													<FormLabel>
 														Require Collaborator Permissions

@@ -157,7 +157,13 @@ const { handler, api } = betterAuth({
 		disabled: process.env.NODE_ENV === "production",
 	},
 	async trustedOrigins() {
-		if (process.env.DOKPLOY_OPENAPI_GENERATION === "true") return [];
+		// Neither generating the OpenAPI document nor `next build` has a
+		// database; asking for one there only waits on DNS.
+		if (
+			process.env.DOKPLOY_OPENAPI_GENERATION === "true" ||
+			process.env.NEXT_PHASE === "phase-production-build"
+		)
+			return [];
 		try {
 			if (IS_CLOUD) {
 				return await getTrustedOrigins();

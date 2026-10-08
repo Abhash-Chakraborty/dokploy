@@ -218,7 +218,7 @@ const DatabaseTools = () => {
 	);
 
 	return (
-		<div className="flex flex-col gap-3 rounded-md border p-4">
+		<div className="flex flex-col gap-3 rounded-md p-4 bg-muted/40">
 			<div>
 				<h3 className="text-sm font-medium">Users, databases and extensions</h3>
 				<p className="text-xs text-muted-foreground">
@@ -350,7 +350,7 @@ const DatabaseTools = () => {
 							onChange={(event) => setUsername(event.target.value)}
 						/>
 					</div>
-					<div className="flex items-center gap-2 rounded-md border p-2">
+					<div className="flex items-center gap-2 rounded-md p-2 bg-muted/40">
 						<span className="text-xs">Read-only</span>
 						<Switch checked={readOnly} onCheckedChange={setReadOnly} />
 					</div>
@@ -371,7 +371,7 @@ const DatabaseTools = () => {
 						Create user
 					</Button>
 					{issued && (
-						<div className="flex items-center gap-2 rounded-md border px-3 py-2">
+						<div className="flex items-center gap-2 rounded-md px-3 py-2 bg-muted/40">
 							<code className="text-xs">{issued}</code>
 							<Button
 								variant="ghost"
@@ -461,7 +461,7 @@ export const EnginesPage = () => {
 			{services && services.length > 0 && (
 				<div className="flex flex-col gap-2">
 					<h2 className="text-sm font-medium">Added by you</h2>
-					<ul className="divide-y rounded-md border">
+					<ul className="divide-y divide-border/60">
 						{services.map((service) => {
 							const env = service.stack?.environment;
 							const href =
@@ -533,7 +533,7 @@ export const EnginesPage = () => {
 						{group.engines.map((engine) => (
 							<div
 								key={engine.id}
-								className="flex flex-col gap-2 rounded-md border p-4"
+								className="flex flex-col gap-2 rounded-md p-4 bg-muted/40"
 							>
 								<div className="flex items-center justify-between gap-2">
 									<span className="font-medium">{engine.label}</span>

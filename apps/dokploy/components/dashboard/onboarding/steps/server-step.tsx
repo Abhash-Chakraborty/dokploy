@@ -209,7 +209,7 @@ export const ServerStep = ({ onNext, plainTitle }: Props) => {
 					Dokploy deploys to servers you own. Buy one from any VPS provider
 					(Hetzner, DigitalOcean, Hostinger...) and paste its IP below.
 				</p>
-				<div className="flex items-start gap-2.5 rounded-lg border p-3 max-w-md">
+				<div className="flex items-start gap-2.5 rounded-lg p-3 max-w-md bg-muted/40">
 					<InfoIcon className="size-4 text-muted-foreground shrink-0 mt-0.5" />
 					<div className="flex flex-col gap-0.5">
 						<span className="text-sm font-medium">Requirements</span>
@@ -229,7 +229,7 @@ export const ServerStep = ({ onNext, plainTitle }: Props) => {
 							to the "Pick a plan" step.
 						</AlertBlock>
 					)}
-					<div className="flex flex-col gap-2 rounded-lg border p-3">
+					<div className="flex flex-col gap-2 rounded-lg p-3 bg-muted/40">
 						<span className="text-xs font-medium text-muted-foreground">
 							1. Run this on your server to authorize Dokploy
 						</span>
@@ -299,7 +299,7 @@ export const ServerStep = ({ onNext, plainTitle }: Props) => {
 				</div>
 			) : (
 				<div className="flex flex-col gap-4 w-full max-w-sm">
-					<div className="flex flex-col gap-3 rounded-lg border p-4">
+					<div className="flex flex-col gap-3 rounded-lg p-4 bg-muted/40">
 						{isSettingUp ? (
 							<div className="flex items-center justify-center gap-3 py-4 text-sm text-muted-foreground">
 								<Loader2 className="size-4 animate-spin shrink-0" />

@@ -207,7 +207,7 @@ export const ShowImport = ({ composeId }: Props) => {
 													Docker Compose
 												</h3>
 											</div>
-											<div className="max-h-[45vh] overflow-auto rounded-md border">
+											<div className="max-h-[45vh] overflow-auto rounded-md bg-muted/40">
 												<CodeEditor
 													language="yaml"
 													value={templateInfo?.compose || ""}
@@ -231,7 +231,7 @@ export const ShowImport = ({ composeId }: Props) => {
 															(domain, index) => (
 																<div
 																	key={index}
-																	className="rounded-lg border bg-card p-3 text-card-foreground shadow-xs"
+																	className="rounded-lg p-3 bg-muted/40"
 																>
 																	<div className="font-medium">
 																		{domain.serviceName}
@@ -265,7 +265,7 @@ export const ShowImport = ({ composeId }: Props) => {
 														{templateInfo.template.envs.map((env, index) => (
 															<div
 																key={index}
-																className="rounded-lg truncate border bg-card p-2 font-mono text-sm"
+																className="rounded-lg truncate p-2 font-mono text-sm bg-muted/40"
 															>
 																{env}
 															</div>
@@ -286,7 +286,7 @@ export const ShowImport = ({ composeId }: Props) => {
 															(mount, index) => (
 																<div
 																	key={index}
-																	className="rounded-lg border bg-card p-2 font-mono text-sm hover:bg-accent cursor-pointer transition-colors"
+																	className="rounded-lg p-2 font-mono text-sm hover:bg-accent cursor-pointer transition-colors bg-muted/40"
 																	onClick={() => handleShowMountContent(mount)}
 																>
 																	{mount.filePath}

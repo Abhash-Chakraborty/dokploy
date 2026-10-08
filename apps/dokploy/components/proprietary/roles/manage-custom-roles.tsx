@@ -754,7 +754,7 @@ function HandleCustomRole({
 								<button
 									key={preset.name}
 									type="button"
-									className="rounded-lg border p-3 text-left hover:bg-muted/50 transition-colors cursor-pointer space-y-1"
+									className="rounded-lg p-3 text-left hover:bg-muted/50 transition-colors cursor-pointer space-y-1 bg-muted/40"
 									onClick={() => {
 										form.setValue("roleName", preset.name);
 										setPermissions({ ...preset.permissions });
@@ -824,7 +824,7 @@ const DefaultRoleSection = ({ customRoles }: { customRoles: string[] }) => {
 	};
 
 	return (
-		<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border bg-muted/20 p-4">
+		<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-muted/20 py-3 border-b border-border/60 last:border-b-0">
 			<div className="space-y-0.5">
 				<p className="text-sm font-medium">Default role for new members</p>
 				<p className="text-xs text-muted-foreground">
@@ -931,7 +931,7 @@ const CustomRolesContent = () => {
 						return (
 							<div
 								key={role.role}
-								className="rounded-lg border bg-muted/20 p-4 space-y-3"
+								className="rounded-lg bg-muted/20 p-4 space-y-3 bg-muted/40"
 							>
 								<div className="flex items-start justify-between gap-2">
 									<div className="flex items-center gap-2.5 min-w-0">
@@ -1001,7 +1001,7 @@ const CustomRolesContent = () => {
 										{enabledResources.map(([resource, actions]) => (
 											<div
 												key={resource}
-												className="flex items-center gap-1 rounded-md bg-background border px-2 py-1"
+												className="flex items-center gap-1 rounded-md px-2 py-1 bg-muted/40"
 											>
 												<span className="text-xs font-medium text-foreground">
 													{RESOURCE_META[resource]?.label || resource}
@@ -1106,7 +1106,10 @@ function PermissionEditor({
 				{resources.map(([resource, actions]) => {
 					const meta = RESOURCE_META[resource];
 					return (
-						<div key={resource} className="rounded-lg border p-3 space-y-3">
+						<div
+							key={resource}
+							className="rounded-lg p-3 space-y-3 bg-muted/40"
+						>
 							<div>
 								<p className="text-sm font-medium">{meta?.label || resource}</p>
 								{meta?.description && (
@@ -1121,7 +1124,7 @@ function PermissionEditor({
 									return (
 										<div
 											key={action}
-											className="flex items-center gap-3 cursor-pointer rounded-md border p-2 hover:bg-muted/50 transition-colors"
+											className="flex items-center gap-3 cursor-pointer rounded-md p-2 hover:bg-muted/50 transition-colors bg-muted/40"
 											onClick={() => onToggle(resource, action)}
 										>
 											<Switch

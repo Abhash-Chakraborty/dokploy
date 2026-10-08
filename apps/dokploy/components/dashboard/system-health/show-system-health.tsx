@@ -232,9 +232,11 @@ export const ShowSystemHealth = ({ serverId }: { serverId?: string }) => {
 							again, which can briefly interrupt traffic to your applications.
 						</AlertBlock>
 						<p>
-							This publishes port 8080 on this host. If something else is
-							already listening there the change is rejected and nothing is
-							recreated.
+							This publishes port 8080 on this host's loopback address only,
+							because the dashboard has no login. Open it through an SSH tunnel
+							(<code>ssh -L 8080:127.0.0.1:8080 your-server</code>). If
+							something else is already listening there the change is rejected
+							and nothing is recreated.
 						</p>
 					</div>
 				}

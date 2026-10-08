@@ -291,7 +291,7 @@ export const ShowDeployments = ({
 							return (
 								<div
 									key={deployment.deploymentId}
-									className="flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
+									className="flex flex-col gap-4 rounded-lg p-4 sm:flex-row sm:items-center sm:justify-between bg-muted/40"
 								>
 									<div className="flex flex-1 flex-col min-w-0">
 										<span className="flex items-center gap-4 font-medium capitalize text-foreground">

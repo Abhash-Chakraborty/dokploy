@@ -1,13 +1,26 @@
+import dynamic from "next/dynamic";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { api } from "@/utils/api";
 import { useWhitelabeling } from "@/utils/hooks/use-whitelabeling";
-import { ImpersonationBar } from "../dashboard/impersonation/impersonation-bar";
-import { AiSidebar } from "../shared/ai-sidebar";
-import { HubSpotWidget } from "../shared/HubSpotWidget";
+import { useHubSpotChat } from "../shared/analytics";
 import { RouteErrorBoundary } from "../shared/route-error-boundary";
 import Page from "./side";
+
+// Rarely opened, and they pull in the form, billing and markdown libraries:
+// fetched after the page is interactive instead of before it.
+const ImpersonationBar = dynamic(
+	() =>
+		import("../dashboard/impersonation/impersonation-bar").then(
+			(m) => m.ImpersonationBar,
+		),
+	{ ssr: false },
+);
+const AiSidebar = dynamic(
+	() => import("../shared/ai-sidebar").then((m) => m.AiSidebar),
+	{ ssr: false },
+);
 
 interface Props {
 	children: React.ReactNode;
@@ -28,6 +41,7 @@ export const DashboardLayout = ({ children, metaName }: Props) => {
 	});
 
 	const isChatEnabled = isCloud === true && currentPlan === "startup";
+	useHubSpotChat(isChatEnabled);
 
 	const { data: onboardingStatus } = api.project.onboardingStatus.useQuery();
 	const shouldRedirectToOnboarding =
@@ -57,12 +71,6 @@ export const DashboardLayout = ({ children, metaName }: Props) => {
 				<RouteErrorBoundary>{children}</RouteErrorBoundary>
 			</Page>
 			<AiSidebar />
-			{isChatEnabled && (
-				<>
-					<HubSpotWidget />
-				</>
-			)}
-
 			{haveRootAccess === true && <ImpersonationBar />}
 		</>
 	);

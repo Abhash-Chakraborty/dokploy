@@ -152,7 +152,7 @@ const NewKey = ({ agent }: { agent: Agent }) => {
 				</DialogHeader>
 				{issued ? (
 					<div className="flex items-start gap-2">
-						<pre className="flex-1 overflow-auto rounded-md border bg-muted/40 p-3 font-mono text-xs break-all">
+						<pre className="flex-1 overflow-auto rounded-md bg-muted/40 p-3 font-mono text-xs break-all">
 							{issued}
 						</pre>
 						<Button
@@ -183,7 +183,7 @@ const NewKey = ({ agent }: { agent: Agent }) => {
 								/>
 							</div>
 						</div>
-						<div className="flex items-center justify-between rounded-md border p-3">
+						<div className="flex items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 							<div>
 								<p className="text-sm font-medium">Read-only</p>
 								<p className="text-xs text-muted-foreground">Reads only.</p>
@@ -272,7 +272,7 @@ const Approvals = () => {
 	return (
 		<div className="flex flex-col gap-2">
 			<h3 className="text-sm font-medium">Waiting for you</h3>
-			<ul className="divide-y rounded-md border">
+			<ul className="divide-y divide-border/60">
 				{approvals.map((approval) => (
 					<li key={approval.id} className="flex items-center gap-3 px-4 py-3">
 						<div className="min-w-0 flex-1">
@@ -340,7 +340,7 @@ export const AgentsSettings = () => {
 
 			<Approvals />
 
-			<ul className="divide-y rounded-md border">
+			<ul className="divide-y divide-border/60">
 				{agents?.length === 0 && (
 					<li className="p-6 text-center text-sm text-muted-foreground">
 						No agents yet.

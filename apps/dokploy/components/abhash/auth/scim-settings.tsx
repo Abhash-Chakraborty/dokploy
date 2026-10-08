@@ -20,7 +20,7 @@ import { api } from "@/utils/api";
 const Copyable = ({ value }: { value: string }) => {
 	const [copied, setCopied] = useState(false);
 	return (
-		<div className="flex items-center gap-2 rounded-md border bg-muted/40 px-2 py-1.5">
+		<div className="flex items-center gap-2 rounded-md bg-muted/40 px-2 py-1.5">
 			<code className="flex-1 break-all text-xs">{value}</code>
 			<Button
 				type="button"
@@ -164,7 +164,7 @@ export const ScimSettings = () => {
 				<Copyable value={`${origin}/api/auth/scim/v2`} />
 			</div>
 			{data && data.connections.length > 0 && (
-				<ul className="divide-y rounded-md border">
+				<ul className="divide-y divide-border/60">
 					{data.connections.map((c) => (
 						<li
 							key={c.providerId}

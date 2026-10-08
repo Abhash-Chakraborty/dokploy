@@ -241,13 +241,13 @@ export const AddApiKey = () => {
 							/>
 
 							{/* Rate Limiting Section */}
-							<div className="space-y-4 rounded-lg border p-4">
+							<div className="space-y-4 rounded-lg p-4 bg-muted/40">
 								<h3 className="text-lg font-medium">Rate Limiting</h3>
 								<FormField
 									control={form.control}
 									name="rateLimitEnabled"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Enable Rate Limiting</FormLabel>
 												<FormDescription>
@@ -334,7 +334,7 @@ export const AddApiKey = () => {
 							</div>
 
 							{/* Request Limiting Section */}
-							<div className="space-y-4 rounded-lg border p-4">
+							<div className="space-y-4 rounded-lg p-4 bg-muted/40">
 								<h3 className="text-lg font-medium">Request Limiting</h3>
 								<FormField
 									control={form.control}

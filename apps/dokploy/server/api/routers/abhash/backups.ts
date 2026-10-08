@@ -21,6 +21,7 @@ import {
 	syncDrillSchedule,
 	turnOffWal,
 } from "@dokploy/server/services/abhash/backups";
+import { listBackupJobs } from "@dokploy/server/services/abhash/backups/catalog";
 import {
 	assertServerInOrganization,
 	assertServiceInOrganization,
@@ -68,6 +69,9 @@ const actorOf = (ctx: {
 
 export const abhashBackupsRouter = createTRPCRouter({
 	/** Everything the backup health page shows, in one call. */
+	jobs: adminProcedure.query(({ ctx }) =>
+		listBackupJobs(ctx.session.activeOrganizationId),
+	),
 	overview: adminProcedure.query(async ({ ctx }) => {
 		const organizationId = ctx.session.activeOrganizationId;
 		const [repositories, policies, drills] = await Promise.all([

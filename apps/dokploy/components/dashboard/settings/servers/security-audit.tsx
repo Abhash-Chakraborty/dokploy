@@ -74,7 +74,7 @@ export const SecurityAudit = ({ serverId }: Props) => {
 							</div>
 						) : (
 							<div className="grid w-full gap-4">
-								<div className="border rounded-lg p-4">
+								<div className="rounded-lg p-4 bg-muted/40">
 									<h3 className="text-lg font-semibold mb-1">UFW</h3>
 									<p className="text-sm text-muted-foreground mb-4">
 										UFW (Uncomplicated Firewall) is a simple firewall that can
@@ -112,7 +112,7 @@ export const SecurityAudit = ({ serverId }: Props) => {
 									</div>
 								</div>
 
-								<div className="border rounded-lg p-4">
+								<div className="rounded-lg p-4 bg-muted/40">
 									<h3 className="text-lg font-semibold mb-1">SSH</h3>
 									<p className="text-sm text-muted-foreground mb-4">
 										SSH (Secure Shell) is a protocol that allows you to securely
@@ -158,7 +158,7 @@ export const SecurityAudit = ({ serverId }: Props) => {
 									</div>
 								</div>
 
-								<div className="border rounded-lg p-4">
+								<div className="rounded-lg p-4 bg-muted/40">
 									<h3 className="text-lg font-semibold mb-1">Fail2Ban</h3>
 									<p className="text-sm text-muted-foreground mb-4">
 										Fail2Ban (Fail2Ban) is a service that can be used to prevent

@@ -221,7 +221,7 @@ const ServiceRow = ({
 	const [open, setOpen] = useState(false);
 
 	return (
-		<div className="flex flex-col gap-3 rounded-lg border p-4">
+		<div className="flex flex-col gap-3 rounded-lg p-4 bg-muted/40">
 			<FormField
 				control={control}
 				name={`services.${index}.detachDokployNetwork`}

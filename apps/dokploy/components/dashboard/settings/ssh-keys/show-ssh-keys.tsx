@@ -28,7 +28,7 @@ export const ShowDestinations = () => {
 					<Loader2 className="animate-spin size-4" />
 				</div>
 			) : data?.length === 0 ? (
-				<div className="flex flex-col items-center gap-3 min-h-[25vh] justify-center rounded-lg border border-dashed">
+				<div className="flex flex-col items-center gap-3 min-h-[25vh] justify-center py-10">
 					<KeyRound className="size-8 self-center text-muted-foreground" />
 					<span className="text-base text-muted-foreground text-center">
 						You don't have any SSH keys
@@ -40,7 +40,7 @@ export const ShowDestinations = () => {
 					{data?.map((sshKey, index) => (
 						<div
 							key={sshKey.sshKeyId}
-							className="flex items-center justify-between rounded-lg border bg-background px-4 py-3"
+							className="flex items-center justify-between py-3 border-b border-border/60 last:border-b-0"
 						>
 							<div className="flex flex-col">
 								<span className="text-sm font-medium">

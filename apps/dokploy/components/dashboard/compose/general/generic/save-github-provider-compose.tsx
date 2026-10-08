@@ -156,7 +156,6 @@ export const SaveGithubProviderCompose = ({ composeId }: Props) => {
 			composePath: data.composePath,
 			githubId: data.githubId,
 			sourceType: "github",
-			composeStatus: "idle",
 			watchPaths: data.watchPaths,
 			enableSubmodules: data.enableSubmodules,
 			triggerType: data.triggerType,

@@ -266,7 +266,7 @@ export const ProfileForm = () => {
 																	/>
 																</FormControl>
 
-																<Avatar className="default-avatar h-12 w-12 rounded-full border hover:p-px hover:border-primary transition-transform">
+																<Avatar className="default-avatar h-12 w-12 rounded-full hover:p-px hover:border-primary transition-transform rounded-lg bg-muted/40">
 																	<AvatarFallback className="rounded-lg">
 																		{getFallbackAvatarInitials(
 																			`${data?.user?.firstName} ${data?.user?.lastName}`.trim(),
@@ -284,7 +284,7 @@ export const ProfileForm = () => {
 																	/>
 																</FormControl>
 																<div
-																	className="upload-avatar h-12 w-12 rounded-full border border-dashed border-muted-foreground hover:border-primary transition-colors flex items-center justify-center bg-muted/50 hover:bg-muted overflow-hidden"
+																	className="upload-avatar h-12 w-12 rounded-full border-muted-foreground hover:border-primary transition-colors flex items-center justify-center bg-muted/50 hover:bg-muted overflow-hidden py-10"
 																	onClick={() =>
 																		document
 																			.getElementById("avatar-upload")
@@ -350,7 +350,7 @@ export const ProfileForm = () => {
 																	/>
 																</FormControl>
 																<div
-																	className="color-avatar h-12 w-12 rounded-full border hover:p-px hover:border-primary transition-colors flex items-center justify-center overflow-hidden cursor-pointer"
+																	className="color-avatar h-12 w-12 rounded-full hover:p-px hover:border-primary transition-colors flex items-center justify-center overflow-hidden cursor-pointer rounded-lg bg-muted/40"
 																	style={{
 																		backgroundColor: isSolidColorAvatar(
 																			field.value,
@@ -388,7 +388,7 @@ export const ProfileForm = () => {
 																		key={image}
 																		src={image}
 																		alt="avatar"
-																		className="h-12 w-12 rounded-full border hover:p-px hover:border-primary transition-transform"
+																		className="h-12 w-12 rounded-full hover:p-px hover:border-primary transition-transform rounded-lg bg-muted/40"
 																	/>
 																</FormLabel>
 															</FormItem>
@@ -404,7 +404,7 @@ export const ProfileForm = () => {
 											control={form.control}
 											name="allowImpersonation"
 											render={({ field }) => (
-												<FormItem className="flex flex-row items-center justify-between p-3 mt-4 border rounded-lg shadow-sm">
+												<FormItem className="flex flex-row items-center justify-between mt-4 py-3 border-b border-border/60 last:border-b-0">
 													<div className="space-y-0.5">
 														<FormLabel>Allow Impersonation</FormLabel>
 														<FormDescription>

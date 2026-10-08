@@ -107,7 +107,7 @@ export const ShowComposeContainers = ({
 						</span>
 					</div>
 				) : (
-					<div className="rounded-md border">
+					<div className="rounded-md bg-muted/40">
 						<Table>
 							<TableHeader>
 								<TableRow>

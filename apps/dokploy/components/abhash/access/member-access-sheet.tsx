@@ -51,7 +51,7 @@ export const MemberAccessSheet = ({
 				</SheetHeader>
 				<div className="flex flex-col gap-4 px-4 pb-6">
 					{privileged ? (
-						<p className="rounded-md border bg-muted/30 p-3 text-sm">
+						<p className="rounded-md bg-muted/30 p-3 text-sm bg-muted/40">
 							Owners and admins can reach every project, so per-project grants
 							do not apply to them. Change the organization role to limit
 							access.

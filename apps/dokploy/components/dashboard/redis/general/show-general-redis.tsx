@@ -206,7 +206,7 @@ export const ShowGeneralRedis = ({ redisId }: Props) => {
 										}}
 									>
 										<Button
-											variant="destructive"
+											variant="danger"
 											isLoading={isStopping}
 											className="flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-offset-2"
 										>

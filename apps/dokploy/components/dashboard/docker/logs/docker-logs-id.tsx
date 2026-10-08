@@ -405,7 +405,7 @@ export const DockerLogsId: React.FC<Props> = ({
 				<div
 					ref={scrollRef}
 					onScroll={handleScroll}
-					className="h-[55vh] sm:h-[65vh] max-h-[760px] overflow-y-auto space-y-0 rounded-lg border bg-[#fafafa] p-4 pt-11 dark:bg-[#050506] custom-logs-scrollbar"
+					className="h-[55vh] sm:h-[65vh] max-h-[760px] overflow-y-auto space-y-0 rounded-lg bg-[#fafafa] p-4 pt-11 dark:bg-[#050506] custom-logs-scrollbar bg-muted/40"
 				>
 					{filteredLogs.length > 0 ? (
 						filteredLogs.map((filteredLog: LogLine, index: number) => (

@@ -200,7 +200,7 @@ export const DnsRecordPanel = ({
 	};
 
 	return (
-		<div className="flex flex-col gap-4 rounded-lg border bg-muted/30 p-4">
+		<div className="flex flex-col gap-4 rounded-lg bg-muted/30 p-4 bg-muted/40">
 			<div className="flex items-start justify-between gap-2">
 				<div className="flex flex-col gap-0.5">
 					<span className="text-sm font-medium">
@@ -335,7 +335,7 @@ export const DnsRecordPanel = ({
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>Proxy status</FormLabel>
-									<fieldset className="relative grid min-w-0 grid-cols-2 rounded-lg border bg-muted/40 p-1">
+									<fieldset className="relative grid min-w-0 grid-cols-2 rounded-lg bg-muted/40 p-1">
 										<legend className="sr-only">Proxy status</legend>
 										<span
 											aria-hidden="true"

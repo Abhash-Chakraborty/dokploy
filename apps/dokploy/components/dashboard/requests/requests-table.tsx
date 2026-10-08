@@ -189,7 +189,7 @@ export const RequestsTable = ({ dateRange }: RequestsTableProps) => {
 		<>
 			<div className="flex flex-col gap-6 w-full ">
 				<div className="mt-6 grid gap-4 pb-20 w-full">
-					<div className="flex flex-col gap-4 w-full overflow-auto">
+					<div className="flex flex-col gap-4  w-full overflow-auto">
 						<div className="flex items-center gap-2 max-sm:flex-wrap">
 							<Input
 								placeholder="Filter by hostname..."
@@ -233,7 +233,7 @@ export const RequestsTable = ({ dateRange }: RequestsTableProps) => {
 								</DropdownMenuContent>
 							</DropdownMenu>
 						</div>
-						<div className="rounded-md border ">
+						<div className="rounded-md bg-muted/40">
 							<Table>
 								<TableHeader>
 									{table.getHeaderGroups().map((headerGroup) => (
@@ -354,7 +354,7 @@ export const RequestsTable = ({ dateRange }: RequestsTableProps) => {
 						</SheetDescription>
 					</SheetHeader>
 					<ScrollArea className="grow mt-4 pr-4">
-						<div className="border rounded-md">
+						<div className="rounded-md bg-muted/40">
 							<Table>
 								<TableBody>
 									{Object.entries(selectedRow || {}).map(([key, value]) => (

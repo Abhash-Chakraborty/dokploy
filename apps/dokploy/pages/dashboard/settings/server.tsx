@@ -1,28 +1,37 @@
 import { IS_CLOUD, validateRequest } from "@dokploy/server";
 import { createServerSideHelpers } from "@trpc/react-query/server";
 import type { GetServerSidePropsContext } from "next";
+import Link from "next/link";
 import type { ReactElement } from "react";
 import superjson from "superjson";
-import { ShowBackups } from "@/components/dashboard/database/backups/show-backups";
-import { ServerPreflight } from "@/components/dashboard/settings/servers/server-preflight";
 import { WebDomain } from "@/components/dashboard/settings/web-domain";
 import { WebServer } from "@/components/dashboard/settings/web-server";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { appRouter } from "@/server/api/root";
-import { api } from "@/utils/api";
 
 const Page = () => {
-	const { data: user } = api.user.get.useQuery();
 	return (
 		<div className="flex w-full flex-col gap-8">
 			<WebServer />
 			<WebDomain />
-			<ServerPreflight />
-			<ShowBackups
-				id={user?.userId ?? ""}
-				databaseType="web-server"
-				backupType="database"
-			/>
+			<p className="text-[13px] text-muted-foreground">
+				Backups of Dokploy itself are on the{" "}
+				<Link
+					href="/dashboard/backups#dokploy-backups"
+					className="text-foreground underline underline-offset-4"
+				>
+					Backups
+				</Link>{" "}
+				page, next to every other backup. Host checks (Docker, Swarm, Traefik)
+				are on{" "}
+				<Link
+					href="/dashboard/system-health"
+					className="text-foreground underline underline-offset-4"
+				>
+					System health
+				</Link>
+				.
+			</p>
 		</div>
 	);
 };

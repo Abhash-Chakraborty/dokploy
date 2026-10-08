@@ -125,8 +125,11 @@ export const AddInvitation = () => {
 	const mode = form.watch("mode");
 
 	useEffect(() => {
-		form.reset();
-	}, [form, form.formState.isSubmitSuccessful, form.reset]);
+		if (!open) {
+			form.reset();
+			setError(null);
+		}
+	}, [open, form, form.reset]);
 
 	useEffect(() => {
 		if (isCloud && form.getValues("mode") === "credentials") {
@@ -234,7 +237,7 @@ export const AddInvitation = () => {
 											<FormLabel>Invite Method</FormLabel>
 											<Select
 												onValueChange={field.onChange}
-												defaultValue={field.value}
+												value={field.value}
 											>
 												<FormControl>
 													<SelectTrigger>
@@ -352,7 +355,7 @@ export const AddInvitation = () => {
 									}}
 								/>
 							) : (
-								<div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+								<div className="text-sm text-muted-foreground py-10">
 									No email provider is set up, so the invitation is created as a
 									link for you to copy and send yourself. Add an email
 									notification under{" "}

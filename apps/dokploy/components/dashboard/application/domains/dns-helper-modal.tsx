@@ -52,7 +52,7 @@ export const DnsHelperModal = ({ domain, serverIp }: Props) => {
 					</AlertBlock>
 
 					<div className="flex flex-col gap-6">
-						<div className="rounded-lg border p-4">
+						<div className="rounded-lg p-4 bg-muted/40">
 							<h3 className="font-medium mb-2">1. Add A Record</h3>
 							<div className="flex flex-col gap-3">
 								<p className="text-sm text-muted-foreground">
@@ -83,7 +83,7 @@ export const DnsHelperModal = ({ domain, serverIp }: Props) => {
 							</div>
 						</div>
 
-						<div className="rounded-lg border p-4">
+						<div className="rounded-lg p-4 bg-muted/40">
 							<h3 className="font-medium mb-2">2. Verify Configuration</h3>
 							<div className="flex flex-col gap-3">
 								<p className="text-sm text-muted-foreground">

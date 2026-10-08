@@ -174,7 +174,7 @@ export const DeployStep = ({ environmentId, onNext, plainTitle }: Props) => {
 				</div>
 
 				{isDone && deploying.url ? (
-					<div className="flex flex-col rounded-2xl border overflow-hidden max-w-md">
+					<div className="flex flex-col rounded-2xl overflow-hidden max-w-md bg-muted/40">
 						<div className="flex items-center gap-2 px-5 py-3 border-b bg-muted/30">
 							<span className="size-2 rounded-full bg-green-500 shrink-0" />
 							<span className="font-mono text-xs text-muted-foreground">
@@ -205,7 +205,7 @@ export const DeployStep = ({ environmentId, onNext, plainTitle }: Props) => {
 						</div>
 					</div>
 				) : !isDone && !isError ? (
-					<div className="rounded-2xl border p-5 max-w-md">
+					<div className="rounded-2xl p-5 max-w-md bg-muted/40">
 						<div className="flex items-center gap-3 text-sm text-muted-foreground">
 							<Loader2 className="size-4 animate-spin shrink-0" />
 							Waiting for the build to finish...
@@ -236,7 +236,7 @@ export const DeployStep = ({ environmentId, onNext, plainTitle }: Props) => {
 				</p>
 			</div>
 
-			<div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border rounded-2xl overflow-hidden border">
+			<div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border rounded-2xl overflow-hidden bg-muted/40">
 				<button
 					type="button"
 					onClick={handleNginx}

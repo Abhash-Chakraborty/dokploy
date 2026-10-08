@@ -187,7 +187,7 @@ export const HandleTag = ({ tagId, onCreated }: HandleTagProps) => {
 									<FormControl>
 										<div className="flex items-center gap-3">
 											<FormLabel
-												className="relative flex items-center justify-center w-12 h-12 rounded-md border-2 cursor-pointer hover:opacity-80 transition-opacity"
+												className="relative flex items-center justify-center w-12 h-12 rounded-md cursor-pointer hover:opacity-80 transition-opacity bg-muted/40"
 												style={{
 													backgroundColor: field.value || "#3b82f6",
 												}}

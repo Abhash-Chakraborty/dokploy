@@ -95,7 +95,7 @@ const Toggle = ({
 const CopyValue = ({ value }: { value: string }) => {
 	const [copied, setCopied] = useState(false);
 	return (
-		<div className="flex items-center gap-2 rounded-md border bg-muted/40 px-2 py-1.5">
+		<div className="flex items-center gap-2 rounded-md bg-muted/40 px-2 py-1.5">
 			<code className="flex-1 truncate text-xs">{value}</code>
 			<Button
 				type="button"
@@ -225,7 +225,7 @@ const ProviderDialog = ({
 						</div>
 					</div>
 
-					<div className="flex flex-col gap-3 rounded-md border p-3">
+					<div className="flex flex-col gap-3 rounded-md p-3 bg-muted/40">
 						{form.kind === "authentik" ? (
 							<div className="grid gap-3 sm:grid-cols-[1fr_12rem]">
 								<div className="flex flex-col gap-1.5">
@@ -448,7 +448,7 @@ const GroupMappings = ({ providers }: { providers: Provider[] }) => {
 				</p>
 			</div>
 			{mappings && mappings.length > 0 && (
-				<ul className="divide-y rounded-md border">
+				<ul className="divide-y divide-border/60">
 					{mappings.map((m) => (
 						<li
 							key={m.id}
@@ -485,7 +485,7 @@ const GroupMappings = ({ providers }: { providers: Provider[] }) => {
 					))}
 				</ul>
 			)}
-			<div className="grid gap-2 rounded-md border bg-muted/30 p-3 sm:grid-cols-[1fr_9rem_9rem_9rem_5rem_auto] sm:items-end">
+			<div className="grid gap-2 rounded-md bg-muted/30 p-3 sm:grid-cols-[1fr_9rem_9rem_9rem_5rem_auto] sm:items-end bg-muted/40">
 				<div className="flex flex-col gap-1.5">
 					<Label htmlFor="map-group">Group name</Label>
 					<Input
@@ -595,7 +595,7 @@ const EnforceCard = ({ providers }: { providers: Provider[] }) => {
 			.catch((error: Error) => toast.error(error.message));
 	};
 	return (
-		<div className="flex flex-col gap-3 rounded-lg border p-4">
+		<div className="flex flex-col gap-3 rounded-lg p-4 bg-muted/40">
 			<Toggle
 				id="enforce"
 				label="Require single sign-on"
@@ -672,14 +672,14 @@ export const SsoSettings = () => {
 			</div>
 
 			{status && !status.enabled && (
-				<p className="rounded-md border border-dashed px-3 py-2 text-sm text-muted-foreground">
+				<p className="text-sm text-muted-foreground py-10">
 					SSO is off: providers can be set up, but nobody can sign in with them
 					until the owner turns it on.
 				</p>
 			)}
 
 			{!providers?.length ? (
-				<div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-10 text-center">
+				<div className="flex flex-col items-center gap-2 text-center py-10">
 					<ShieldCheck className="size-8 text-muted-foreground" />
 					<p className="text-sm font-medium">No identity provider yet</p>
 					<p className="max-w-sm text-sm text-muted-foreground">
@@ -692,7 +692,7 @@ export const SsoSettings = () => {
 					{providers.map((p) => (
 						<div
 							key={p.providerId}
-							className="flex flex-col gap-2 rounded-lg border p-4"
+							className="flex flex-col gap-2 rounded-lg p-4 bg-muted/40"
 						>
 							<div className="flex items-start justify-between gap-2">
 								<div className="min-w-0">

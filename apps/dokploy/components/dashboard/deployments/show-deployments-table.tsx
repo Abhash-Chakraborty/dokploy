@@ -554,7 +554,7 @@ export function ShowDeploymentsTable({
 					</div>
 				) : (
 					<>
-						<div className="rounded-md border overflow-x-auto">
+						<div className="overflow-x-auto">
 							<Table>
 								<TableHeader>
 									{table.getHeaderGroups().map((headerGroup) => (

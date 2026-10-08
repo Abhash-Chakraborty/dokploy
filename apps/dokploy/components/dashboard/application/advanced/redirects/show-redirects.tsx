@@ -62,7 +62,7 @@ export const ShowRedirects = ({ applicationId }: Props) => {
 						<div className="flex flex-col gap-6">
 							{data?.redirects.map((redirect) => (
 								<div key={redirect.redirectId}>
-									<div className="flex w-full flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-10 border rounded-lg p-4">
+									<div className="flex w-full flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-10 py-3 border-b border-border/60 last:border-b-0">
 										<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 flex-col gap-4 sm:gap-8">
 											<div className="flex flex-col gap-1">
 												<span className="font-medium">Regex</span>

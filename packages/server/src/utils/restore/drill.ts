@@ -23,7 +23,10 @@ export interface RestoreDrillResult {
 export const scratchDatabaseName = (suffix: string) =>
 	// Lower-case and underscore-only keeps this valid unquoted in all three
 	// engines, and the prefix makes an abandoned scratch DB obvious.
-	`dokploy_drill_${suffix.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 16)}`;
+	`dokploy_drill_${suffix
+		.toLowerCase()
+		.replace(/[^a-z0-9]/g, "")
+		.slice(0, 16)}`;
 
 const psql = (user: string, sql: string) =>
 	`docker exec -e DB_USER=${quote([user])} -e SQL=${quote([sql])} -i $CONTAINER_ID sh -c 'psql -U "$DB_USER" -d postgres -tAc "$SQL"'`;
@@ -65,7 +68,12 @@ export const buildDrillCommands = (
 	const binary = type === "mariadb" ? "mariadb" : "mysql";
 	const user = type === "mysql" ? "root" : databaseUser;
 	return {
-		create: mysqlish(binary, user, databasePassword, `CREATE DATABASE ${scratch}`),
+		create: mysqlish(
+			binary,
+			user,
+			databasePassword,
+			`CREATE DATABASE ${scratch}`,
+		),
 		restore: `docker exec -e DB_NAME=${quote([scratch])} -e DB_USER=${quote([user])} -e DB_PASS=${quote([databasePassword])} -i $CONTAINER_ID sh -c '${binary} -u "$DB_USER" -p"$DB_PASS" "$DB_NAME"'`,
 		verify: mysqlish(
 			binary,

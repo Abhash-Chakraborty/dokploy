@@ -309,7 +309,7 @@ export const Configure2FA = () => {
 					{step === "actions" && (
 						<div className="space-y-4">
 							<div className="grid gap-3">
-								<div className="flex flex-col gap-2 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+								<div className="flex flex-col gap-2 p-4 rounded-lg hover:bg-muted/50 transition-colors bg-muted/40">
 									<div className="flex items-start justify-between">
 										<div className="flex-1">
 											<h4 className="font-medium flex items-center gap-2">
@@ -370,7 +370,7 @@ export const Configure2FA = () => {
 
 					{step === "backup-codes" && (
 						<div className="space-y-4">
-							<div className="w-full space-y-3 border rounded-lg p-4 bg-muted/50">
+							<div className="w-full space-y-3 rounded-lg p-4 bg-muted/50 bg-muted/40">
 								<div className="grid grid-cols-2 gap-2">
 									{backupCodes.map((code, index) => (
 										<code

@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { DB_ENGINE_ICONS } from "@/components/icons/data-tools-icons";
 import { DateTooltip } from "@/components/shared/date-tooltip";
 import { DialogAction } from "@/components/shared/dialog-action";
-import { StatusTooltip } from "@/components/shared/status-tooltip";
+import { StatusPill, useLiveServices } from "@/components/shared/live-status";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -108,6 +108,7 @@ export const ShowOverviewServices = () => {
 	const [selectedProjectId, setSelectedProjectId] = useState("all");
 	const [selectedType, setSelectedType] = useState("all");
 	const [selectedStatus, setSelectedStatus] = useState("all");
+	const liveState = useLiveServices();
 	const [selectedServerId, setSelectedServerId] = useState("all");
 	const [sortBy, setSort] = useSortPreference<OverviewSortBy>(
 		"overviewServicesSort",
@@ -419,9 +420,12 @@ export const ShowOverviewServices = () => {
 											</TableCell>
 											<TableCell>{TYPE_LABELS[service.type]}</TableCell>
 											<TableCell>
-												<StatusTooltip
-													status={service.status as any}
-													className="size-2.5"
+												<StatusPill
+													state={liveState(
+														service.appName,
+														service.serverId,
+														service.status,
+													)}
 												/>
 											</TableCell>
 											<TableCell>

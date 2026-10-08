@@ -310,7 +310,7 @@ const Reveal = ({ secret }: { secret: Secret }) => {
 					/>
 				) : (
 					<div className="flex items-start gap-2">
-						<pre className="flex-1 overflow-auto rounded-md border bg-muted/40 p-3 font-mono text-xs whitespace-pre-wrap break-all">
+						<pre className="flex-1 overflow-auto rounded-md bg-muted/40 p-3 font-mono text-xs whitespace-pre-wrap break-all">
 							{value}
 						</pre>
 						<Button
@@ -372,7 +372,7 @@ const Versions = ({ secret }: { secret: Secret }) => {
 						Versions, and where it was last used.
 					</DialogDescription>
 				</DialogHeader>
-				<ul className="divide-y rounded-md border text-sm">
+				<ul className="divide-y text-sm divide-border/60">
 					{data?.versions.map((version) => (
 						<li
 							key={version.version}
@@ -541,7 +541,7 @@ const CredentialEncryption = () => {
 	if (!status) return null;
 	const on = status.credentialsEncrypted;
 	return (
-		<div className="flex flex-wrap items-center gap-3 rounded-md border p-4 text-sm">
+		<div className="flex flex-wrap items-center gap-3 rounded-md p-4 text-sm bg-muted/40">
 			<div className="min-w-0 flex-1">
 				<p className="font-medium">
 					Encrypt stored credentials {on ? "" : "(off)"}
@@ -629,7 +629,7 @@ export const VaultSettings = ({ embedded = false }: { embedded?: boolean }) => {
 			/>
 
 			{!status?.enabled && (
-				<div className="space-y-3 rounded-md border p-4 text-sm">
+				<div className="space-y-3 rounded-md p-4 text-sm bg-muted/40">
 					<p className="font-medium">The vault is off</p>
 					<p className="text-muted-foreground">
 						Creates a master key on this server. Download the recovery kit
@@ -668,7 +668,7 @@ export const VaultSettings = ({ embedded = false }: { embedded?: boolean }) => {
 			)}
 
 			{status?.enabled && (
-				<ul className="divide-y rounded-md border">
+				<ul className="divide-y divide-border/60">
 					{secrets?.length === 0 && (
 						<li className="p-6 text-center text-sm text-muted-foreground">
 							No secrets yet.

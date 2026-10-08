@@ -1,10 +1,4 @@
-import {
-	ClipboardList,
-	Database,
-	DatabaseBackup,
-	Play,
-	Trash2,
-} from "lucide-react";
+import { ClipboardList, DatabaseBackup, Play, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -42,11 +36,14 @@ interface Props {
 	id: string;
 	databaseType?: Exclude<ServiceType, "application" | "redis"> | "web-server";
 	backupType?: "database" | "compose";
+	/** The surrounding page already names the section. */
+	hideHeading?: boolean;
 }
 export const ShowBackups = ({
 	id,
 	databaseType,
 	backupType = "database",
+	hideHeading = false,
 }: Props) => {
 	const [activeManualBackup, setActiveManualBackup] = useState<
 		string | undefined
@@ -102,17 +99,15 @@ export const ShowBackups = ({
 
 	return (
 		<Card className="bg-background">
-			<CardHeader className="flex flex-row justify-between gap-4  flex-wrap">
-				<div className="flex flex-col gap-0.5">
-					<CardTitle className="text-xl flex flex-row gap-2">
-						<Database className="size-6 text-muted-foreground" />
-						Backups
-					</CardTitle>
-					<CardDescription>
-						Add backups to your database to save the data to a different
-						provider.
-					</CardDescription>
-				</div>
+			<CardHeader className="flex flex-row items-center flex-wrap gap-4 justify-between">
+				{!hideHeading && (
+					<div className="flex flex-col gap-1">
+						<CardTitle>Backups</CardTitle>
+						<CardDescription>
+							Scheduled copies of this database, sent to your storage.
+						</CardDescription>
+					</div>
+				)}
 
 				{postgres && postgres?.backups?.length > 0 && (
 					<div className="flex flex-col lg:flex-row gap-4 w-full lg:w-auto">
@@ -141,7 +136,7 @@ export const ShowBackups = ({
 							To create a backup it is required to set at least 1 provider.
 							Please, go to{" "}
 							<Link
-								href="/dashboard/settings/destinations"
+								href="/dashboard/backups?tab=storage"
 								className="text-foreground"
 							>
 								S3 Destinations
@@ -188,7 +183,7 @@ export const ShowBackups = ({
 
 										return (
 											<div key={backup.backupId}>
-												<div className="flex w-full flex-col md:flex-row md:items-start justify-between gap-4 border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+												<div className="flex w-full flex-col md:flex-row md:items-start justify-between gap-4 rounded-lg p-4 hover:bg-muted/50 transition-colors bg-muted/40">
 													<div className="flex flex-col w-full gap-4">
 														<div className="flex items-center gap-3">
 															{backup.backupType === "compose" && (

@@ -47,7 +47,10 @@ export const initializeStandaloneTraefik = async ({
 		[`${TRAEFIK_HTTP3_PORT}/udp`]: {},
 	};
 
-	const portBindings: Record<string, Array<{ HostPort: string }>> = {
+	const portBindings: Record<
+		string,
+		Array<{ HostIp?: string; HostPort: string }>
+	> = {
 		[`${TRAEFIK_PORT}/tcp`]: [{ HostPort: TRAEFIK_PORT.toString() }],
 		[`${TRAEFIK_SSL_PORT}/tcp`]: [{ HostPort: TRAEFIK_SSL_PORT.toString() }],
 		[`${TRAEFIK_HTTP3_PORT}/udp`]: [
@@ -59,15 +62,24 @@ export const initializeStandaloneTraefik = async ({
 		(port) => port.targetPort === 8080,
 	);
 
+	// The dashboard API runs with `insecure: true`, i.e. without a login, so
+	// its port is published on loopback only: reach it through an SSH tunnel
+	// or a private network, never the public interface. Dokploy itself talks
+	// to Traefik over dokploy-network and does not need the host port.
+	const dashboardBinding = [{ HostIp: "127.0.0.1", HostPort: "8080" }];
+
 	if (enableDashboard) {
 		exposedPorts["8080/tcp"] = {};
-		portBindings["8080/tcp"] = [{ HostPort: "8080" }];
+		portBindings["8080/tcp"] = dashboardBinding;
 	}
 
 	for (const port of additionalPorts) {
 		const portKey = `${port.targetPort}/${port.protocol ?? "tcp"}`;
 		exposedPorts[portKey] = {};
-		portBindings[portKey] = [{ HostPort: port.publishedPort.toString() }];
+		portBindings[portKey] =
+			port.targetPort === 8080
+				? dashboardBinding
+				: [{ HostPort: port.publishedPort.toString() }];
 	}
 
 	const settings: ContainerCreateOptions = {

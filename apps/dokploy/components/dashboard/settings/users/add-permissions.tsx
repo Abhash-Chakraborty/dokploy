@@ -29,143 +29,9 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { api, type RouterOutputs } from "@/utils/api";
 
-/** Shape returned by project.allForPermissions (admin only). Used for the permissions UI. */
-type ProjectForPermissions =
-	RouterOutputs["project"]["allForPermissions"][number];
-type EnvironmentForPermissions = ProjectForPermissions["environments"][number];
+export { extractServices, type Services } from "@/lib/services";
 
-type Environment = EnvironmentForPermissions;
-
-export type Services = {
-	appName: string;
-	serverId?: string | null;
-	name: string;
-	type:
-		| "mariadb"
-		| "application"
-		| "postgres"
-		| "mysql"
-		| "mongo"
-		| "redis"
-		| "compose"
-		| "libsql";
-	description?: string | null;
-	id: string;
-	createdAt: string;
-	status?: "idle" | "running" | "done" | "error";
-};
-
-export const extractServices = (data: Environment | undefined) => {
-	const applications: Services[] = (data?.applications?.map((item) => ({
-		appName: item.appName,
-		name: item.name,
-		type: "application",
-		id: item.applicationId,
-		createdAt: item.createdAt,
-		status: item.applicationStatus,
-		description: item.description,
-		serverId: item.serverId,
-	})) ?? []) as Services[];
-
-	const mariadb: Services[] =
-		data?.mariadb.map((item) => ({
-			appName: item.appName,
-			name: item.name,
-			type: "mariadb",
-			id: item.mariadbId,
-			createdAt: item.createdAt,
-			status: item.applicationStatus,
-			description: item.description,
-			serverId: item.serverId,
-		})) || [];
-
-	const postgres: Services[] =
-		data?.postgres.map((item) => ({
-			appName: item.appName,
-			name: item.name,
-			type: "postgres",
-			id: item.postgresId,
-			createdAt: item.createdAt,
-			status: item.applicationStatus,
-			description: item.description,
-			serverId: item.serverId,
-		})) || [];
-
-	const mongo: Services[] =
-		data?.mongo.map((item) => ({
-			appName: item.appName,
-			name: item.name,
-			type: "mongo",
-			id: item.mongoId,
-			createdAt: item.createdAt,
-			status: item.applicationStatus,
-			description: item.description,
-			serverId: item.serverId,
-		})) || [];
-
-	const redis: Services[] =
-		data?.redis.map((item) => ({
-			appName: item.appName,
-			name: item.name,
-			type: "redis",
-			id: item.redisId,
-			createdAt: item.createdAt,
-			status: item.applicationStatus,
-			description: item.description,
-			serverId: item.serverId,
-		})) || [];
-
-	const mysql: Services[] =
-		data?.mysql.map((item) => ({
-			appName: item.appName,
-			name: item.name,
-			type: "mysql",
-			id: item.mysqlId,
-			createdAt: item.createdAt,
-			status: item.applicationStatus,
-			description: item.description,
-			serverId: item.serverId,
-		})) || [];
-
-	const compose: Services[] = (data?.compose?.map((item) => ({
-		appName: item.appName,
-		name: item.name,
-		type: "compose",
-		id: item.composeId,
-		createdAt: item.createdAt,
-		status: item.composeStatus,
-		description: item.description,
-		serverId: item.serverId,
-	})) ?? []) as Services[];
-
-	const libsql: Services[] =
-		data?.libsql?.map((item) => ({
-			appName: item.appName,
-			name: item.name,
-			type: "libsql" as const,
-			id: item.libsqlId,
-			createdAt: item.createdAt,
-			status: item.applicationStatus,
-			description: item.description,
-			serverId: item.serverId,
-		})) || [];
-
-	applications.push(
-		...mysql,
-		...redis,
-		...mongo,
-		...postgres,
-		...mariadb,
-		...compose,
-		...libsql,
-	);
-
-	applications.sort((a, b) => {
-		return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-	});
-
-	return applications;
-};
+import { extractServices } from "@/lib/services";
 
 const addPermissions = z.object({
 	accessedProjects: z.array(z.string()).optional(),
@@ -321,10 +187,10 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 					<form
 						id="hook-form-add-permissions"
 						onSubmit={form.handleSubmit(onSubmit)}
-						className="grid  grid-cols-1 md:grid-cols-2 w-full gap-4"
+						className="grid  grid-cols-1 md:grid-cols-2  w-full gap-4"
 					>
 						{isCustomRole && (
-							<div className="md:col-span-2 rounded-lg border p-3 bg-muted/50 text-sm text-muted-foreground">
+							<div className="md:col-span-2 rounded-lg p-3 bg-muted/50 text-sm text-muted-foreground bg-muted/40">
 								This user has a custom role assigned. Capabilities are defined
 								by the role. You can still manage which projects, environments,
 								and services they can access below.
@@ -336,7 +202,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canCreateProjects"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Create Projects</FormLabel>
 												<FormDescription>
@@ -356,7 +222,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canDeleteProjects"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Delete Projects</FormLabel>
 												<FormDescription>
@@ -376,7 +242,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canCreateServices"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Create Services</FormLabel>
 												<FormDescription>
@@ -396,7 +262,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canDeleteServices"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Delete Services</FormLabel>
 												<FormDescription>
@@ -416,7 +282,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canCreateEnvironments"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Create Environments</FormLabel>
 												<FormDescription>
@@ -436,7 +302,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canDeleteEnvironments"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Delete Environments</FormLabel>
 												<FormDescription>
@@ -456,7 +322,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canAccessToTraefikFiles"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Access to Traefik Files</FormLabel>
 												<FormDescription>
@@ -476,7 +342,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canAccessToDocker"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Access to Docker</FormLabel>
 												<FormDescription>
@@ -496,7 +362,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canAccessToAPI"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Access to API/CLI</FormLabel>
 												<FormDescription>
@@ -516,7 +382,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canAccessToSSHKeys"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Access to SSH Keys</FormLabel>
 												<FormDescription>
@@ -536,7 +402,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 									control={form.control}
 									name="canAccessToGitProviders"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs">
+										<FormItem className="flex flex-row items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 											<div className="space-y-0.5">
 												<FormLabel>Access to Git Providers</FormLabel>
 												<FormDescription>
@@ -581,7 +447,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 														return (
 															<FormItem
 																key={project.projectId}
-																className="flex flex-col items-start rounded-lg p-4 border"
+																className="flex flex-col items-start rounded-lg p-4 bg-muted/40"
 															>
 																{/* Project Header */}
 																<div className="flex flex-row gap-4 items-center w-full">
@@ -917,7 +783,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 													control={form.control}
 													name="accessedGitProviders"
 													render={({ field }) => (
-														<FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-lg border p-3">
+														<FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-lg p-3 bg-muted/40">
 															<FormControl>
 																<Checkbox
 																	checked={field.value?.includes(
@@ -981,7 +847,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 													control={form.control}
 													name="accessedServers"
 													render={({ field }) => (
-														<FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-lg border p-3">
+														<FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-lg p-3 bg-muted/40">
 															<FormControl>
 																<Checkbox
 																	checked={field.value?.includes(s.serverId)}

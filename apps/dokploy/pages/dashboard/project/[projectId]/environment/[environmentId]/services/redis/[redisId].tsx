@@ -1,52 +1,67 @@
 import { validateRequest } from "@dokploy/server/lib/auth";
 import { createServerSideHelpers } from "@trpc/react-query/server";
-import copy from "copy-to-clipboard";
-import { ServerOff, TriangleAlert } from "lucide-react";
+import { ServerOff } from "lucide-react";
 import type {
 	GetServerSidePropsContext,
 	InferGetServerSidePropsType,
 } from "next";
+import dynamic from "next/dynamic";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ReactElement, useState } from "react";
-import { toast } from "sonner";
 import superjson from "superjson";
-import { ShowEnvironment } from "@/components/dashboard/application/environment/show-environment";
-import { ShowDockerLogs } from "@/components/dashboard/application/logs/show";
 import { DeleteService } from "@/components/dashboard/compose/delete-service";
-import { ContainerFreeMonitoring } from "@/components/dashboard/monitoring/free/container/show-free-container-monitoring";
-import { ContainerPaidMonitoring } from "@/components/dashboard/monitoring/paid/container/show-paid-container-monitoring";
-import { ShowExternalRedisCredentials } from "@/components/dashboard/redis/general/show-external-redis-credentials";
 import { ShowGeneralRedis } from "@/components/dashboard/redis/general/show-general-redis";
-import { ShowInternalRedisCredentials } from "@/components/dashboard/redis/general/show-internal-redis-credentials";
 import { UpdateRedis } from "@/components/dashboard/redis/update-redis";
-import { ShowDatabaseAdvancedSettings } from "@/components/dashboard/shared/show-database-advanced-settings";
 import { TransferService } from "@/components/dashboard/shared/transfer-service";
 import { RedisIcon } from "@/components/icons/data-tools-icons";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { AdvanceBreadcrumb } from "@/components/shared/advance-breadcrumb";
-import { StatusTooltip } from "@/components/shared/status-tooltip";
-import { Badge } from "@/components/ui/badge";
-import {
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { ServiceHeader } from "@/components/shared/service-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { UseKeyboardNav } from "@/hooks/use-keyboard-nav";
-import { cn } from "@/lib/utils";
 import { appRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
 import { useWhitelabeling } from "@/utils/hooks/use-whitelabeling";
+
+// Tabs load on demand: only one is visible, and together they pull in
+// the editor, terminal and chart libraries.
+const ShowEnvironment = dynamic(() =>
+	import(
+		"@/components/dashboard/application/environment/show-environment"
+	).then((m) => m.ShowEnvironment),
+);
+const ShowDockerLogs = dynamic(() =>
+	import("@/components/dashboard/application/logs/show").then(
+		(m) => m.ShowDockerLogs,
+	),
+);
+const ContainerFreeMonitoring = dynamic(() =>
+	import(
+		"@/components/dashboard/monitoring/free/container/show-free-container-monitoring"
+	).then((m) => m.ContainerFreeMonitoring),
+);
+const ContainerPaidMonitoring = dynamic(() =>
+	import(
+		"@/components/dashboard/monitoring/paid/container/show-paid-container-monitoring"
+	).then((m) => m.ContainerPaidMonitoring),
+);
+const ShowExternalRedisCredentials = dynamic(() =>
+	import(
+		"@/components/dashboard/redis/general/show-external-redis-credentials"
+	).then((m) => m.ShowExternalRedisCredentials),
+);
+const ShowInternalRedisCredentials = dynamic(() =>
+	import(
+		"@/components/dashboard/redis/general/show-internal-redis-credentials"
+	).then((m) => m.ShowInternalRedisCredentials),
+);
+const ShowDatabaseAdvancedSettings = dynamic(() =>
+	import("@/components/dashboard/shared/show-database-advanced-settings").then(
+		(m) => m.ShowDatabaseAdvancedSettings,
+	),
+);
 
 type TabState = "projects" | "monitoring" | "settings" | "advanced";
 
@@ -88,72 +103,17 @@ const Redis = (
 			</Head>
 			<div className="w-full">
 				<div className="flex w-full flex-col">
-					<CardHeader className="flex flex-row justify-between items-center">
-						<div className="flex flex-col">
-							<CardTitle className="text-xl flex flex-row gap-2">
-								<div className="relative flex flex-row gap-4">
-									<div className="absolute -right-1  -top-2">
-										<StatusTooltip status={data?.applicationStatus} />
-									</div>
-
-									<RedisIcon className="h-6 w-6 text-muted-foreground" />
-								</div>
-								{data?.name}
-							</CardTitle>
-							{data?.description && (
-								<CardDescription>{data?.description}</CardDescription>
-							)}
-
-							<span className="text-sm text-muted-foreground">
-								{data?.appName}
-							</span>
-						</div>
-						<div className="flex flex-col h-fit w-fit gap-2">
-							<div className="flex flex-row h-fit w-fit gap-2">
-								<Badge
-									className="cursor-pointer"
-									onClick={() => {
-										const ip = data?.server?.ipAddress || serverIp;
-										if (ip) {
-											copy(ip);
-											toast.success("IP Address Copied!");
-										}
-									}}
-									variant={
-										!data?.serverId
-											? "default"
-											: data?.server?.serverStatus === "active"
-												? "default"
-												: "destructive"
-									}
-								>
-									{data?.server?.name || "Dokploy Server"}
-								</Badge>
-								{data?.server?.serverStatus === "inactive" && (
-									<TooltipProvider delayDuration={0}>
-										<Tooltip>
-											<TooltipTrigger asChild>
-												<Label className="break-all w-fit flex flex-row gap-1 items-center">
-													<TriangleAlert className="size-4 text-amber-500" />
-												</Label>
-											</TooltipTrigger>
-											<TooltipContent
-												className="z-[999] w-[300px]"
-												align="start"
-												side="top"
-											>
-												<span>
-													You cannot, deploy this application because the server
-													is inactive, please upgrade your plan to add more
-													servers.
-												</span>
-											</TooltipContent>
-										</Tooltip>
-									</TooltipProvider>
-								)}
-							</div>
-
-							<div className="flex flex-row gap-2 justify-end">
+					<ServiceHeader
+						icon={<RedisIcon />}
+						name={data?.name}
+						description={data?.description}
+						appName={data?.appName}
+						storedStatus={data?.applicationStatus}
+						serverId={data?.serverId}
+						server={data?.server}
+						logsHref={`/dashboard/project/${projectId}/environment/${environmentId}/services/redis/${redisId}?tab=logs`}
+						actions={
+							<>
 								{permissions?.service.create && (
 									<UpdateRedis redisId={redisId} />
 								)}
@@ -167,12 +127,12 @@ const Redis = (
 								{permissions?.service.delete && (
 									<DeleteService id={redisId} type="redis" />
 								)}
-							</div>
-						</div>
-					</CardHeader>
-					<CardContent className="space-y-2 pt-5 pb-8 border-t px-0">
+							</>
+						}
+					/>
+					<div className="pt-2">
 						{data?.server?.serverStatus === "inactive" ? (
-							<div className="flex h-[55vh] border-2 rounded-xl border-dashed p-4">
+							<div className="flex h-[55vh] py-10">
 								<div className="max-w-3xl mx-auto flex flex-col items-center justify-center self-center gap-3">
 									<ServerOff className="size-10 text-muted-foreground self-center" />
 									<span className="text-center text-base text-muted-foreground">
@@ -204,17 +164,8 @@ const Redis = (
 									router.push(newPath, undefined, { shallow: true });
 								}}
 							>
-								<div className="flex flex-row items-center justify-between w-full gap-4 overflow-x-auto lg:hidden">
-									<TabsList
-										className={cn(
-											"justify-start max-md:overflow-y-scroll md:grid md:w-fit lg:hidden",
-											isCloud && data?.serverId
-												? "md:grid-cols-5"
-												: data?.serverId
-													? "md:grid-cols-4"
-													: "md:grid-cols-5",
-										)}
-									>
+								<div className="flex flex-row items-center justify-between w-full gap-4 overflow-x-auto">
+									<TabsList>
 										<TabsTrigger value="general">General</TabsTrigger>
 										{permissions?.envVars.read && (
 											<TabsTrigger value="environment">Environment</TabsTrigger>
@@ -249,7 +200,7 @@ const Redis = (
 								{permissions?.monitoring.read && (
 									<TabsContent value="monitoring">
 										<div className="pt-2.5">
-											<div className="flex flex-col gap-4 border rounded-lg p-6">
+											<div className="flex flex-col gap-4 rounded-lg p-6 bg-muted/40">
 												{data?.serverId && isCloud ? (
 													<ContainerPaidMonitoring
 														appName={data?.appName || ""}
@@ -261,7 +212,7 @@ const Redis = (
 												) : (
 													<>
 														{/* {monitoring?.enabledFeatures && (
-															<div className="flex flex-row border w-fit p-4 rounded-lg items-center gap-2">
+															<div className="flex flex-row w-fit p-4 rounded-lg items-center gap-2 bg-muted/40">
 																<Label className="text-muted-foreground">
 																	Change Monitoring
 																</Label>
@@ -313,7 +264,7 @@ const Redis = (
 								)}
 							</Tabs>
 						)}
-					</CardContent>
+					</div>
 				</div>
 			</div>
 		</div>

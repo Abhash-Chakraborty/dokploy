@@ -52,7 +52,7 @@ const Page = () => {
 							))}
 						</div>
 					) : (
-						<p className="text-sm text-muted-foreground rounded-lg border border-dashed p-4 text-center">
+						<p className="text-sm text-muted-foreground text-center py-10">
 							No remote servers added yet.
 						</p>
 					)}

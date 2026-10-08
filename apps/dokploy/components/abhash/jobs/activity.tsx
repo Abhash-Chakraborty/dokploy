@@ -142,7 +142,7 @@ const JobLog = ({ job, onBack }: { job: Job; onBack: () => void }) => {
 					<Progress value={detail.progress} className="h-1" />
 				)}
 			</div>
-			<pre className="min-h-0 flex-1 overflow-auto rounded-md border bg-muted/40 p-3 font-mono text-xs whitespace-pre-wrap break-all">
+			<pre className="min-h-0 flex-1 overflow-auto rounded-md bg-muted/40 p-3 font-mono text-xs whitespace-pre-wrap break-all">
 				{compactTimes(text) ||
 					(isActive(status) ? "Waiting for output…" : "No output")}
 				<div ref={bottom} />
@@ -163,7 +163,7 @@ const EnginePanel = ({ isOwner }: { isOwner: boolean }) => {
 	});
 	if (!status || status.enabled) return null;
 	return (
-		<div className="space-y-3 rounded-md border p-4 text-sm">
+		<div className="space-y-3 rounded-md p-4 text-sm bg-muted/40">
 			<p className="font-medium">Background jobs are off</p>
 			<p className="text-muted-foreground">
 				The job engine runs fleet commands, backups, restore drills and other
@@ -264,7 +264,7 @@ export const ActivityButton = () => {
 						)}
 						{enabled && !selected && (
 							<>
-								<div className="min-h-0 flex-1 divide-y overflow-auto rounded-md border">
+								<div className="min-h-0 flex-1 divide-y overflow-auto divide-border/60">
 									{data?.jobs.length === 0 && (
 										<p className="p-6 text-center text-sm text-muted-foreground">
 											No jobs yet.

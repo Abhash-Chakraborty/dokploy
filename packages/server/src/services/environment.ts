@@ -55,6 +55,7 @@ export const findEnvironmentById = async (environmentId: string) => {
 				columns: {
 					name: true,
 					applicationId: true,
+					appName: true,
 					createdAt: true,
 					applicationStatus: true,
 					description: true,
@@ -73,6 +74,7 @@ export const findEnvironmentById = async (environmentId: string) => {
 				},
 				columns: {
 					mariadbId: true,
+					appName: true,
 					name: true,
 					createdAt: true,
 					applicationStatus: true,
@@ -91,6 +93,7 @@ export const findEnvironmentById = async (environmentId: string) => {
 				},
 				columns: {
 					mongoId: true,
+					appName: true,
 					name: true,
 					createdAt: true,
 					applicationStatus: true,
@@ -109,6 +112,7 @@ export const findEnvironmentById = async (environmentId: string) => {
 				},
 				columns: {
 					mysqlId: true,
+					appName: true,
 					name: true,
 					createdAt: true,
 					applicationStatus: true,
@@ -127,6 +131,7 @@ export const findEnvironmentById = async (environmentId: string) => {
 				},
 				columns: {
 					postgresId: true,
+					appName: true,
 					name: true,
 					description: true,
 					createdAt: true,
@@ -145,6 +150,7 @@ export const findEnvironmentById = async (environmentId: string) => {
 				},
 				columns: {
 					redisId: true,
+					appName: true,
 					name: true,
 					createdAt: true,
 					applicationStatus: true,
@@ -163,6 +169,7 @@ export const findEnvironmentById = async (environmentId: string) => {
 				},
 				columns: {
 					composeId: true,
+					appName: true,
 					name: true,
 					createdAt: true,
 					composeStatus: true,
@@ -182,6 +189,7 @@ export const findEnvironmentById = async (environmentId: string) => {
 				},
 				columns: {
 					libsqlId: true,
+					appName: true,
 					name: true,
 					createdAt: true,
 					applicationStatus: true,

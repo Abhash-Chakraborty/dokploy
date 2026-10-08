@@ -359,7 +359,7 @@ export const ShowDomains = ({ id, type }: Props) => {
 									</DropdownMenuContent>
 								</DropdownMenu>
 							</div>
-							<div className="rounded-md border">
+							<div className="rounded-md bg-muted/40">
 								<Table>
 									<TableHeader>
 										{table.getHeaderGroups().map((headerGroup) => (

@@ -1,65 +1,125 @@
 import { validateRequest } from "@dokploy/server/lib/auth";
 import { createServerSideHelpers } from "@trpc/react-query/server";
-import copy from "copy-to-clipboard";
-import { ServerOff, TriangleAlert } from "lucide-react";
+import { ServerOff } from "lucide-react";
 import type {
 	GetServerSidePropsContext,
 	InferGetServerSidePropsType,
 } from "next";
+import dynamic from "next/dynamic";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ReactElement, useEffect, useState } from "react";
-import { toast } from "sonner";
 import superjson from "superjson";
-import { ShowClusterSettings } from "@/components/dashboard/application/advanced/cluster/show-cluster-settings";
 import { AddCommand } from "@/components/dashboard/application/advanced/general/add-command";
-import { ShowPorts } from "@/components/dashboard/application/advanced/ports/show-port";
-import { ShowRedirects } from "@/components/dashboard/application/advanced/redirects/show-redirects";
-import { ShowSecurity } from "@/components/dashboard/application/advanced/security/show-security";
-import { ShowBuildServer } from "@/components/dashboard/application/advanced/show-build-server";
-import { ShowResources } from "@/components/dashboard/application/advanced/show-resources";
-import { ShowTraefikConfig } from "@/components/dashboard/application/advanced/traefik/show-traefik-config";
-import { ShowVolumes } from "@/components/dashboard/application/advanced/volumes/show-volumes";
-import { ShowDeployments } from "@/components/dashboard/application/deployments/show-deployments";
-import { ShowDomains } from "@/components/dashboard/application/domains/show-domains";
-import { ShowEnvironment } from "@/components/dashboard/application/environment/show";
 import { ShowGeneralApplication } from "@/components/dashboard/application/general/show";
 import { ShowIconSettings } from "@/components/dashboard/application/icon/show-icon-settings";
-import { ShowDockerLogs } from "@/components/dashboard/application/logs/show";
-import { ShowPatches } from "@/components/dashboard/application/patches/show-patches";
-import { ShowPreviewDeployments } from "@/components/dashboard/application/preview-deployments/show-preview-deployments";
 import { RolloutStatus } from "@/components/dashboard/application/rollout-status";
-import { ShowSchedules } from "@/components/dashboard/application/schedules/show-schedules";
 import { UpdateApplication } from "@/components/dashboard/application/update-application";
-import { ShowVolumeBackups } from "@/components/dashboard/application/volume-backups/show-volume-backups";
 import { DeleteService } from "@/components/dashboard/compose/delete-service";
-import { ContainerFreeMonitoring } from "@/components/dashboard/monitoring/free/container/show-free-container-monitoring";
-import { ContainerPaidMonitoring } from "@/components/dashboard/monitoring/paid/container/show-paid-container-monitoring";
 import { AssignNetworks } from "@/components/dashboard/networks/assign-networks";
 import { TransferService } from "@/components/dashboard/shared/transfer-service";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { AdvanceBreadcrumb } from "@/components/shared/advance-breadcrumb";
-import { StatusTooltip } from "@/components/shared/status-tooltip";
-import { Badge } from "@/components/ui/badge";
-import {
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { ServiceHeader } from "@/components/shared/service-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { UseKeyboardNav } from "@/hooks/use-keyboard-nav";
 import { appRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
 import { useWhitelabeling } from "@/utils/hooks/use-whitelabeling";
+
+// Tabs load on demand: only one is visible, and together they pull in
+// the editor, terminal and chart libraries.
+const ShowClusterSettings = dynamic(() =>
+	import(
+		"@/components/dashboard/application/advanced/cluster/show-cluster-settings"
+	).then((m) => m.ShowClusterSettings),
+);
+const ShowPorts = dynamic(() =>
+	import("@/components/dashboard/application/advanced/ports/show-port").then(
+		(m) => m.ShowPorts,
+	),
+);
+const ShowRedirects = dynamic(() =>
+	import(
+		"@/components/dashboard/application/advanced/redirects/show-redirects"
+	).then((m) => m.ShowRedirects),
+);
+const ShowSecurity = dynamic(() =>
+	import(
+		"@/components/dashboard/application/advanced/security/show-security"
+	).then((m) => m.ShowSecurity),
+);
+const ShowBuildServer = dynamic(() =>
+	import("@/components/dashboard/application/advanced/show-build-server").then(
+		(m) => m.ShowBuildServer,
+	),
+);
+const ShowResources = dynamic(() =>
+	import("@/components/dashboard/application/advanced/show-resources").then(
+		(m) => m.ShowResources,
+	),
+);
+const ShowTraefikConfig = dynamic(() =>
+	import(
+		"@/components/dashboard/application/advanced/traefik/show-traefik-config"
+	).then((m) => m.ShowTraefikConfig),
+);
+const ShowVolumes = dynamic(() =>
+	import(
+		"@/components/dashboard/application/advanced/volumes/show-volumes"
+	).then((m) => m.ShowVolumes),
+);
+const ShowDeployments = dynamic(() =>
+	import(
+		"@/components/dashboard/application/deployments/show-deployments"
+	).then((m) => m.ShowDeployments),
+);
+const ShowDomains = dynamic(() =>
+	import("@/components/dashboard/application/domains/show-domains").then(
+		(m) => m.ShowDomains,
+	),
+);
+const ShowEnvironment = dynamic(() =>
+	import("@/components/dashboard/application/environment/show").then(
+		(m) => m.ShowEnvironment,
+	),
+);
+const ShowDockerLogs = dynamic(() =>
+	import("@/components/dashboard/application/logs/show").then(
+		(m) => m.ShowDockerLogs,
+	),
+);
+const ShowPatches = dynamic(() =>
+	import("@/components/dashboard/application/patches/show-patches").then(
+		(m) => m.ShowPatches,
+	),
+);
+const ShowPreviewDeployments = dynamic(() =>
+	import(
+		"@/components/dashboard/application/preview-deployments/show-preview-deployments"
+	).then((m) => m.ShowPreviewDeployments),
+);
+const ShowSchedules = dynamic(() =>
+	import("@/components/dashboard/application/schedules/show-schedules").then(
+		(m) => m.ShowSchedules,
+	),
+);
+const ShowVolumeBackups = dynamic(() =>
+	import(
+		"@/components/dashboard/application/volume-backups/show-volume-backups"
+	).then((m) => m.ShowVolumeBackups),
+);
+const ContainerFreeMonitoring = dynamic(() =>
+	import(
+		"@/components/dashboard/monitoring/free/container/show-free-container-monitoring"
+	).then((m) => m.ContainerFreeMonitoring),
+);
+const ContainerPaidMonitoring = dynamic(() =>
+	import(
+		"@/components/dashboard/monitoring/paid/container/show-paid-container-monitoring"
+	).then((m) => m.ContainerPaidMonitoring),
+);
 
 type TabState =
 	| "projects"
@@ -122,75 +182,23 @@ const Service = (
 			</Head>
 			<div className="w-full">
 				<div className="flex w-full flex-col">
-					<CardHeader className="flex flex-row justify-between items-center px-0">
-						<div className="flex flex-col">
-							<CardTitle className="text-xl flex flex-row gap-2 items-center">
-								<div className="relative flex flex-row gap-4 items-center">
-									<ShowIconSettings
-										serviceId={applicationId}
-										serviceType="application"
-										icon={data?.icon}
-									/>
-									<div className="absolute -right-1 -top-2 z-10">
-										<StatusTooltip status={data?.applicationStatus} />
-									</div>
-								</div>
-								{data?.name}
-							</CardTitle>
-							{data?.description && (
-								<CardDescription>{data?.description}</CardDescription>
-							)}
-
-							<span className="text-sm text-muted-foreground">
-								{data?.appName}
-							</span>
-						</div>
-						<div className="flex flex-col h-fit w-fit gap-2">
-							<div className="flex flex-row h-fit w-fit gap-2">
-								<Badge
-									className="cursor-pointer"
-									onClick={() => {
-										const ip = data?.server?.ipAddress || serverIp;
-										if (ip) {
-											copy(ip);
-											toast.success("IP Address Copied!");
-										}
-									}}
-									variant={
-										!data?.serverId
-											? "default"
-											: data?.server?.serverStatus === "active"
-												? "default"
-												: "destructive"
-									}
-								>
-									{data?.server?.name || "Dokploy Server"}
-								</Badge>
-								{data?.server?.serverStatus === "inactive" && (
-									<TooltipProvider delayDuration={0}>
-										<Tooltip>
-											<TooltipTrigger asChild>
-												<Label className="break-all w-fit flex flex-row gap-1 items-center">
-													<TriangleAlert className="size-4 text-amber-500" />
-												</Label>
-											</TooltipTrigger>
-											<TooltipContent
-												className="z-[999] w-[300px]"
-												align="start"
-												side="top"
-											>
-												<span>
-													You cannot, deploy this application because the server
-													is inactive, please upgrade your plan to add more
-													servers.
-												</span>
-											</TooltipContent>
-										</Tooltip>
-									</TooltipProvider>
-								)}
-							</div>
-
-							<div className="flex flex-row gap-2 justify-end">
+					<ServiceHeader
+						icon={
+							<ShowIconSettings
+								serviceId={applicationId}
+								serviceType="application"
+								icon={data?.icon}
+							/>
+						}
+						name={data?.name}
+						description={data?.description}
+						appName={data?.appName}
+						storedStatus={data?.applicationStatus}
+						serverId={data?.serverId}
+						server={data?.server}
+						logsHref={`/dashboard/project/${projectId}/environment/${environmentId}/services/application/${applicationId}?tab=logs`}
+						actions={
+							<>
 								{permissions?.service.create && (
 									<UpdateApplication applicationId={applicationId} />
 								)}
@@ -204,12 +212,12 @@ const Service = (
 								{permissions?.service.delete && (
 									<DeleteService id={applicationId} type="application" />
 								)}
-							</div>
-						</div>
-					</CardHeader>
-					<CardContent className="space-y-2 pt-5 pb-8 border-t px-0">
+							</>
+						}
+					/>
+					<div className="pt-2">
 						{data?.server?.serverStatus === "inactive" ? (
-							<div className="flex h-[55vh] border-2 rounded-xl border-dashed p-4">
+							<div className="flex h-[55vh] py-10">
 								<div className="max-w-3xl mx-auto flex flex-col items-center justify-center self-center gap-3">
 									<ServerOff className="size-10 text-muted-foreground self-center" />
 									<span className="text-center text-base text-muted-foreground">
@@ -240,8 +248,8 @@ const Service = (
 									router.push(newPath);
 								}}
 							>
-								<div className="flex flex-row items-center justify-between w-full lg:hidden">
-									<TabsList className="flex h-auto flex-wrap justify-start gap-x-8 gap-y-1 max-md:gap-x-4 lg:hidden">
+								<div className="flex flex-row items-center justify-between w-full">
+									<TabsList>
 										<TabsTrigger value="general">General</TabsTrigger>
 										{permissions?.envVars.read && (
 											<TabsTrigger value="environment">Environment</TabsTrigger>
@@ -261,9 +269,7 @@ const Service = (
 											<TabsTrigger value="schedules">Schedules</TabsTrigger>
 										)}
 										{permissions?.volumeBackup.read && (
-											<TabsTrigger value="volume-backups">
-												Volume Backups
-											</TabsTrigger>
+											<TabsTrigger value="volume-backups">Backups</TabsTrigger>
 										)}
 										{permissions?.logs.read && (
 											<TabsTrigger value="logs">Logs</TabsTrigger>
@@ -297,7 +303,7 @@ const Service = (
 								{permissions?.monitoring.read && (
 									<TabsContent value="monitoring">
 										<div className="pt-2.5">
-											<div className="flex flex-col gap-4 border rounded-lg p-6">
+											<div className="flex flex-col gap-4 rounded-lg p-6 bg-muted/40">
 												{data?.serverId && isCloud ? (
 													<ContainerPaidMonitoring
 														appName={data?.appName || ""}
@@ -311,7 +317,7 @@ const Service = (
 														{/* {monitoring?.enabledFeatures &&
 															isCloud &&
 															data?.serverId && (
-																<div className="flex flex-row border w-fit p-4 rounded-lg items-center gap-2">
+																<div className="flex flex-row w-fit p-4 rounded-lg items-center gap-2 bg-muted/40">
 																	<Label className="text-muted-foreground">
 																		Change Monitoring
 																	</Label>
@@ -369,7 +375,7 @@ const Service = (
 									<TabsContent value="deployments" className="w-full pt-2.5">
 										<div className="flex flex-col gap-4">
 											<RolloutStatus applicationId={applicationId} />
-											<div className="flex flex-col gap-4 border rounded-lg">
+											<div className="flex flex-col gap-4 rounded-lg bg-muted/40">
 												<ShowDeployments
 													id={applicationId}
 													type="application"
@@ -382,7 +388,7 @@ const Service = (
 								)}
 								{permissions?.volumeBackup.read && (
 									<TabsContent value="volume-backups" className="w-full pt-2.5">
-										<div className="flex flex-col gap-4 border rounded-lg">
+										<div className="flex flex-col gap-4">
 											<ShowVolumeBackups
 												id={applicationId}
 												type="application"
@@ -431,7 +437,7 @@ const Service = (
 								)}
 							</Tabs>
 						)}
-					</CardContent>
+					</div>
 				</div>
 			</div>
 		</div>

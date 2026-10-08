@@ -2,7 +2,7 @@ import "@/styles/globals.css";
 
 import type { NextPage } from "next";
 import type { AppProps } from "next/app";
-import { Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import NextTopLoader from "nextjs-toploader";
 import type { ReactElement, ReactNode } from "react";
@@ -12,7 +12,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { api } from "@/utils/api";
 
-const inter = Inter({ subsets: ["latin"] });
+const geist = Geist({ subsets: ["latin"] });
+const geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
 	getLayout?: (page: ReactElement) => ReactNode;
@@ -31,13 +32,13 @@ const MyApp = ({
 
 	return (
 		<>
-			<style jsx global>
-				{`
-					:root {
-						--font-inter: ${inter.style.fontFamily};
-					}
-				`}
-			</style>
+			<style
+				// Plain style tag: Turbopack does not bundle styled-jsx.
+				// biome-ignore lint/security/noDangerouslySetInnerHtml: static font variables
+				dangerouslySetInnerHTML={{
+					__html: `:root{--font-inter:${geist.style.fontFamily};--font-geist-mono:${geistMono.style.fontFamily};}`,
+				}}
+			/>
 			<TooltipProvider>
 				<ThemeProvider
 					attribute="class"

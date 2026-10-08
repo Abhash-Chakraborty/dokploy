@@ -376,7 +376,7 @@ export const ShowResources = ({ id, type }: Props) => {
 									{fields.map((field, index) => (
 										<div
 											key={field.id}
-											className="flex items-start gap-3 p-3 border rounded-lg bg-muted/30"
+											className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 bg-muted/40"
 										>
 											<FormField
 												control={form.control}

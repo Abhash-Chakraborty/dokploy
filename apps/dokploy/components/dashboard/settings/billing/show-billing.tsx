@@ -111,14 +111,20 @@ export const ShowBilling = () => {
 	const [trialTier, setTrialTier] = useState<"hobby" | "startup" | null>(null);
 	const [switchingTrial, setSwitchingTrial] = useState(false);
 
-	const handleSwitchTrialPlan = async (tier: "hobby" | "startup") => {
-		const planName = tier === "startup" ? "Startup" : "Hobby";
+	const handleSwitchTrialPlan = async (
+		tier: "hobby" | "startup",
+		isAnnualPlan: boolean,
+		label?: string,
+	) => {
+		const planName =
+			label ??
+			`${tier === "startup" ? "Startup" : "Hobby"} ${isAnnualPlan ? "annual" : "monthly"}`;
 
 		const switchPlan = async () => {
 			await upgradeSubscription({
 				tier,
 				serverQuantity: tier === "startup" ? STARTUP_SERVERS_INCLUDED : 1,
-				isAnnual: false,
+				isAnnual: isAnnualPlan,
 			});
 			await new Promise((resolve) => setTimeout(resolve, 3000));
 			await Promise.all([
@@ -133,7 +139,7 @@ export const ShowBilling = () => {
 		await toast
 			.promise(switchPlan(), {
 				loading: `Switching to ${planName}...`,
-				success: `Your trial is now on the ${planName} plan`,
+				success: `Your trial is now on ${planName}`,
 				error: (error) =>
 					error instanceof Error ? error.message : "Error switching plan",
 			})
@@ -255,7 +261,7 @@ export const ShowBilling = () => {
 											Configure your billing email notifications.
 										</DialogDescription>
 									</DialogHeader>
-									<div className="flex items-center justify-between rounded-lg border p-4">
+									<div className="flex items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 										<div className="space-y-0.5">
 											<Label htmlFor="invoice-notifications">
 												Invoice Notifications
@@ -319,7 +325,7 @@ export const ShowBilling = () => {
 							{!isEnterpriseCloud &&
 								billingStatus &&
 								(billingStatus.plan || billingStatus.isOnTrial) && (
-									<div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border p-4 max-w-2xl">
+									<div className="flex flex-wrap items-center justify-between gap-4 max-w-2xl py-3 border-b border-border/60 last:border-b-0">
 										<div className="flex items-center gap-3">
 											{billingStatus.isOnTrial ? (
 												<Clock className="h-5 w-5 text-primary shrink-0" />
@@ -336,6 +342,11 @@ export const ShowBilling = () => {
 													<Badge className="capitalize" variant="secondary">
 														{billingStatus.plan ?? "Trial"}
 													</Badge>
+													{billingStatus.plan && (
+														<Badge variant="outline">
+															{billingStatus.isAnnual ? "Annual" : "Monthly"}
+														</Badge>
+													)}
 												</div>
 												<span className="text-sm text-muted-foreground">
 													{billingStatus.isOnTrial
@@ -356,23 +367,45 @@ export const ShowBilling = () => {
 											<div className="flex flex-wrap items-center gap-2">
 												{billingStatus.isOnTrial &&
 													useNewPricing &&
-													billingStatus.plan && (
-														<Button
-															size="sm"
-															variant="outline"
-															isLoading={switchingTrial}
-															onClick={() =>
-																handleSwitchTrialPlan(
-																	billingStatus.plan === "startup"
-																		? "hobby"
-																		: "startup",
-																)
-															}
-														>
-															{billingStatus.plan === "startup"
-																? "Switch to Hobby"
-																: "Switch to Startup"}
-														</Button>
+													billingStatus.plan &&
+													billingStatus.plan !== "legacy" && (
+														<>
+															<Button
+																size="sm"
+																variant="outline"
+																isLoading={switchingTrial}
+																onClick={() =>
+																	handleSwitchTrialPlan(
+																		billingStatus.plan === "startup"
+																			? "hobby"
+																			: "startup",
+																		billingStatus.isAnnual,
+																	)
+																}
+															>
+																{billingStatus.plan === "startup"
+																	? "Switch to Hobby"
+																	: "Switch to Startup"}
+															</Button>
+															<Button
+																size="sm"
+																variant="outline"
+																isLoading={switchingTrial}
+																onClick={() =>
+																	handleSwitchTrialPlan(
+																		billingStatus.plan as "hobby" | "startup",
+																		!billingStatus.isAnnual,
+																		billingStatus.isAnnual
+																			? "monthly billing"
+																			: "annual billing",
+																	)
+																}
+															>
+																{billingStatus.isAnnual
+																	? "Switch to monthly"
+																	: "Switch to annual"}
+															</Button>
+														</>
 													)}
 												<Button
 													size="sm"
@@ -462,7 +495,7 @@ export const ShowBilling = () => {
 								useNewPricing &&
 								data?.currentPlan === "legacy" &&
 								data?.subscriptions?.length > 0 && (
-									<div className="rounded-xl border border-border bg-primary/5 p-4 space-y-4 max-w-2xl">
+									<div className="rounded-xl bg-primary/5 p-4 space-y-4 max-w-2xl bg-muted/40">
 										<h3 className="text-lg font-medium">Upgrade your plan</h3>
 										<p className="text-sm text-muted-foreground">
 											You’re on the legacy plan. Switch to Hobby or Startup
@@ -654,7 +687,7 @@ export const ShowBilling = () => {
 								(data?.currentPlan === "hobby" ||
 									data?.currentPlan === "startup") &&
 								data?.subscriptions?.length > 0 && (
-									<div className="rounded-xl border border-border bg-primary/5 p-4 space-y-4 max-w-2xl">
+									<div className="rounded-xl bg-primary/5 p-4 space-y-4 max-w-2xl bg-muted/40">
 										<h3 className="text-lg font-medium">
 											Change plan or number of servers
 										</h3>
@@ -928,7 +961,7 @@ export const ShowBilling = () => {
 									</Tabs>
 									<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 										{/* Hobby */}
-										<section className="flex flex-col rounded-2xl border border-border px-5 py-6 shadow-xs">
+										<section className="flex flex-col rounded-2xl px-5 py-6 bg-muted/40">
 											{isAnnual && (
 												<Badge className="mb-3 w-fit" variant="secondary">
 													20% off
@@ -1204,7 +1237,7 @@ export const ShowBilling = () => {
 										</section>
 
 										{/* Enterprise */}
-										<section className="flex flex-col rounded-2xl border border-border px-5 py-6 shadow-xs">
+										<section className="flex flex-col rounded-2xl px-5 py-6 bg-muted/40">
 											<h3 className="text-xl font-bold tracking-tight text-foreground">
 												Enterprise
 											</h3>

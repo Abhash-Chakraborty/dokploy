@@ -49,7 +49,7 @@ export const ShowNetworkConfig = ({ networkId, networkName }: Props) => {
 						<Loader2 className="animate-spin size-4" />
 					</div>
 				) : (
-					<div className="text-wrap rounded-lg border p-4 overflow-y-auto text-sm bg-card max-h-[80vh]">
+					<div className="text-wrap rounded-lg p-4 overflow-y-auto text-sm max-h-[80vh] bg-muted/40">
 						<code>
 							<pre className="whitespace-pre-wrap wrap-break-word">
 								<CodeEditor

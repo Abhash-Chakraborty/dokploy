@@ -55,7 +55,7 @@ export const ShowNotifications = () => {
 					<Loader2 className="animate-spin size-4" />
 				</div>
 			) : data?.length === 0 ? (
-				<div className="flex flex-col items-center gap-3 min-h-[25vh] justify-center rounded-lg border border-dashed">
+				<div className="flex flex-col items-center gap-3 min-h-[25vh] justify-center py-10">
 					<Bell className="text-muted-foreground" />
 					<span className="text-base text-muted-foreground text-center">
 						To send notifications it is required to set at least 1 provider.
@@ -67,7 +67,7 @@ export const ShowNotifications = () => {
 					{data?.map((notification) => (
 						<div
 							key={notification.notificationId}
-							className="flex flex-col gap-3 rounded-xl border bg-background p-4 transition-colors hover:bg-muted/40"
+							className="flex flex-col gap-3 rounded-xl p-4 transition-colors hover:bg-muted/40 bg-muted/40"
 						>
 							<div className="flex items-start justify-between gap-2">
 								<div className="flex size-11 shrink-0 items-center justify-center rounded-lg border bg-muted/40">

@@ -4,10 +4,6 @@ import { BookIcon, CircuitBoard, GlobeIcon } from "lucide-react";
 import { useRouter } from "next/router";
 import React from "react";
 import {
-	extractServices,
-	type Services,
-} from "@/components/dashboard/settings/users/add-permissions";
-import {
 	MariadbIcon,
 	MongodbIcon,
 	MysqlIcon,
@@ -23,6 +19,7 @@ import {
 	CommandList,
 	CommandSeparator,
 } from "@/components/ui/command";
+import { extractServices, type Services } from "@/lib/services";
 import { api } from "@/utils/api";
 import { StatusTooltip } from "../shared/status-tooltip";
 

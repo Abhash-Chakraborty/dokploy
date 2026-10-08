@@ -254,7 +254,7 @@ export const StepTwo = ({ templateInfo, setTemplateInfo }: StepProps) => {
 									<AccordionItem value="description">
 										<AccordionTrigger>Description</AccordionTrigger>
 										<AccordionContent>
-											<ScrollArea className="w-full rounded-md border p-4">
+											<ScrollArea className="w-full rounded-md p-4 bg-muted/40">
 												<ReactMarkdown className="text-muted-foreground text-sm">
 													{selectedVariant?.description}
 												</ReactMarkdown>
@@ -284,7 +284,7 @@ export const StepTwo = ({ templateInfo, setTemplateInfo }: StepProps) => {
 									<AccordionItem value="env-variables">
 										<AccordionTrigger>Environment Variables</AccordionTrigger>
 										<AccordionContent>
-											<ScrollArea className="w-full rounded-md border">
+											<ScrollArea className="w-full rounded-md bg-muted/40">
 												<div className="p-4 space-y-4">
 													{selectedVariant?.envVariables.map((env, index) => (
 														<div
@@ -344,7 +344,7 @@ export const StepTwo = ({ templateInfo, setTemplateInfo }: StepProps) => {
 									<AccordionItem value="domains">
 										<AccordionTrigger>Domains</AccordionTrigger>
 										<AccordionContent>
-											<ScrollArea className="w-full rounded-md border">
+											<ScrollArea className="w-full rounded-md bg-muted/40">
 												<div className="p-4 space-y-4">
 													{selectedVariant?.domains.map((domain, index) => (
 														<div
@@ -415,7 +415,7 @@ export const StepTwo = ({ templateInfo, setTemplateInfo }: StepProps) => {
 									<AccordionItem value="mounts">
 										<AccordionTrigger>Configuration Files</AccordionTrigger>
 										<AccordionContent>
-											<ScrollArea className="w-full rounded-md border">
+											<ScrollArea className="w-full rounded-md bg-muted/40">
 												<div className="p-4 space-y-4">
 													{selectedVariant?.configFiles?.length &&
 													selectedVariant?.configFiles?.length > 0 ? (
@@ -428,7 +428,7 @@ export const StepTwo = ({ templateInfo, setTemplateInfo }: StepProps) => {
 																(config, index) => (
 																	<div
 																		key={index}
-																		className="space-y-2 border rounded-lg p-4"
+																		className="space-y-2 rounded-lg p-4 bg-muted/40"
 																	>
 																		<div className="flex items-center justify-between">
 																			<div className="space-y-1">

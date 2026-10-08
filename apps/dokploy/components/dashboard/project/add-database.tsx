@@ -52,7 +52,7 @@ import { APP_NAME_MESSAGE, APP_NAME_REGEX } from "@/utils/schema";
 type DbType = z.infer<typeof mySchema>["type"];
 
 const dockerImageDefaultPlaceholder: Record<DbType, string> = {
-	mongo: "mongo:8",
+	mongo: "mongo:8.2",
 	libsql: "ghcr.io/tursodatabase/libsql-server:v0.24.32",
 	mariadb: "mariadb:11",
 	mysql: "mysql:8",
@@ -407,7 +407,7 @@ export const AddDatabase = ({ environmentId, projectName }: Props) => {
 															/>
 															<Label
 																htmlFor={key}
-																className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary has-data-[state=checked]:border-primary cursor-pointer"
+																className="flex flex-col items-center justify-between border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary has-data-[state=checked]:border-primary cursor-pointer py-3 border-b border-border/60 last:border-b-0"
 															>
 																{value.icon}
 																{value.label}
@@ -755,7 +755,7 @@ export const AddDatabase = ({ environmentId, projectName }: Props) => {
 										name="replicaSets"
 										render={({ field }) => {
 											return (
-												<FormItem className="flex flex-row items-center justify-between p-3 mt-4 border rounded-lg shadow-xs">
+												<FormItem className="flex flex-row items-center justify-between mt-4 py-3 border-b border-border/60 last:border-b-0">
 													<div className="space-y-0.5">
 														<FormLabel>Use Replica Sets</FormLabel>
 													</div>

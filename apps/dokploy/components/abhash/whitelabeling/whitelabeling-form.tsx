@@ -311,7 +311,7 @@ export const WhitelabelingForm = () => {
 											control={form.control}
 											name={toggle.name}
 											render={({ field: input }) => (
-												<FormItem className="flex flex-row items-center justify-between gap-3 rounded-lg border px-3 py-2.5">
+												<FormItem className="flex flex-row items-center justify-between gap-3 py-3 border-b border-border/60 last:border-b-0">
 													<div className="space-y-0.5">
 														<FormLabel>{toggle.label}</FormLabel>
 														<FormDescription>{toggle.hint}</FormDescription>

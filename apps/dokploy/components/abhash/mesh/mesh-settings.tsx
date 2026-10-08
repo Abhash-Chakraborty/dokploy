@@ -149,7 +149,7 @@ const EditProvider = ({ provider }: { provider?: Provider }) => {
 							/>
 						</div>
 					</div>
-					<div className="flex items-center justify-between rounded-md border p-3">
+					<div className="flex items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 						<div>
 							<p className="text-sm font-medium">Let the mesh manage DNS</p>
 							<p className="text-xs text-muted-foreground">
@@ -158,7 +158,7 @@ const EditProvider = ({ provider }: { provider?: Provider }) => {
 						</div>
 						<Switch checked={manageDns} onCheckedChange={setManageDns} />
 					</div>
-					<div className="flex items-center justify-between rounded-md border p-3">
+					<div className="flex items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 						<div>
 							<p className="text-sm font-medium">Swarm over the mesh</p>
 							<p className="text-xs text-muted-foreground">
@@ -220,7 +220,7 @@ const DetectedMesh = () => {
 	const found = data?.filter((row) => row.kind) ?? [];
 
 	return (
-		<div className="flex flex-col gap-3 rounded-md border border-dashed p-4">
+		<div className="flex flex-col gap-3 py-10">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="min-w-0">
 					<p className="font-medium">Already on a mesh?</p>
@@ -246,7 +246,7 @@ const DetectedMesh = () => {
 							? "No mesh client found on any server."
 							: `Found a client on ${found.length} of ${data.length} servers. Add the matching provider above to manage them here.`}
 					</p>
-					<ul className="divide-y rounded-md border">
+					<ul className="divide-y divide-border/60">
 						{data.map((row) => (
 							<li
 								key={row.serverId}
@@ -457,7 +457,7 @@ export const MeshSettings = () => {
 			</div>
 
 			{preview && (
-				<pre className="overflow-auto rounded-md border bg-muted/40 p-3 font-mono text-xs whitespace-pre-wrap">
+				<pre className="overflow-auto rounded-md bg-muted/40 p-3 font-mono text-xs whitespace-pre-wrap">
 					{preview}
 				</pre>
 			)}
@@ -465,7 +465,7 @@ export const MeshSettings = () => {
 			{!active && <DetectedMesh />}
 
 			{active && (
-				<ul className="divide-y rounded-md border">
+				<ul className="divide-y divide-border/60">
 					{data?.servers.map((row) => (
 						<li
 							key={row.serverId}

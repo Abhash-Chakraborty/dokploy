@@ -36,7 +36,7 @@ export const AiForm = () => {
 						<Loader2 className="animate-spin size-4" />
 					</div>
 				) : aiConfigs?.length === 0 ? (
-					<div className="flex flex-col items-center gap-3 min-h-[25vh] justify-center rounded-lg border border-dashed">
+					<div className="flex flex-col items-center gap-3 min-h-[25vh] justify-center py-10">
 						<BotIcon className="size-8 self-center text-muted-foreground" />
 						<span className="text-base text-muted-foreground text-center">
 							You don't have any AI configurations
@@ -48,7 +48,7 @@ export const AiForm = () => {
 						{aiConfigs?.map((config) => (
 							<div
 								key={config.aiId}
-								className="flex items-center justify-between rounded-lg border bg-background px-4 py-3"
+								className="flex items-center justify-between py-3 border-b border-border/60 last:border-b-0"
 							>
 								<div>
 									<span className="text-sm font-medium">{config.name}</span>

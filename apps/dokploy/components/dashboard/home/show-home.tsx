@@ -1,17 +1,20 @@
 import { formatDistanceToNow } from "date-fns";
-import { ArrowRight, Rocket, Server } from "lucide-react";
+import { ArrowRight, Server } from "lucide-react";
 import Link from "next/link";
-import { useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
+import { StatusPill, useLiveServices } from "@/components/shared/live-status";
+import { PageHeader, SectionHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
+import { extractServices } from "@/lib/services";
 import { api } from "@/utils/api";
 
 type DeploymentStatus = "idle" | "running" | "done" | "error";
 
 const statusDotClass: Record<string, string> = {
-	done: "bg-emerald-500",
-	running: "bg-amber-500",
-	error: "bg-red-500",
-	idle: "bg-muted-foreground/40",
+	done: "bg-status-running",
+	running: "bg-status-deploying",
+	error: "bg-status-failed",
+	idle: "bg-status-stopped",
 };
 
 function getServiceInfo(d: any) {
@@ -40,54 +43,24 @@ function getServiceInfo(d: any) {
 	return null;
 }
 
-function StatCard({
+function Stat({
 	label,
 	value,
-	delta,
+	detail,
 }: {
 	label: string;
-	value: string;
-	delta?: string;
+	value: ReactNode;
+	detail?: ReactNode;
 }) {
 	return (
-		<div className="rounded-xl border bg-background p-5 min-h-[140px] flex flex-col justify-between">
-			<span className="text-xs uppercase tracking-wider text-muted-foreground">
-				{label}
+		<div className="flex min-w-0 flex-col gap-1 py-1 sm:px-6 sm:first:pl-0 sm:[&+&]:border-l sm:[&+&]:border-border/60">
+			<span className="text-xs text-muted-foreground">{label}</span>
+			<span className="text-2xl font-semibold tracking-tight tabular-nums">
+				{value}
 			</span>
-			<div className="flex flex-col gap-1">
-				<span className="text-3xl font-semibold tracking-tight">{value}</span>
-				{delta && (
-					<span className="text-xs text-muted-foreground">{delta}</span>
-				)}
-			</div>
-		</div>
-	);
-}
-
-function StatusListCard({
-	label,
-	items,
-}: {
-	label: string;
-	items: { dotClass: string; label: string; count: number }[];
-}) {
-	return (
-		<div className="rounded-xl border bg-background p-5 min-h-[140px] flex flex-col gap-3">
-			<span className="text-xs uppercase tracking-wider text-muted-foreground">
-				{label}
-			</span>
-			<ul className="flex flex-col gap-1.5">
-				{items.map((item) => (
-					<li key={item.label} className="flex items-center gap-2.5 text-sm">
-						<span
-							className={`size-2 rounded-full shrink-0 ${item.dotClass}`}
-							aria-hidden
-						/>
-						<span className="font-semibold tabular-nums w-8">{item.count}</span>
-						<span className="text-muted-foreground">{item.label}</span>
-					</li>
-				))}
-			</ul>
+			{detail && (
+				<span className="truncate text-xs text-muted-foreground">{detail}</span>
+			)}
 		</div>
 	);
 }
@@ -115,11 +88,32 @@ export const ShowHome = () => {
 		databases: 0,
 		services: 0,
 	};
-	const statusBreakdown = homeStats?.status ?? {
+	const { data: projects } = api.project.all.useQuery();
+	const liveState = useLiveServices();
+	const attention = useMemo(
+		() =>
+			(projects ?? []).flatMap((project) =>
+				project.environments.flatMap((environment) =>
+					extractServices(environment as never).map((service) => ({
+						id: service.id,
+						name: service.name,
+						project: project.name,
+						environment: environment.name,
+						href: `/dashboard/project/${project.projectId}/environment/${environment.environmentId}/services/${service.type}/${service.id}`,
+						state: liveState(service.appName, service.serverId, service.status),
+					})),
+				),
+			),
+		[projects, liveState],
+	);
+	const tally = {
 		running: 0,
-		error: 0,
-		idle: 0,
+		restarting: 0,
+		failed: 0,
+		stopped: 0,
+		deploying: 0,
 	};
+	for (const item of attention) tally[item.state.tone] += 1;
 
 	const recentDeployments = useMemo(() => {
 		if (!deployments) return [];
@@ -160,138 +154,155 @@ export const ShowHome = () => {
 		return { value: String(lastCount), delta };
 	}, [deployments]);
 
+	const unhealthy = attention.filter((item) =>
+		["failed", "restarting"].includes(item.state.tone),
+	);
+
 	return (
-		<div className="flex flex-col gap-6 w-full">
-			<div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-				<h1 className="text-2xl font-semibold tracking-tight">
-					{firstName ? `Welcome back, ${firstName}` : "Welcome back"}
-				</h1>
-				<Button asChild variant="secondary" className="w-fit">
-					<Link href="/dashboard/projects">
-						Go to projects
-						<ArrowRight className="size-4" />
-					</Link>
-				</Button>
-			</div>
-
-			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-				<StatCard
-					label="Projects"
-					value={String(totals.projects)}
-					delta={`${totals.environments} ${totals.environments === 1 ? "environment" : "environments"}`}
-				/>
-				<StatCard
-					label="Services"
-					value={String(totals.services)}
-					delta={`${totals.applications} apps · ${totals.compose} compose · ${totals.databases} db`}
-				/>
-				<StatCard
-					label="Deploys / 7d"
-					value={deployStats.value}
-					delta={deployStats.delta}
-				/>
-				<StatusListCard
-					label="Status"
-					items={[
-						{
-							dotClass: "bg-emerald-500",
-							label: "running",
-							count: statusBreakdown.running,
-						},
-						{
-							dotClass: "bg-red-500",
-							label: "errored",
-							count: statusBreakdown.error,
-						},
-						{
-							dotClass: "bg-muted-foreground/40",
-							label: "idle",
-							count: statusBreakdown.idle,
-						},
-					]}
-				/>
-			</div>
-
-			<div className="rounded-xl border bg-background">
-				<div className="flex items-center justify-between px-5 py-4 border-b">
-					<div className="flex items-center gap-2">
-						<Rocket className="size-4 text-muted-foreground" />
-						<h2 className="text-sm font-semibold">Recent deployments</h2>
-					</div>
-					{canReadDeployments && (
-						<Link
-							href="/dashboard/deployments"
-							className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-						>
-							view all →
+		<div className="flex w-full flex-col gap-10">
+			<PageHeader
+				title={firstName ? `Welcome back, ${firstName}` : "Welcome back"}
+				description={
+					unhealthy.length > 0
+						? `${unhealthy.length} ${unhealthy.length === 1 ? "service needs" : "services need"} attention`
+						: "Everything you run is up."
+				}
+				actions={
+					<Button asChild variant="secondary">
+						<Link href="/dashboard/projects">
+							Projects
+							<ArrowRight className="size-4" />
 						</Link>
-					)}
-				</div>
-				{!canReadDeployments ? (
-					<div className="min-h-[400px] flex flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground p-10">
-						<Rocket className="size-8 opacity-40" />
-						<span>You do not have permission to view deployments.</span>
-					</div>
-				) : recentDeployments.length === 0 ? (
-					<div className="min-h-[400px] flex flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground p-10">
-						<Rocket className="size-8 opacity-40" />
-						<span>No deployments yet.</span>
-					</div>
-				) : (
-					<>
-						{/* Column headings */}
-						<div className="hidden md:flex items-center gap-4 px-5 py-2.5 border-b text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-							<span className="w-2 shrink-0" aria-hidden />
-							<span className="flex-1">Project</span>
-							<span className="w-40 pl-3">Server</span>
-							<span className="w-20 text-right">Status</span>
-							<span className="w-28 text-right">Time</span>
-							<span className="w-14 text-right">Logs</span>
-						</div>
-						<ul className="divide-y">
-							{recentDeployments.map((d) => {
-								const info = getServiceInfo(d);
-								if (!info) return null;
-								const status = (d.status ?? "idle") as DeploymentStatus;
-								return (
-									<li key={d.deploymentId}>
-										<Link
-											href={info.href}
-											className="flex items-center gap-4 px-5 py-4 hover:bg-muted/40 transition-colors"
-										>
-											<span
-												className={`size-2 rounded-full shrink-0 ${statusDotClass[status] ?? statusDotClass.idle}`}
-												aria-hidden
-											/>
-											<div className="flex flex-col min-w-0 flex-1">
-												<span className="text-sm truncate">{info.name}</span>
-												<span className="text-xs text-muted-foreground truncate">
-													{info.projectName} · {info.environment}
-												</span>
-											</div>
-											<span className="text-xs text-muted-foreground w-40 pl-3 hidden md:flex items-center gap-1.5 truncate">
-												<Server className="size-3 shrink-0" />
-												<span className="truncate">{info.serverName}</span>
-											</span>
-											<span className="text-xs text-muted-foreground w-20 text-right hidden sm:inline capitalize">
-												{status}
-											</span>
-											<span className="text-xs text-muted-foreground w-28 text-right whitespace-nowrap hidden md:inline">
-												{formatDistanceToNow(new Date(d.createdAt), {
-													addSuffix: true,
-												})}
-											</span>
-											<span className="text-xs text-muted-foreground w-14 text-right hover:text-foreground transition-colors">
-												logs →
-											</span>
-										</Link>
-									</li>
-								);
-							})}
-						</ul>
-					</>
-				)}
+					</Button>
+				}
+			/>
+
+			<div className="grid grid-cols-2 gap-y-6 sm:flex sm:flex-wrap">
+				<Stat
+					label="Projects"
+					value={totals.projects}
+					detail={`${totals.environments} ${totals.environments === 1 ? "environment" : "environments"}`}
+				/>
+				<Stat
+					label="Services"
+					value={totals.services}
+					detail={`${totals.applications} apps · ${totals.compose} compose · ${totals.databases} databases`}
+				/>
+				<Stat
+					label="Deploys this week"
+					value={deployStats.value}
+					detail={deployStats.delta}
+				/>
+				<Stat
+					label="Health"
+					value={
+						<span className="flex items-baseline gap-2">
+							{tally.running}
+							<span className="text-[13px] font-normal text-muted-foreground">
+								running
+							</span>
+						</span>
+					}
+					detail={
+						<span className="flex gap-3">
+							{tally.failed + tally.restarting > 0 && (
+								<span className="text-status-failed">
+									{tally.failed + tally.restarting} down
+								</span>
+							)}
+							<span>{tally.stopped} stopped</span>
+						</span>
+					}
+				/>
 			</div>
+
+			{unhealthy.length > 0 && (
+				<section className="flex flex-col gap-2">
+					<SectionHeader title="Needs attention" />
+					<ul>
+						{unhealthy.map((item) => (
+							<li key={item.id}>
+								<Link
+									href={item.href}
+									className="flex items-center gap-4 border-b border-border/60 py-2.5 text-[13px] transition-colors hover:bg-muted/40"
+								>
+									<span className="min-w-0 flex-1 truncate">
+										<span className="font-medium">{item.name}</span>
+										<span className="ml-2 text-muted-foreground">
+											{item.project} · {item.environment}
+										</span>
+									</span>
+									<StatusPill state={item.state} />
+								</Link>
+							</li>
+						))}
+					</ul>
+				</section>
+			)}
+
+			<section className="flex flex-col gap-2">
+				<SectionHeader
+					title="Recent deployments"
+					actions={
+						canReadDeployments ? (
+							<Link
+								href="/dashboard/deployments"
+								className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+							>
+								All deployments
+							</Link>
+						) : undefined
+					}
+				/>
+				{!canReadDeployments ? (
+					<p className="py-8 text-[13px] text-muted-foreground">
+						You do not have permission to view deployments.
+					</p>
+				) : recentDeployments.length === 0 ? (
+					<p className="py-8 text-[13px] text-muted-foreground">
+						No deployments yet.
+					</p>
+				) : (
+					<ul>
+						{recentDeployments.map((d) => {
+							const info = getServiceInfo(d);
+							if (!info) return null;
+							const status = (d.status ?? "idle") as DeploymentStatus;
+							return (
+								<li key={d.deploymentId}>
+									<Link
+										href={info.href}
+										className="flex items-center gap-4 border-b border-border/60 py-2.5 text-[13px] transition-colors hover:bg-muted/40"
+									>
+										<span
+											className={`size-1.5 shrink-0 rounded-full ${statusDotClass[status] ?? statusDotClass.idle}`}
+											aria-hidden
+										/>
+										<span className="min-w-0 flex-1 truncate">
+											<span className="font-medium">{info.name}</span>
+											<span className="ml-2 text-muted-foreground">
+												{info.projectName} · {info.environment}
+											</span>
+										</span>
+										<span className="hidden w-40 items-center gap-1.5 truncate text-xs text-muted-foreground md:flex">
+											<Server className="size-3 shrink-0" />
+											<span className="truncate">{info.serverName}</span>
+										</span>
+										<span className="hidden w-20 text-right text-xs capitalize text-muted-foreground sm:inline">
+											{status === "done" ? "deployed" : status}
+										</span>
+										<span className="hidden w-28 whitespace-nowrap text-right text-xs text-muted-foreground md:inline">
+											{formatDistanceToNow(new Date(d.createdAt), {
+												addSuffix: true,
+											})}
+										</span>
+									</Link>
+								</li>
+							);
+						})}
+					</ul>
+				)}
+			</section>
 		</div>
 	);
 };

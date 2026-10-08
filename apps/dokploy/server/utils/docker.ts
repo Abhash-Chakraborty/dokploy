@@ -85,7 +85,17 @@ export const getDockerHost = async (
 	port = 22,
 	additionalCandidates: string[] = [],
 ): Promise<string> => {
-	if (process.env.NODE_ENV !== "production") return "localhost";
+	// Outside production the panel runs on the developer's machine, which can be
+	// a production host; only a disposable sandbox target is fair game.
+	if (process.env.NODE_ENV !== "production") {
+		const sandboxHost = process.env.SANDBOX_LOCAL_SSH_HOST;
+		if (!sandboxHost) {
+			throw new Error(
+				"the host terminal is off in development; set SANDBOX_LOCAL_SSH_HOST to a throwaway SSH target",
+			);
+		}
+		return sandboxHost;
+	}
 	if (process.platform !== "linux" || (await isWSL())) {
 		return "host.docker.internal";
 	}
