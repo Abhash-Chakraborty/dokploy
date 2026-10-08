@@ -22,6 +22,54 @@ export const TRAEFIK_HTTP3_PORT =
 	Number.parseInt(process.env.TRAEFIK_HTTP3_PORT!, 10) || 443;
 export const TRAEFIK_VERSION = process.env.TRAEFIK_VERSION || "3.6.25";
 
+type Docker = Awaited<ReturnType<typeof getRemoteDocker>>;
+type ContainerInfo = Awaited<
+	ReturnType<ReturnType<Docker["getContainer"]>["inspect"]>
+>;
+
+/** Pulls the image unless it is already present, and waits for the pull. */
+export const ensureImage = async (docker: Docker, image: string) => {
+	const present = await docker
+		.getImage(image)
+		.inspect()
+		.then(() => true)
+		.catch(() => false);
+	if (present) return;
+	const stream = await docker.pull(image);
+	await new Promise<void>((resolve, reject) =>
+		docker.modem.followProgress(stream, (error: Error | null) =>
+			error ? reject(error) : resolve(),
+		),
+	);
+};
+
+/** Recreates a container from its own inspect output. */
+const restoreContainer = async (docker: Docker, info: ContainerInfo) => {
+	const name = info.Name.replace(/^\//, "");
+	const restored = await docker.createContainer({
+		name,
+		// The exact image that ran, even if its tag has moved since.
+		Image: info.Image,
+		Env: info.Config.Env,
+		Cmd: info.Config.Cmd ?? undefined,
+		Entrypoint: info.Config.Entrypoint ?? undefined,
+		Labels: info.Config.Labels,
+		WorkingDir: info.Config.WorkingDir,
+		User: info.Config.User,
+		ExposedPorts: info.Config.ExposedPorts,
+		HostConfig: info.HostConfig,
+		NetworkingConfig: {
+			EndpointsConfig: Object.fromEntries(
+				Object.keys(info.NetworkSettings.Networks ?? {}).map((network) => [
+					network,
+					{},
+				]),
+			),
+		},
+	});
+	await restored.start();
+};
+
 export interface TraefikOptions {
 	env?: string[];
 	serverId?: string;
@@ -38,8 +86,15 @@ export const initializeStandaloneTraefik = async ({
 	additionalPorts = [],
 }: TraefikOptions = {}) => {
 	const { MAIN_TRAEFIK_PATH, DYNAMIC_TRAEFIK_PATH } = paths(!!serverId);
-	const imageName = `traefik:v${TRAEFIK_VERSION}`;
 	const containerName = "dokploy-traefik";
+	const docker = await getRemoteDocker(serverId);
+	const previous = await docker
+		.getContainer(containerName)
+		.inspect()
+		.catch(() => null);
+	// Keep the version that is running: hosts upgraded by hand run a newer
+	// Traefik than the pinned default, and recreating must never downgrade.
+	const imageName = previous?.Config?.Image ?? `traefik:v${TRAEFIK_VERSION}`;
 
 	const exposedPorts: Record<string, {}> = {
 		[`${TRAEFIK_PORT}/tcp`]: {},
@@ -105,27 +160,31 @@ export const initializeStandaloneTraefik = async ({
 		Env: env,
 	};
 
-	const docker = await getRemoteDocker(serverId);
-	try {
-		await docker.pull(imageName);
-		await new Promise((resolve) => setTimeout(resolve, 3000));
-		console.log("Traefik Image Pulled ✅");
-	} catch (error) {
-		console.log("Traefik Image Not Found: Pulling ", error);
+	// The image must be on the host before the running container goes away;
+	// waiting a fixed few seconds for a pull left Traefik deleted and not
+	// recreated on a slow host, taking every site offline.
+	await ensureImage(docker, imageName);
+
+	if (previous) {
+		await docker.getContainer(containerName).remove({ force: true });
 	}
 	try {
-		const container = docker.getContainer(containerName);
-		await container.remove({ force: true });
-		await new Promise((resolve) => setTimeout(resolve, 5000));
-	} catch {}
-
-	try {
 		await docker.createContainer(settings);
-		const newContainer = docker.getContainer(containerName);
-		await newContainer.start();
+		await docker.getContainer(containerName).start();
 		console.log("Traefik Started ✅");
 	} catch (error) {
-		console.log("Traefik Not Found: Starting ", error);
+		console.error(
+			"Traefik could not be recreated, restoring the previous one",
+			error,
+		);
+		// A replacement that was created but failed to start still holds the
+		// name; it has to go or the previous container cannot come back.
+		await docker
+			.getContainer(containerName)
+			.remove({ force: true })
+			.catch(() => undefined);
+		if (previous) await restoreContainer(docker, previous);
+		throw error;
 	}
 };
 
