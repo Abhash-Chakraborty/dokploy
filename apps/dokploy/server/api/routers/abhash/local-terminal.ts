@@ -10,6 +10,13 @@ export const abhashLocalTerminalRouter = createTRPCRouter({
 	save: adminProcedure
 		.input(
 			z.object({
+				host: z
+					.string()
+					.trim()
+					.max(253)
+					.regex(/^[a-z0-9.:\-[\]]*$/i, "Not a valid host name or IP address")
+					.optional()
+					.transform((value) => value || undefined),
 				port: z.number().int().min(1).max(65_535),
 				username: z
 					.string()
