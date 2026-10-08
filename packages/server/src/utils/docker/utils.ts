@@ -809,26 +809,65 @@ export const getServiceContainer = async (
 	appName: string,
 	serverId?: string | null,
 ) => {
-	try {
-		const filter = {
-			status: ["running"],
-			label: [`com.docker.swarm.service.name=${appName}`],
-		};
-		const remoteDocker = await getRemoteDocker(serverId);
-		const containers = await remoteDocker.listContainers({
-			filters: JSON.stringify(filter),
-		});
+	const filter = {
+		status: ["running"],
+		label: [`com.docker.swarm.service.name=${appName}`],
+	};
+	const remoteDocker = await getRemoteDocker(serverId);
+	const listRunning = () =>
+		remoteDocker.listContainers({ filters: JSON.stringify(filter) });
 
-		if (containers.length === 0 || !containers[0]) {
-			return null;
-		}
-
-		const container = containers[0];
-
-		return container;
-	} catch (error) {
-		throw error;
+	// Right after an update the old container is still running while Swarm
+	// shuts it down, and commands sent to it fail with "is not running".
+	// Prefer the container of a task Swarm wants running, and give a
+	// restarting service a moment to bring it up.
+	for (let attempt = 0; attempt < 15; attempt++) {
+		const tasks = await remoteDocker
+			.listTasks({
+				filters: JSON.stringify({
+					service: [appName],
+					"desired-state": ["running"],
+				}),
+			})
+			.catch(() => []);
+		if (tasks.length === 0) break;
+		const wanted = new Set(
+			tasks
+				.filter((task) => task.Status?.State === "running")
+				.map((task) => task.Status?.ContainerStatus?.ContainerID)
+				.filter(Boolean),
+		);
+		const match = (await listRunning()).find((container) =>
+			wanted.has(container.Id),
+		);
+		if (match) return match;
+		await new Promise((resolve) => setTimeout(resolve, 2000));
 	}
+
+	return (await listRunning())[0] ?? null;
+};
+
+/** Waits until no container of a removed service is left, so its volumes can go. */
+export const waitForServiceContainersGone = async (
+	appName: string,
+	serverId?: string | null,
+	timeoutMs = 60_000,
+) => {
+	const remoteDocker = await getRemoteDocker(serverId);
+	const deadline = Date.now() + timeoutMs;
+	while (Date.now() < deadline) {
+		const containers = await remoteDocker.listContainers({
+			all: true,
+			filters: JSON.stringify({
+				label: [`com.docker.swarm.service.name=${appName}`],
+			}),
+		});
+		if (containers.length === 0) return;
+		await new Promise((resolve) => setTimeout(resolve, 2000));
+	}
+	throw new Error(
+		`${appName} still has containers after ${timeoutMs / 1000}s; try again once they have stopped`,
+	);
 };
 
 export const getComposeContainer = async (

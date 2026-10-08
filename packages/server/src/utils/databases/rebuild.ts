@@ -15,7 +15,7 @@ import { deployPostgres } from "@dokploy/server/services/postgres";
 import { deployRedis } from "@dokploy/server/services/redis";
 import { eq } from "drizzle-orm";
 import { quote } from "shell-quote";
-import { removeService } from "../docker/utils";
+import { removeService, waitForServiceContainersGone } from "../docker/utils";
 import { execAsync, execAsyncRemote } from "../process/execAsync";
 
 type DatabaseType =
@@ -37,7 +37,9 @@ export const rebuildDatabase = async (
 	}
 
 	await removeService(database.appName, database.serverId);
-	await new Promise((resolve) => setTimeout(resolve, 6000));
+	// A fixed pause raced Swarm's shutdown: the volume was still in use and
+	// the rebuild failed half done, with the service already removed.
+	await waitForServiceContainersGone(database.appName, database.serverId);
 
 	for (const mount of database.mounts) {
 		if (mount.type === "volume") {
