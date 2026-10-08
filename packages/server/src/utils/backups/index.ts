@@ -6,12 +6,14 @@ import { getAllServers } from "@dokploy/server/services/server";
 import { getWebServerSettings } from "@dokploy/server/services/web-server-settings";
 import { eq } from "drizzle-orm";
 import { scheduleJob } from "node-schedule";
+import { quote } from "shell-quote";
 import { db } from "../../db/index";
 import { startLogCleanup } from "../access-log/handler";
 import { cleanupAll } from "../docker/utils";
 import { sendDockerCleanupNotifications } from "../notifications/docker-cleanup";
 import { execAsync, execAsyncRemote } from "../process/execAsync";
 import { redactRcloneCredentials } from "./redact";
+import { planRetention } from "./retention";
 import { getS3Credentials, normalizeS3Path, scheduleBackup } from "./utils";
 
 export const initCronJobs = async () => {
@@ -140,19 +142,29 @@ export const keepLatestNBackups = async (
 
 		// The include pattern keeps retention to Dokploy's own files. libsql
 		// writes a gzipped tar, so it is listed here too or it never prunes.
-		const rcloneList = `rclone lsf ${rcloneFlags.join(" ")} --include "*${backup.databaseType === "web-server" ? ".zip" : ".{sql.gz,bson.gz,tar.gz}"}" ${backupFilesPath}`;
-		// when we pipe the above command with this one, we only get the list of files we want to delete
-		const sortAndPickUnwantedBackups = `sort -r | tail -n +$((${backup.keepLatestCount}+1)) | xargs -I{}`;
-		// this command deletes the files
-		// to test the deletion before actually deleting we can add --dry-run before ${backupFilesPath}{}
-		const rcloneDelete = `rclone delete ${rcloneFlags.join(" ")} ${backupFilesPath}{}`;
-
-		const rcloneCommand = `${rcloneList} | ${sortAndPickUnwantedBackups} ${rcloneDelete}`;
-
-		if (serverId) {
-			await execAsyncRemote(serverId, rcloneCommand);
-		} else {
-			await execAsync(rcloneCommand);
+		const backupPattern =
+			backup.databaseType === "web-server"
+				? /\.zip$/
+				: /\.(sql\.gz|bson\.gz|tar\.gz)$/;
+		const run = (command: string) =>
+			serverId ? execAsyncRemote(serverId, command) : execAsync(command);
+		// Only Dokploy's own backups write a .sha256 beside each archive.
+		const include =
+			backup.databaseType === "web-server"
+				? "*.{zip,zip.sha256}"
+				: "*.{sql.gz,bson.gz,tar.gz}";
+		const { stdout } = await run(
+			`rclone lsf ${rcloneFlags.join(" ")} --include "${include}" ${backupFilesPath}`,
+		);
+		const doomed = planRetention(
+			stdout.split("\n"),
+			backup.keepLatestCount,
+			(name) => backupPattern.test(name),
+		);
+		for (const name of doomed) {
+			await run(
+				`rclone deletefile ${rcloneFlags.join(" ")} ${quote([`${backupFilesPath}${name}`])}`,
+			);
 		}
 	} catch (error) {
 		console.error(redactRcloneCredentials(String(error)));
