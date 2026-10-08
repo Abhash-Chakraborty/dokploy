@@ -62,9 +62,7 @@ export const DashboardLayout = ({ children, metaName }: Props) => {
 		<>
 			{metaName && (
 				<Head>
-					<title>
-						{metaName} | {appName}
-					</title>
+					<title>{`${metaName} | ${appName}`}</title>
 				</Head>
 			)}
 			<Page>

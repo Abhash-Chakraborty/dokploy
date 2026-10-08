@@ -327,7 +327,7 @@ export const ShowDnsRecords = ({ dnsProviderId, zoneId, embedded }: Props) => {
 					<div
 						className={cn(
 							"flex flex-wrap items-center justify-between gap-4",
-							embedded ? "pb-4" : "p-6",
+							embedded ? "justify-end pb-4" : "p-6",
 						)}
 					>
 						<div
