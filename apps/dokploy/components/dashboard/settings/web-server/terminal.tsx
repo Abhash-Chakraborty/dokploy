@@ -145,7 +145,7 @@ export const Terminal: React.FC<Props> = ({ id, serverId, onStatusChange }) => {
 
 	return (
 		<div className="flex h-full min-h-0 flex-col">
-			<div className="h-full w-full rounded-b-xl bg-[#090b0e] p-3 shadow-inner">
+			<div className="h-full w-full p-3">
 				<div
 					id={id}
 					ref={termRef}

@@ -1,16 +1,11 @@
 import { validateRequest } from "@dokploy/server/lib/auth";
 import { createServerSideHelpers } from "@trpc/react-query/server";
-import { SquareTerminal } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
 import { useState } from "react";
 import superjson from "superjson";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
-import { PageHeader } from "@/components/shared/page-header";
-import {
-	TerminalServerSelect,
-	TerminalView,
-} from "@/components/shared/terminal-view";
+import { TerminalView } from "@/components/shared/terminal-view";
 import { appRouter } from "@/server/api/root";
 
 const Terminals = () => {
@@ -18,23 +13,11 @@ const Terminals = () => {
 	return (
 		// Cap to the viewport so the page itself never scrolls — only the
 		// terminal canvas inside TerminalView scrolls.
-		<div className="flex h-[calc(100dvh-5rem)] min-h-0 w-full flex-col gap-4">
-			<PageHeader
-				title="Terminals"
-				description="Master console — switch between any connected server."
-				icon={<SquareTerminal className="size-5" />}
-				actions={
-					<TerminalServerSelect
-						value={serverId}
-						onChange={setServerId}
-						className="w-56"
-					/>
-				}
-			/>
+		<div className="flex h-[calc(100dvh-5rem)] min-h-0 w-full flex-col gap-3">
+			<h1 className="text-xl font-semibold tracking-tight">Terminal</h1>
 			<TerminalView
 				serverId={serverId}
 				onServerChange={setServerId}
-				showSelector={false}
 				fillHeight
 			/>
 		</div>
