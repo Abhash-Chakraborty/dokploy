@@ -114,7 +114,10 @@ export const dumpPlan = (
 		case "path":
 		case "dokploy":
 			return {
-				command: `tar -cf - -C ${shellQuote(target.path ?? "/etc/dokploy")} .`,
+				// Read through a container: the SSH user can run Docker but often
+				// cannot read root-owned data (AdGuard's /opt folder failed with
+				// "Permission denied" when tar ran as that user).
+				command: `docker run --rm -v ${shellQuote(`${target.path ?? "/etc/dokploy"}:/data:ro`)} alpine:3.20 tar -cf - -C /data .`,
 				filename: `${(target.path ?? "dokploy").replace(/\W+/g, "-")}.tar`,
 			};
 		default:
