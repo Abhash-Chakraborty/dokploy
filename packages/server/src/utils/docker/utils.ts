@@ -108,12 +108,14 @@ export const containerExists = async (containerName: string) => {
 	}
 };
 
+// Throws like startService: returning the error let callers mark a service
+// stopped (and point-in-time recovery carry on) while it was still running.
 export const stopService = async (appName: string) => {
 	try {
 		await execAsync(`docker service scale ${appName}=0 `);
 	} catch (error) {
 		console.error(error);
-		return error;
+		throw error;
 	}
 };
 
@@ -122,7 +124,7 @@ export const stopServiceRemote = async (serverId: string, appName: string) => {
 		await execAsyncRemote(serverId, `docker service scale ${appName}=0 `);
 	} catch (error) {
 		console.error(error);
-		return error;
+		throw error;
 	}
 };
 
