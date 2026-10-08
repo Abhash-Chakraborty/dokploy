@@ -43,7 +43,6 @@ export const ShowCertificates = () => {
 					</span>
 				}
 				description="Create certificates in the Traefik directory."
-				icon={<ShieldCheck className="size-5" />}
 				actions={
 					permissions?.certificate.create ? <HandleCertificate /> : undefined
 				}

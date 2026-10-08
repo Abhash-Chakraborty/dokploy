@@ -1,11 +1,4 @@
-import {
-	Activity,
-	Loader2,
-	Monitor,
-	Server,
-	Settings,
-	WorkflowIcon,
-} from "lucide-react";
+import { Activity, Loader2, Monitor, Server, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,7 +33,6 @@ export default function SwarmMonitorCard({ serverId }: Props) {
 			<header className="flex items-center flex-wrap gap-4 justify-between">
 				<div className="space-y-1">
 					<CardTitle className="text-xl flex flex-row gap-2">
-						<WorkflowIcon className="size-6 text-muted-foreground self-center" />
 						Docker Swarm Overview
 					</CardTitle>
 					<p className="text-sm text-muted-foreground">

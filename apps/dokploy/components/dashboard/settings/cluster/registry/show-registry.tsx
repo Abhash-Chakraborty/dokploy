@@ -17,7 +17,6 @@ export const ShowRegistry = () => {
 			<PageHeader
 				title="Docker Registry"
 				description="Manage your Docker Registry configurations."
-				icon={<Package className="size-5" />}
 				actions={permissions?.registry.create ? <HandleRegistry /> : undefined}
 			/>
 

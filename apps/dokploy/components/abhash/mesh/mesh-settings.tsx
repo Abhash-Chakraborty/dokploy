@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from "date-fns";
-import { Network, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { MeshIcon } from "@/components/icons/abhash/mesh-icons";
@@ -300,7 +300,6 @@ export const MeshSettings = () => {
 	return (
 		<section className="flex flex-col gap-4">
 			<PageHeader
-				icon={<Network className="size-5" />}
 				title="Secure network"
 				description="One private network for your servers. One provider at a time."
 				actions={

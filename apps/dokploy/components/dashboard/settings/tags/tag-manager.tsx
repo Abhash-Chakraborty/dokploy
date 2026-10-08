@@ -19,7 +19,6 @@ export const TagManager = () => {
 			<PageHeader
 				title="Tags"
 				description="Create and manage tags to organize your projects."
-				icon={<TagIcon className="size-5" />}
 				actions={permissions?.tag.create ? <HandleTag /> : undefined}
 			/>
 

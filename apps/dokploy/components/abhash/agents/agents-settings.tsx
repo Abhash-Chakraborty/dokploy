@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from "date-fns";
-import { Bot, Check, Copy, Plus, Trash2, X } from "lucide-react";
+import { Check, Copy, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DialogAction } from "@/components/shared/dialog-action";
@@ -332,7 +332,6 @@ export const AgentsSettings = () => {
 	return (
 		<section className="flex flex-col gap-4">
 			<PageHeader
-				icon={<Bot className="size-5" />}
 				title="Agents"
 				description="Service accounts with scoped keys. They never see secret values."
 				actions={<CreateAgent />}

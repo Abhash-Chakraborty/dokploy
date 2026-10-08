@@ -19,7 +19,6 @@ export const ShowApiKeys = () => {
 			<PageHeader
 				title="API/CLI Keys"
 				description="Generate and manage API keys to access the API/CLI."
-				icon={<KeyIcon className="size-5" />}
 				actions={
 					<>
 						<Link

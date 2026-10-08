@@ -33,7 +33,6 @@ export const ShowBillingInvoices = () => {
 				<div className="w-full">
 					<CardHeader>
 						<CardTitle className="text-xl flex flex-row gap-2">
-							<CreditCard className="size-6 text-muted-foreground self-center" />
 							Billing
 						</CardTitle>
 						<CardDescription>

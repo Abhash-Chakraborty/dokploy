@@ -1,5 +1,5 @@
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
-import { Loader2, Palette, User } from "lucide-react";
+import { Loader2, Palette } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -146,7 +146,6 @@ export const ProfileForm = () => {
 			<PageHeader
 				title="Account"
 				description="Change the details of your profile here."
-				icon={<User className="size-5" />}
 				actions={
 					!data?.user.twoFactorEnabled ? <Enable2FA /> : <Configure2FA />
 				}

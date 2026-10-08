@@ -18,6 +18,7 @@ import {
 	PostgresqlIcon,
 	RedisIcon,
 } from "@/components/icons/data-tools-icons";
+import { HeaderSlot } from "@/components/layouts/header-slot";
 import { Button } from "@/components/ui/button";
 import {
 	Command,
@@ -33,8 +34,6 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { api, type RouterOutputs } from "@/utils/api";
 
 type ProjectItem = RouterOutputs["project"]["all"][number];
@@ -328,25 +327,20 @@ export const AdvanceBreadcrumb = () => {
 	// If we're just on the projects page, show simple breadcrumb
 	if (!projectId) {
 		return (
-			<header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+			<HeaderSlot>
 				<div className="flex items-center gap-2">
-					<SidebarTrigger className="-ml-1" />
-					<Separator orientation="vertical" className="mr-2 h-4" />
 					<div className="flex items-center gap-2">
 						<FolderInput className="size-4 text-muted-foreground" />
 						<span className="font-medium">Projects</span>
 					</div>
 				</div>
-			</header>
+			</HeaderSlot>
 		);
 	}
 
 	return (
-		<header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-			<div className="flex items-center gap-2">
-				<SidebarTrigger className="-ml-1" />
-				<Separator orientation="vertical" className="mr-2 h-4" />
-
+		<HeaderSlot>
+			<div className="flex min-w-0 items-center gap-2">
 				<div className="flex items-center">
 					{/* Project Selector */}
 					<Popover open={projectOpen} onOpenChange={setProjectOpen}>
@@ -556,7 +550,7 @@ export const AdvanceBreadcrumb = () => {
 					{/* Service Selector - only show when viewing a service */}
 					{serviceId && currentService && (
 						<>
-							<Separator orientation="vertical" className="mx-2 h-6" />
+							<span className="mx-1 text-muted-foreground/60">/</span>
 
 							<Popover open={serviceOpen} onOpenChange={setServiceOpen}>
 								<PopoverTrigger asChild>
@@ -645,6 +639,6 @@ export const AdvanceBreadcrumb = () => {
 					)}
 				</div>
 			</div>
-		</header>
+		</HeaderSlot>
 	);
 };

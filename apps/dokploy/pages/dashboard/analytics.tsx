@@ -1,6 +1,5 @@
 import { validateRequest } from "@dokploy/server/lib/auth";
 import { hasPermission } from "@dokploy/server/services/permission";
-import { ChartLine } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
 import { ShowAnalytics } from "@/components/dashboard/analytics/show-analytics";
@@ -13,7 +12,6 @@ const AnalyticsPage = () => {
 			<PageHeader
 				title="Analytics"
 				description="Deployment trends and service composition across your projects."
-				icon={<ChartLine className="size-5" />}
 			/>
 			<ShowAnalytics />
 		</PageContainer>

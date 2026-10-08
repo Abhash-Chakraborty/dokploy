@@ -1,7 +1,6 @@
 import { IS_CLOUD } from "@dokploy/server/constants";
 import { validateRequest } from "@dokploy/server/lib/auth";
 import { hasPermission } from "@dokploy/server/services/permission";
-import { HeartPulse } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
 import { ShowSystemHealth } from "@/components/dashboard/system-health/show-system-health";
@@ -14,7 +13,6 @@ const SystemHealthPage = () => {
 			<PageHeader
 				title="System Health"
 				description="Docker, Traefik, Postgres, storage and fleet reachability in one place."
-				icon={<HeartPulse className="size-5" />}
 			/>
 			<ShowSystemHealth />
 		</PageContainer>

@@ -22,11 +22,14 @@ import { api } from "@/utils/api";
 import { ModeToggle } from "../ui/modeToggle";
 import { SidebarMenuButton } from "../ui/sidebar";
 
-const _AUTO_CHECK_UPDATES_INTERVAL_MINUTES = 7;
-
 export const UserNav = () => {
 	const router = useRouter();
 	const { data } = api.user.get.useQuery();
+	const { data: version } = api.settings.getDokployVersion.useQuery(undefined, {
+		staleTime: Number.POSITIVE_INFINITY,
+	});
+	const name =
+		`${data?.user?.firstName ?? ""} ${data?.user?.lastName ?? ""}`.trim();
 	const { data: whitelabeling } = api.whitelabeling.get.useQuery(undefined, {
 		staleTime: 5 * 60 * 1000,
 		refetchOnWindowFocus: false,
@@ -42,25 +45,27 @@ export const UserNav = () => {
 			<DropdownMenuTrigger asChild>
 				<SidebarMenuButton
 					size="lg"
-					className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+					className="h-11 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 				>
-					<Avatar className="h-8 w-8 rounded-lg">
+					<Avatar className="size-7 rounded-full">
 						<AvatarImage
 							className="object-cover"
 							src={data?.user?.image || ""}
 							alt={data?.user?.image || ""}
 						/>
-						<AvatarFallback className="rounded-lg">
-							{getFallbackAvatarInitials(
-								`${data?.user?.firstName} ${data?.user?.lastName}`.trim(),
-							)}
+						<AvatarFallback className="rounded-full text-[11px]">
+							{getFallbackAvatarInitials(name)}
 						</AvatarFallback>
 					</Avatar>
 					<div className="grid flex-1 text-left text-sm leading-tight">
-						<span className="truncate font-semibold">Account</span>
-						<span className="truncate text-xs">{data?.user?.email}</span>
+						<span className="truncate text-[13px] font-medium">
+							{name || "Account"}
+						</span>
+						<span className="truncate text-xs text-muted-foreground">
+							{data?.user?.email}
+						</span>
 					</div>
-					<ChevronsUpDown className="ml-auto size-4" />
+					<ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
 				</SidebarMenuButton>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent
@@ -108,6 +113,14 @@ export const UserNav = () => {
 					</DropdownMenuItem>
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
+				{version && (
+					<>
+						<DropdownMenuLabel className="font-mono text-[11px] font-normal normal-case text-muted-foreground">
+							Dokploy {String(version).replace(/^v?/i, "v")}
+						</DropdownMenuLabel>
+						<DropdownMenuSeparator />
+					</>
+				)}
 				<DropdownMenuItem
 					className="cursor-pointer"
 					onClick={async () => {

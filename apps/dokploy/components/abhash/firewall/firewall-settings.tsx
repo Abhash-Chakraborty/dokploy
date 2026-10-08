@@ -1,4 +1,4 @@
-import { AlertTriangle, Plus, ShieldCheck, Trash2 } from "lucide-react";
+import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DialogAction } from "@/components/shared/dialog-action";
@@ -288,7 +288,6 @@ export const FirewallSettings = () => {
 	return (
 		<section className="flex flex-col gap-4">
 			<PageHeader
-				icon={<ShieldCheck className="size-5" />}
 				title="Firewall"
 				description="Rules derived per server, applied with an automatic rollback."
 				actions={

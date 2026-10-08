@@ -176,7 +176,6 @@ export const MiddlewaresPage = () => {
 					</span>
 				}
 				description="Rate limits, allowlists, passwords and headers in front of your domains."
-				icon={<Layers className="size-5" />}
 				actions={
 					<>
 						<Button

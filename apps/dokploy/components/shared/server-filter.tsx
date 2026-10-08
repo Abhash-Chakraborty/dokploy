@@ -78,7 +78,7 @@ export const ServerFilter = ({
 	if (isLoadingServers || isLoadingCloud) {
 		return (
 			<Card className="w-full border-none bg-transparent p-0 shadow-none">
-				<div className="rounded-xl bg-background shadow-md flex flex-col gap-2 items-center justify-center min-h-[60vh]">
+				<div className="flex flex-col gap-2 items-center justify-center min-h-[60vh]">
 					<span className="text-muted-foreground text-lg font-medium">
 						Loading...
 					</span>

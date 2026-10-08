@@ -327,10 +327,9 @@ export const ShowImages = ({ serverId }: Props) => {
 	return (
 		<div className="w-full">
 			<Card className=" border-none bg-transparent p-0 shadow-none">
-				<div className="rounded-xl bg-background shadow-md ">
+				<div className="">
 					<CardHeader className="">
 						<CardTitle className="text-xl flex flex-row gap-2">
-							<Layers className="size-6 text-muted-foreground self-center" />
 							Images
 						</CardTitle>
 						<CardDescription>

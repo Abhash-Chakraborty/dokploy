@@ -43,7 +43,6 @@ export const ShowNotifications = () => {
 			<PageHeader
 				title="Notifications"
 				description="Discord, Slack, Telegram, Teams, Email, Resend, Lark and more."
-				icon={<Bell className="size-5" />}
 				actions={
 					permissions?.notification.create ? <HandleNotifications /> : undefined
 				}

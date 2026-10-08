@@ -33,7 +33,6 @@ export const ShowDnsProviders = () => {
 			<PageHeader
 				title="DNS providers"
 				description="Connect a DNS provider so Dokploy can create the A or CNAME record for a domain instead of you setting it up by hand."
-				icon={<Globe className="size-5" />}
 				actions={permissions?.dnsProvider.create && <HandleDnsProvider />}
 			/>
 			<div className="flex flex-col gap-4">

@@ -1,7 +1,7 @@
 import { IS_CLOUD } from "@dokploy/server/constants";
 import { validateRequest } from "@dokploy/server/lib/auth";
 import { hasPermission } from "@dokploy/server/services/permission";
-import { BarChartHorizontalBigIcon, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
 import { ContainerFreeMonitoring } from "@/components/dashboard/monitoring/free/container/show-free-container-monitoring";
@@ -27,7 +27,6 @@ const Dashboard = () => {
 			<PageHeader
 				title="Monitoring"
 				description="Live container and server metrics."
-				icon={<BarChartHorizontalBigIcon className="size-5" />}
 			/>
 			{isPending ? (
 				<div className="rounded-xl flex px-4 min-h-[50vh] justify-center items-center gap-2 text-muted-foreground bg-muted/40">

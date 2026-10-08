@@ -1,6 +1,6 @@
 "use client";
 
-import { Link2, Loader2, Unlink } from "lucide-react";
+import { Loader2, Unlink } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
@@ -108,7 +108,6 @@ export function LinkingAccount() {
 			<PageHeader
 				title="Linking account"
 				description="Link your Google or GitHub account to sign in with them."
-				icon={<Link2 className="size-5" />}
 			/>
 			<div className="space-y-6">
 				{/* Linked accounts */}

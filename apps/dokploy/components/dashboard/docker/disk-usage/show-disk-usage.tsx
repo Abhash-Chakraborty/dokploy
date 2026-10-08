@@ -15,7 +15,6 @@ import {
 	ArrowUpDown,
 	Boxes,
 	Database,
-	Gauge,
 	HardDrive,
 	Layers,
 	Loader2,
@@ -297,7 +296,6 @@ export const ShowDiskUsage = ({ serverId }: Props) => {
 						<div className="flex flex-wrap items-center justify-between gap-2">
 							<div>
 								<CardTitle className="text-xl flex flex-row gap-2">
-									<Gauge className="size-6 text-muted-foreground self-center" />
 									Build Cache
 								</CardTitle>
 								<CardDescription>

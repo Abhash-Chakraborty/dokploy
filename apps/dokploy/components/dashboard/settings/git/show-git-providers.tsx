@@ -66,7 +66,6 @@ export const ShowGitProviders = () => {
 			<PageHeader
 				title="Git Providers"
 				description="Connect your Git provider for authentication."
-				icon={<GitBranch className="size-5" />}
 			/>
 			<div className="space-y-2">
 				{isPending ? (

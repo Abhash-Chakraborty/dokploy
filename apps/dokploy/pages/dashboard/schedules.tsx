@@ -1,6 +1,5 @@
 import { validateRequest } from "@dokploy/server/lib/auth";
 import { hasPermission } from "@dokploy/server/services/permission";
-import { CalendarClock } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -38,7 +37,6 @@ function SchedulesPage() {
 			<PageHeader
 				title="Automation"
 				description="Every scheduled job in this organization, across projects, servers and the Dokploy host."
-				icon={<CalendarClock className="size-5" />}
 			/>
 			<Tabs value={tab} onValueChange={setTab} className="w-full">
 				<ServerFilter

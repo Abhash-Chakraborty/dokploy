@@ -9,7 +9,7 @@ import {
 	useReactTable,
 	type VisibilityState,
 } from "@tanstack/react-table";
-import { ChevronDown, Container } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import * as React from "react";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
@@ -75,7 +75,6 @@ export const ShowContainers = ({ serverId }: Props) => {
 			<PageHeader
 				title="Docker Containers"
 				description="See all the containers of your dokploy server."
-				icon={<Container className="size-5" />}
 			/>
 			<div className="gap-4 pb-20 w-full">
 				<div className="flex flex-col gap-4  w-full overflow-auto">

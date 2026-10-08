@@ -1,6 +1,5 @@
 import { validateRequest } from "@dokploy/server/lib/auth";
 import { hasPermission } from "@dokploy/server/services/permission";
-import { Rocket } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { type ReactElement, useState } from "react";
@@ -55,7 +54,6 @@ function DeploymentsPage() {
 			<PageHeader
 				title="Deployments"
 				description="All application and compose deployments in one place."
-				icon={<Rocket className="size-5" />}
 			/>
 			<Tabs value={tab} onValueChange={setTab} className="w-full">
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

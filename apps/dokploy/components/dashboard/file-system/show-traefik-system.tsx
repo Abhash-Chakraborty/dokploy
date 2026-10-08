@@ -1,5 +1,4 @@
 import {
-	FileIcon,
 	Folder,
 	FolderOpen,
 	Loader2,
@@ -54,7 +53,6 @@ export const ShowTraefikSystem = ({ serverId, headerActions }: Props) => {
 					</span>
 				}
 				description="Manage all the files and directories in '/etc/dokploy/traefik'."
-				icon={<FileIcon className="size-5" />}
 				actions={headerActions}
 			/>
 			<div>

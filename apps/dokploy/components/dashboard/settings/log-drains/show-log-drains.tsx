@@ -420,7 +420,6 @@ export const ShowLogDrains = () => {
 					</span>
 				}
 				description="Ship container logs off the host to Loki, Datadog or any HTTP endpoint. Without one, logs live and die with the container."
-				icon={<Waypoints className="size-5" />}
 				actions={<AddLogDrain onDone={() => refetch()} />}
 			/>
 			<div>

@@ -1,12 +1,5 @@
 import { formatDistanceToNow } from "date-fns";
-import {
-	DatabaseBackup,
-	History,
-	Play,
-	Plus,
-	ShieldCheck,
-	Trash2,
-} from "lucide-react";
+import { History, Play, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DialogAction } from "@/components/shared/dialog-action";
@@ -541,7 +534,6 @@ export const BackupHealth = ({ embedded = false }: { embedded?: boolean }) => {
 	return (
 		<section className="flex flex-col gap-4">
 			<PageHeader
-				icon={embedded ? undefined : <DatabaseBackup className="size-5" />}
 				// Inside the Backups tabs the tab label is the heading already.
 				title={embedded ? "" : "Backups and drills"}
 				description="Encrypted snapshots, and drills that prove a restore works."

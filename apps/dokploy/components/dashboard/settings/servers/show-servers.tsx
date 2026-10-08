@@ -1,50 +1,86 @@
 import copy from "copy-to-clipboard";
-import { format } from "date-fns";
 import {
 	Activity,
-	Clock,
-	Copy,
-	Key,
 	KeyIcon,
-	Loader2,
-	Network,
 	Pencil,
+	RotateCcw,
 	ServerIcon,
+	Settings2,
 	Terminal,
 	Trash2,
-	User,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { api } from "@/utils/api";
+import { cn } from "@/lib/utils";
+import { api, type RouterOutputs } from "@/utils/api";
 import { TerminalModal } from "../web-server/terminal-modal";
 import { ShowServerActions } from "./actions/show-server-actions";
 import { DeleteServerModal } from "./delete-server-modal";
+import { DriftWarning, formatMb, Usage } from "./fleet-cells";
 import { HandleServers } from "./handle-servers";
 import { SetupServer } from "./setup-server";
 import { ShowMonitoringModal } from "./show-monitoring-modal";
 import { WelcomeSubscription } from "./welcome-stripe/welcome-subscription";
 
+type FleetRow = RouterOutputs["server"]["fleetOverview"]["servers"][number];
+type ServerRecord = RouterOutputs["server"]["all"][number];
+
+const RowAction = ({
+	label,
+	children,
+}: {
+	label: string;
+	children: ReactNode;
+}) => (
+	<Tooltip>
+		<TooltipTrigger asChild>{children}</TooltipTrigger>
+		<TooltipContent>{label}</TooltipContent>
+	</Tooltip>
+);
+
+const iconButton = "size-8 text-muted-foreground hover:text-foreground";
+
+// Every row reserves the same slots, so each action lines up in a column even
+// when a row does not offer it.
+const Slot = ({ children }: { children?: ReactNode }) =>
+	children ? <>{children}</> : <span aria-hidden className="size-8" />;
+
 export const ShowServers = () => {
 	const router = useRouter();
 	const query = router.query;
-	const { data, refetch, isPending } = api.server.all.useQuery();
+	const { data, isPending } = api.server.all.useQuery();
 	const { data: sshKeys } = api.sshKey.all.useQuery();
 	const { data: isCloud } = api.settings.isCloud.useQuery();
-	const { data: canCreateMoreServers } =
-		api.stripe.canCreateMoreServers.useQuery();
 	const { data: permissions } = api.user.getPermissions.useQuery();
+	// Probing runs SSH against every server, so the rows render from the
+	// database first and the live columns fill in when the probe returns.
+	const {
+		data: probe,
+		isPending: isProbing,
+		isFetching: isReprobing,
+		refetch: reprobe,
+	} = api.server.fleetOverview.useQuery(undefined, {
+		refetchOnWindowFocus: false,
+	});
 	// Stored facts, refreshed on a schedule, so this costs no SSH round trip.
 	// Members cannot read them, hence retry: false and the optional handling.
 	const { data: fleet } = api.fleet.list.useQuery(undefined, { retry: false });
@@ -55,337 +91,406 @@ export const ShowServers = () => {
 		]),
 	);
 
+	const live = new Map<string | null, FleetRow>(
+		(probe?.servers ?? []).map((row) => [row.serverId, row]),
+	);
+	const hostRow = live.get(null);
+	const servers = data ?? [];
+	const dockerDrift = (probe?.drift.dockerVersions.length ?? 0) > 1;
+	const traefikDrift = (probe?.drift.traefikVersions.length ?? 0) > 1;
+	const unreachable = (probe?.servers ?? []).filter((row) => !row.reachable);
+
+	const summary = [
+		`${servers.length + (isCloud ? 0 : 1)} server${servers.length + (isCloud ? 0 : 1) === 1 ? "" : "s"}`,
+		unreachable.length > 0 ? `${unreachable.length} unreachable` : null,
+		dockerDrift ? "Docker versions differ" : null,
+		traefikDrift ? "Traefik versions differ" : null,
+	]
+		.filter(Boolean)
+		.join(" · ");
+
+	const liveCells = (row: FleetRow | undefined) => {
+		if (!row) {
+			return Array.from({ length: 6 }, (_, index) => (
+				<TableCell key={index} className={index >= 3 ? "text-right" : ""}>
+					{isProbing ? (
+						<span className="inline-block h-3 w-10 animate-pulse rounded bg-muted" />
+					) : (
+						<span className="text-muted-foreground">—</span>
+					)}
+				</TableCell>
+			));
+		}
+		return [
+			<TableCell key="docker">
+				<span className="flex items-center gap-1.5 font-mono text-xs">
+					{row.dockerVersion ?? "—"}
+					{dockerDrift && row.dockerVersion && (
+						<DriftWarning
+							what="Docker"
+							versions={probe?.drift.dockerVersions ?? []}
+						/>
+					)}
+				</span>
+			</TableCell>,
+			<TableCell key="swarm" className="text-xs">
+				{row.swarmState === "active" ? (
+					<span className="text-muted-foreground">
+						{row.swarmRole ?? "active"}
+					</span>
+				) : row.reachable ? (
+					<Link
+						href="/dashboard/command-center"
+						className="text-amber-500 underline underline-offset-2"
+						title="Apply the baseline from Command centre"
+					>
+						{row.swarmState || "not in swarm"}
+					</Link>
+				) : (
+					<span className="text-muted-foreground">—</span>
+				)}
+			</TableCell>,
+			<TableCell key="traefik">
+				<span className="flex items-center gap-1.5 font-mono text-xs">
+					{row.traefikVersion ?? "—"}
+					{traefikDrift && row.traefikVersion && (
+						<DriftWarning
+							what="Traefik"
+							versions={probe?.drift.traefikVersions ?? []}
+						/>
+					)}
+				</span>
+			</TableCell>,
+			<TableCell key="containers" className="text-right tabular-nums">
+				{row.containersRunning === undefined ? (
+					<span className="text-muted-foreground">—</span>
+				) : (
+					<>
+						{row.containersRunning}
+						<span className="text-muted-foreground">
+							{" / "}
+							{row.containersTotal ?? 0}
+						</span>
+					</>
+				)}
+			</TableCell>,
+			<TableCell key="disk" className="text-right">
+				<Usage percent={row.diskUsedPercent} />
+			</TableCell>,
+			<TableCell key="memory" className="text-right">
+				<Usage percent={row.memUsedPercent} />
+			</TableCell>,
+		];
+	};
+
+	const nameCell = (
+		name: string,
+		row: FleetRow | undefined,
+		detail: ReactNode,
+		badge?: ReactNode,
+	) => (
+		// max-w-0 with a width makes an auto-layout table truncate this cell
+		// instead of letting a long probe error push the other columns away.
+		<TableCell className="w-[34%] max-w-0 py-3">
+			<div className="flex min-w-0 items-center gap-2.5">
+				<span
+					className={cn(
+						"size-2 shrink-0 rounded-full",
+						!row
+							? "bg-muted-foreground/40"
+							: row.reachable
+								? "bg-status-running"
+								: "bg-status-failed",
+					)}
+					title={!row ? "Probing" : row.reachable ? "Reachable" : row.error}
+				/>
+				<div className="flex min-w-0 flex-col">
+					<span className="flex min-w-0 items-center gap-2">
+						<span className="truncate font-medium">{name}</span>
+						{badge}
+					</span>
+					<span
+						className={cn(
+							"truncate text-xs",
+							row && !row.reachable
+								? "text-status-failed"
+								: "text-muted-foreground",
+						)}
+						title={row && !row.reachable ? row.error : undefined}
+					>
+						{row && !row.reachable ? row.error : detail}
+					</span>
+				</div>
+			</div>
+		</TableCell>
+	);
+
+	const capacity = (row: FleetRow | undefined) =>
+		row?.cpuCores === undefined
+			? null
+			: [
+					`${row.cpuCores} vCPU`,
+					row.memoryTotalMb ? formatMb(row.memoryTotalMb) : null,
+					row.diskTotalMb ? `${formatMb(row.diskTotalMb)} disk` : null,
+				]
+					.filter(Boolean)
+					.join(" · ");
+
+	const serverActions = (server: ServerRecord) => {
+		const isBuildServer = server.serverType === "build";
+		if (server.serverStatus !== "active") return null;
+		return (
+			<>
+				<Slot>
+					<RowAction
+						label={
+							provisioned.get(server.serverId)
+								? "Re-run setup"
+								: "Set up server"
+						}
+					>
+						<span>
+							<SetupServer
+								serverId={server.serverId}
+								alreadyProvisioned={provisioned.get(server.serverId) ?? false}
+							>
+								<Button variant="ghost" size="icon" className={iconButton}>
+									<Settings2 className="size-4" />
+								</Button>
+							</SetupServer>
+						</span>
+					</RowAction>
+				</Slot>
+				<Slot>
+					{server.sshKeyId && permissions?.server.terminal && (
+						<RowAction label="Terminal">
+							<span>
+								<TerminalModal serverId={server.serverId} asButton>
+									<Button variant="ghost" size="icon" className={iconButton}>
+										<Terminal className="size-4" />
+									</Button>
+								</TerminalModal>
+							</span>
+						</RowAction>
+					)}
+				</Slot>
+				<Slot>
+					<RowAction label="Edit">
+						<span>
+							<HandleServers serverId={server.serverId}>
+								<Button variant="ghost" size="icon" className={iconButton}>
+									<Pencil className="size-4" />
+								</Button>
+							</HandleServers>
+						</span>
+					</RowAction>
+				</Slot>
+				<Slot>
+					{server.sshKeyId && !isBuildServer && (
+						<RowAction label="Web server actions">
+							<span>
+								<ShowServerActions serverId={server.serverId}>
+									<Button variant="ghost" size="icon" className={iconButton}>
+										<Activity className="size-4" />
+									</Button>
+								</ShowServerActions>
+							</span>
+						</RowAction>
+					)}
+				</Slot>
+				{isCloud && server.sshKeyId && !isBuildServer && (
+					<ShowMonitoringModal
+						url={`http://${server.ipAddress}:${server?.metricsConfig?.server?.port}/metrics`}
+						token={server?.metricsConfig?.server?.token}
+					/>
+				)}
+				<Slot>
+					{permissions?.server.delete && (
+						<RowAction label="Delete">
+							<span>
+								<DeleteServerModal
+									serverId={server.serverId}
+									serverName={server.name}
+								>
+									<Button
+										variant="ghost"
+										size="icon"
+										className={cn(iconButton, "hover:text-destructive")}
+									>
+										<Trash2 className="size-4" />
+									</Button>
+								</DeleteServerModal>
+							</span>
+						</RowAction>
+					)}
+				</Slot>
+			</>
+		);
+	};
+
+	const noKeys = sshKeys?.length === 0 && servers.length === 0;
+
 	return (
 		<PageContainer>
 			{query?.success && isCloud && <WelcomeSubscription />}
 			<PageHeader
 				title="Servers"
-				description="Add servers to deploy your applications remotely."
-				icon={<ServerIcon className="size-5" />}
+				description={isPending ? "Loading…" : summary}
 				actions={
-					permissions?.server.create && data && data.length > 0 ? (
-						<HandleServers />
-					) : undefined
+					<>
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={() => reprobe()}
+							isLoading={isReprobing}
+						>
+							<RotateCcw className="size-4" />
+							Re-probe
+						</Button>
+						{permissions?.server.create && !noKeys && <HandleServers />}
+					</>
 				}
 			/>
 			{isCloud && (
 				<button
 					type="button"
-					className="bg-gradient-to-r cursor-pointer from-blue-600 via-green-500 to-indigo-400 inline-block text-transparent bg-clip-text text-sm w-fit"
+					className="w-fit text-left text-sm text-muted-foreground underline underline-offset-2"
 					onClick={() => {
 						router.push("/dashboard/settings/servers?success=true");
 					}}
 				>
-					Reset Onboarding
+					Reset onboarding
 				</button>
 			)}
-			<div className="space-y-2">
-				{isPending ? (
-					<div className="flex flex-row gap-2 items-center justify-center text-sm text-muted-foreground min-h-[25vh]">
-						<span>Loading...</span>
-						<Loader2 className="animate-spin size-4" />
-					</div>
-				) : (
-					<>
-						{sshKeys?.length === 0 && data?.length === 0 ? (
-							<div className="flex flex-col items-center gap-3 min-h-[25vh] justify-center">
-								<KeyIcon className="size-8" />
-								<span className="text-base text-muted-foreground">
-									No SSH Keys found. Add a SSH Key to start adding servers.{" "}
-									<Link
-										href="/dashboard/settings/ssh-keys"
-										className="text-primary"
-									>
-										Add SSH Key
-									</Link>
-								</span>
-							</div>
-						) : (
-							<>
-								{data?.length === 0 ? (
-									<div className="flex flex-col items-center gap-3  min-h-[25vh] justify-center">
-										<ServerIcon className="size-8 self-center text-muted-foreground" />
-										<span className="text-base text-muted-foreground">
-											Start adding servers to deploy your applications remotely.
-										</span>
-										{permissions?.server.create && <HandleServers />}
-									</div>
-								) : (
-									<div className="flex flex-col gap-4 min-h-[25vh]">
-										<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-											{data?.map((server) => {
-												const isActive = server.serverStatus === "active";
-												const isBuildServer = server.serverType === "build";
-												return (
-													<Card
-														key={server.serverId}
-														className="relative hover:shadow-lg transition-shadow flex flex-col bg-transparent"
-													>
-														<CardHeader className="pb-3">
-															<div className="flex items-start justify-between gap-2">
-																<div className="flex min-w-0 items-center gap-2">
-																	<ServerIcon className="size-5 shrink-0 text-muted-foreground" />
-																	<CardTitle
-																		className="text-lg truncate min-w-0"
-																		title={server.name}
-																	>
-																		{server.name}
-																	</CardTitle>
-																</div>
-															</div>
-															<TooltipProvider>
-																<div className="flex gap-2 mt-2 flex-wrap">
-																	{isCloud && (
-																		<>
-																			{server.serverStatus === "active" ? (
-																				<Badge variant="default">
-																					{server.serverStatus}
-																				</Badge>
-																			) : (
-																				<Tooltip delayDuration={0}>
-																					<TooltipTrigger asChild>
-																						<span className="inline-block">
-																							<Badge
-																								variant="destructive"
-																								className="cursor-help"
-																							>
-																								{server.serverStatus}
-																							</Badge>
-																						</span>
-																					</TooltipTrigger>
-																					<TooltipContent
-																						className="max-w-xs"
-																						side="bottom"
-																					>
-																						<p className="text-sm">
-																							This server is deactivated due to
-																							lack of payment. Please pay your
-																							invoice to reactivate it. If you
-																							think this is an error, please
-																							contact support.
-																						</p>
-																					</TooltipContent>
-																				</Tooltip>
-																			)}
-																		</>
-																	)}
-																	<Badge
-																		variant={
-																			isBuildServer ? "secondary" : "default"
-																		}
-																	>
-																		{server.serverType}
-																	</Badge>
-																</div>
-															</TooltipProvider>
-														</CardHeader>
-														<CardContent className="space-y-3 flex-1 flex flex-col">
-															<div className="flex items-center gap-2 text-sm">
-																<Network className="size-4 text-muted-foreground" />
-																<span className="text-muted-foreground">
-																	IP:
-																</span>
-																<button
-																	type="button"
-																	onClick={() => {
-																		copy(server.ipAddress);
-																		toast.success("IP copied to clipboard");
-																	}}
-																	className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs hover:bg-muted transition-colors bg-muted/40"
-																	title="Copy IP"
-																>
-																	{server.ipAddress}
-																	<Copy className="size-3" />
-																</button>
-																<span className="text-muted-foreground">
-																	Port:
-																</span>
-																<span className="font-medium">
-																	{server.port}
-																</span>
-															</div>
-															<div className="flex items-center gap-2 text-sm">
-																<User className="size-4 text-muted-foreground" />
-																<span className="text-muted-foreground">
-																	User:
-																</span>
-																<span className="font-medium">
-																	{server.username}
-																</span>
-															</div>
-															<div className="flex items-center gap-2 text-sm">
-																<Key className="size-4 text-muted-foreground" />
-																<span className="text-muted-foreground">
-																	SSH Key:
-																</span>
-																<span className="font-medium">
-																	{server.sshKeyId ? "Yes" : "No"}
-																</span>
-															</div>
-															<div className="flex items-center gap-2 text-sm pt-2 border-t">
-																<Clock className="size-4 text-muted-foreground" />
-																<span className="text-xs text-muted-foreground">
-																	Created{" "}
-																	{format(new Date(server.createdAt), "PPp")}
-																</span>
-															</div>
-
-															{/* Compact Actions */}
-															{isActive && (
-																<div className="flex items-center gap-2 pt-3 border-t mt-auto flex-wrap">
-																	<TooltipProvider>
-																		<Tooltip>
-																			<TooltipTrigger asChild>
-																				<SetupServer
-																					serverId={server.serverId}
-																					alreadyProvisioned={
-																						provisioned.get(server.serverId) ??
-																						false
-																					}
-																				/>
-																			</TooltipTrigger>
-																			<TooltipContent
-																				className="max-w-xs"
-																				side="bottom"
-																			>
-																				<div className="space-y-1">
-																					<p className="font-semibold">
-																						{provisioned.get(server.serverId)
-																							? "Re-run setup"
-																							: "Setup Server"}
-																					</p>
-																					<p className="text-xs text-muted-foreground">
-																						{provisioned.get(server.serverId)
-																							? "Docker and Swarm are already up on this server. Re-running is safe but nothing here is outstanding."
-																							: "Configure and initialize your server with Docker, Traefik, and other essential services"}
-																					</p>
-																				</div>
-																			</TooltipContent>
-																		</Tooltip>
-																		{server.sshKeyId &&
-																			permissions?.server.terminal && (
-																				<Tooltip>
-																					<TooltipTrigger asChild>
-																						<div>
-																							<TerminalModal
-																								serverId={server.serverId}
-																								asButton={true}
-																							>
-																								<Button
-																									variant="outline"
-																									size="icon"
-																									className="h-9 w-9"
-																								>
-																									<Terminal className="h-4 w-4" />
-																								</Button>
-																							</TerminalModal>
-																						</div>
-																					</TooltipTrigger>
-																					<TooltipContent>
-																						<p>Terminal</p>
-																					</TooltipContent>
-																				</Tooltip>
-																			)}
-
-																		<Tooltip>
-																			<HandleServers serverId={server.serverId}>
-																				<TooltipTrigger asChild>
-																					<Button
-																						variant="outline"
-																						size="icon"
-																						className="h-9 w-9"
-																					>
-																						<Pencil className="h-4 w-4" />
-																					</Button>
-																				</TooltipTrigger>
-																			</HandleServers>
-																			<TooltipContent>
-																				<p>Edit Server</p>
-																			</TooltipContent>
-																		</Tooltip>
-
-																		{server.sshKeyId && !isBuildServer && (
-																			<Tooltip>
-																				<ShowServerActions
-																					serverId={server.serverId}
-																				>
-																					<TooltipTrigger asChild>
-																						<Button
-																							variant="outline"
-																							size="icon"
-																							className="h-9 w-9"
-																						>
-																							<Activity className="h-4 w-4" />
-																						</Button>
-																					</TooltipTrigger>
-																				</ShowServerActions>
-																				<TooltipContent>
-																					<p>Web Server Actions</p>
-																				</TooltipContent>
-																			</Tooltip>
-																		)}
-
-																		{isCloud &&
-																			server.sshKeyId &&
-																			!isBuildServer && (
-																				<Tooltip>
-																					<TooltipTrigger asChild>
-																						<div>
-																							<ShowMonitoringModal
-																								url={`http://${server.ipAddress}:${server?.metricsConfig?.server?.port}/metrics`}
-																								token={
-																									server?.metricsConfig?.server
-																										?.token
-																								}
-																							/>
-																						</div>
-																					</TooltipTrigger>
-																					<TooltipContent>
-																						<p>Monitoring</p>
-																					</TooltipContent>
-																				</Tooltip>
-																			)}
-
-																		<div className="flex-1" />
-
-																		{permissions?.server.delete && (
-																			<Tooltip>
-																				<TooltipTrigger asChild>
-																					<div>
-																						<DeleteServerModal
-																							serverId={server.serverId}
-																							serverName={server.name}
-																						>
-																							<Button
-																								variant="ghost"
-																								size="icon"
-																								className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10"
-																							>
-																								<Trash2 className="h-4 w-4" />
-																							</Button>
-																						</DeleteServerModal>
-																					</div>
-																				</TooltipTrigger>
-																				<TooltipContent>
-																					<p>Delete Server</p>
-																				</TooltipContent>
-																			</Tooltip>
-																		)}
-																	</TooltipProvider>
-																</div>
-															)}
-														</CardContent>
-													</Card>
-												);
-											})}
+			<TooltipProvider delayDuration={200}>
+				<div className="w-full overflow-x-auto">
+					<Table>
+						<TableHeader>
+							<TableRow>
+								<TableHead>Server</TableHead>
+								<TableHead>Docker</TableHead>
+								<TableHead>Swarm</TableHead>
+								<TableHead>Traefik</TableHead>
+								<TableHead className="text-right">Containers</TableHead>
+								<TableHead className="text-right">Disk</TableHead>
+								<TableHead className="text-right">Memory</TableHead>
+								<TableHead className="w-0" />
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{!isCloud && (
+								<TableRow>
+									{nameCell(
+										"Dokploy host",
+										hostRow,
+										[
+											"this machine",
+											capacity(hostRow),
+											hostRow?.uptime ? `up ${hostRow.uptime}` : null,
+										]
+											.filter(Boolean)
+											.join(" · "),
+									)}
+									{liveCells(hostRow)}
+									<TableCell>
+										<div className="flex justify-end gap-0.5">
+											<Slot />
+											<Slot>
+												{permissions?.server.terminal && (
+													<RowAction label="Terminal">
+														<Button
+															variant="ghost"
+															size="icon"
+															className={iconButton}
+															asChild
+														>
+															<Link href="/dashboard/terminals">
+																<Terminal className="size-4" />
+															</Link>
+														</Button>
+													</RowAction>
+												)}
+											</Slot>
+											<Slot />
+											<Slot />
+											<Slot />
 										</div>
-									</div>
-								)}
-							</>
-						)}
-					</>
-				)}
-			</div>
+									</TableCell>
+								</TableRow>
+							)}
+							{servers.map((server) => {
+								const row = live.get(server.serverId);
+								return (
+									<TableRow key={server.serverId}>
+										{nameCell(
+											server.name,
+											row,
+											<>
+												<button
+													type="button"
+													className="font-mono hover:text-foreground"
+													title="Copy address"
+													onClick={() => {
+														copy(server.ipAddress);
+														toast.success("Address copied");
+													}}
+												>
+													{server.username}@{server.ipAddress}:{server.port}
+												</button>
+												{capacity(row) ? ` · ${capacity(row)}` : ""}
+												{!server.sshKeyId ? " · no SSH key" : ""}
+											</>,
+											<>
+												{server.serverType === "build" && (
+													<Badge variant="secondary" className="text-[10px]">
+														build
+													</Badge>
+												)}
+												{isCloud && server.serverStatus !== "active" && (
+													<Badge
+														variant="destructive"
+														className="text-[10px]"
+														title="Deactivated for an unpaid invoice. Pay it to reactivate the server."
+													>
+														{server.serverStatus}
+													</Badge>
+												)}
+											</>,
+										)}
+										{liveCells(row)}
+										<TableCell>
+											<div className="flex justify-end gap-0.5">
+												{serverActions(server)}
+											</div>
+										</TableCell>
+									</TableRow>
+								);
+							})}
+						</TableBody>
+					</Table>
+				</div>
+			</TooltipProvider>
+			{!isPending && servers.length === 0 && (
+				<div className="flex flex-col items-start gap-2 py-2 text-sm text-muted-foreground">
+					{noKeys ? (
+						<span className="flex items-center gap-2">
+							<KeyIcon className="size-4" />
+							Add an SSH key first, then add servers to deploy to them.
+							<Link
+								href="/dashboard/settings/ssh-keys"
+								className="text-foreground underline underline-offset-2"
+							>
+								Add SSH key
+							</Link>
+						</span>
+					) : (
+						<span className="flex items-center gap-2">
+							<ServerIcon className="size-4" />
+							Add a server to deploy applications to it.
+						</span>
+					)}
+				</div>
+			)}
 		</PageContainer>
 	);
 };

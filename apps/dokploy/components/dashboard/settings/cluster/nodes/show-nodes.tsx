@@ -1,4 +1,4 @@
-import { Boxes, Loader2, LockIcon, MoreHorizontal } from "lucide-react";
+import { Loader2, LockIcon, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { DateTooltip } from "@/components/shared/date-tooltip";
 import { DialogAction } from "@/components/shared/dialog-action";
@@ -45,7 +45,6 @@ export const ShowNodes = ({ serverId }: Props) => {
 			<PageHeader
 				title="Cluster"
 				description="Add nodes to your cluster."
-				icon={<Boxes className="size-5" />}
 				actions={
 					haveAtLeastOneRegistry && permissions?.server.create ? (
 						<AddNode serverId={serverId} />

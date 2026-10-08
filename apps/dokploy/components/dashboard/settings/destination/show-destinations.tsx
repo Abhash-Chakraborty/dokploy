@@ -1,4 +1,4 @@
-import { Database, FolderUp, Loader2, Trash2 } from "lucide-react";
+import { FolderUp, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { DialogAction } from "@/components/shared/dialog-action";
 import {
@@ -33,7 +33,6 @@ export const ShowDestinations = ({
 				<PageHeader
 					title="S3 Destinations"
 					description="AWS S3, Cloudflare R2, Wasabi, DigitalOcean Spaces and more."
-					icon={<Database className="size-5" />}
 					actions={
 						permissions?.destination.create ? <HandleDestinations /> : undefined
 					}

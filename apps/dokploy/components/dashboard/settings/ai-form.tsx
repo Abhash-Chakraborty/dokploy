@@ -21,7 +21,6 @@ export const AiForm = () => {
 			<PageHeader
 				title="AI Settings"
 				description="Manage your AI configurations."
-				icon={<BotIcon className="size-5" />}
 				actions={
 					<div className="flex flex-row gap-2">
 						{isOrgAdmin && <HandleAiProviders />}

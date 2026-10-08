@@ -1,6 +1,5 @@
 import { validateRequest } from "@dokploy/server/lib/auth";
 import { createServerSideHelpers } from "@trpc/react-query/server";
-import { LayoutList } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import type { ReactElement } from "react";
@@ -42,7 +41,6 @@ const Overview = () => {
 			<PageHeader
 				title="Inventory"
 				description="Every service and domain you can reach, in one place."
-				icon={<LayoutList className="size-5" />}
 			/>
 			<Tabs value={activeTab} onValueChange={setTab}>
 				<TabsList>

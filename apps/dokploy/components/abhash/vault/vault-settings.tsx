@@ -4,7 +4,6 @@ import {
 	DownloadCloud,
 	Eye,
 	History,
-	KeyRound,
 	Plus,
 	RotateCw,
 	Trash2,
@@ -590,7 +589,6 @@ export const VaultSettings = ({ embedded = false }: { embedded?: boolean }) => {
 	return (
 		<section className="flex flex-col gap-4">
 			<PageHeader
-				icon={embedded ? undefined : <KeyRound className="size-5" />}
 				// Inside the Secrets tabs the tab label is the heading already.
 				title={embedded ? "" : "Vault"}
 				description={

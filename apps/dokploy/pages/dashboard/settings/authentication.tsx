@@ -1,6 +1,5 @@
 import { IS_CLOUD, validateRequest } from "@dokploy/server";
 import { createServerSideHelpers } from "@trpc/react-query/server";
-import { LockKeyhole } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
 import superjson from "superjson";
@@ -17,7 +16,6 @@ const Page = () => (
 		<PageHeader
 			title="Authentication"
 			description="How people sign in: login methods, single sign-on and its group mappings."
-			icon={<LockKeyhole className="size-5" />}
 		/>
 		<LoginMethods />
 		<SsoSettings />

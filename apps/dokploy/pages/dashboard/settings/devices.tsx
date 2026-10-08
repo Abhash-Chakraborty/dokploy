@@ -1,5 +1,4 @@
 import { validateRequest } from "@dokploy/server";
-import { ShieldCheck } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
 import { PasskeyManager } from "@/components/dashboard/settings/profile/passkey-manager";
@@ -12,7 +11,6 @@ const DevicesPage = () => (
 		<PageHeader
 			title="Security"
 			description="Passkeys and the devices signed in to your account."
-			icon={<ShieldCheck className="size-5" />}
 		/>
 		<PasskeyManager />
 		<ShowSessions />

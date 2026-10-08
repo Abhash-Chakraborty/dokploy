@@ -1,5 +1,5 @@
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
-import { Eye, EyeOff, LayoutDashboardIcon, RefreshCw } from "lucide-react";
+import { Eye, EyeOff, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -238,7 +238,6 @@ export const SetupMonitoring = ({ serverId }: Props) => {
 		<>
 			<CardHeader className="">
 				<CardTitle className="text-xl flex flex-row gap-2">
-					<LayoutDashboardIcon className="size-6 text-muted-foreground self-center" />
 					Monitoring
 				</CardTitle>
 				<CardDescription>
