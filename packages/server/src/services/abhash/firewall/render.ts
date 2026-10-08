@@ -38,9 +38,20 @@ export const renderUfwRules = (rules: CompiledRule[]) =>
  * pass through ufw's INPUT chain. These go in a chain called from
  * DOCKER-USER and match the port the client originally asked for, which is
  * the only thing left after Docker's DNAT.
+ *
+ * ufw loads after.rules at boot, before Docker has created DOCKER-USER, so the
+ * block declares that chain itself; otherwise iptables-restore fails ("No
+ * chain/target/match") and ufw does not start at all. Declaring it also means
+ * every ufw reload starts DOCKER-USER empty, so the hook is appended (-A)
+ * exactly once rather than inserted (-I) again on each reload.
  */
 export const renderDockerChain = (rules: CompiledRule[]) => {
-	const lines = ["*filter", `:${MANAGED_CHAIN} - [0:0]`, `-F ${MANAGED_CHAIN}`];
+	const lines = [
+		"*filter",
+		`:${MANAGED_CHAIN} - [0:0]`,
+		":DOCKER-USER - [0:0]",
+		`-F ${MANAGED_CHAIN}`,
+	];
 	// A port that anything is allowed to reach is closed to everyone else,
 	// but only after every rule for it has had its say: closing it straight
 	// after the first allow would stop a second allowed source ever matching.
@@ -69,7 +80,7 @@ export const renderDockerChain = (rules: CompiledRule[]) => {
 	}
 	lines.push(...closed.values());
 	lines.push(`-A ${MANAGED_CHAIN} -j RETURN`);
-	lines.push(`-I DOCKER-USER -j ${MANAGED_CHAIN}`);
+	lines.push(`-A DOCKER-USER -j ${MANAGED_CHAIN}`);
 	lines.push("COMMIT");
 	return lines.join("\n");
 };
