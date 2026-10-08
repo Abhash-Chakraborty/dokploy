@@ -37,6 +37,7 @@ RUN cp -R /usr/src/app/apps/dokploy/.next /prod/dokploy/.next \
 # Turbopack's links to external server packages point into the monorepo's
 # store; re-point them into the deployed node_modules as seen at /app.
 RUN node scripts/relink-next-externals.mjs /prod/dokploy /app
+RUN node scripts/prune-runtime-deps.mjs /prod/dokploy
 RUN cp -R /usr/src/app/apps/dokploy/dist /prod/dokploy/dist
 
 FROM base AS dokploy
@@ -49,8 +50,21 @@ RUN apt-get update && apt-get install -y tini curl unzip zip apache2-utils iprou
 
 # System tooling goes before the app copy so a code change reuses these layers
 # instead of reinstalling Docker, rclone, Nixpacks, Railpack and pack.
-# Install docker
-RUN curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh --version 28.5.2 && rm get-docker.sh && curl https://rclone.org/install.sh | bash
+# Only the Docker client and its plugins: Dokploy drives the host's daemon
+# through the mounted socket, so the engine, containerd and the rootless
+# extras that get.docker.com adds were dead weight (~350 MB).
+ARG DOCKER_VERSION=28.5.2
+RUN install -m 0755 -d /etc/apt/keyrings \
+	&& curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc \
+	&& . /etc/os-release \
+	&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian ${VERSION_CODENAME} stable" > /etc/apt/sources.list.d/docker.list \
+	&& apt-get update \
+	&& CLI_VERSION=$(apt-cache madison docker-ce-cli | awk -v v="${DOCKER_VERSION}" '$3 ~ ":"v"-" {print $3; exit}') \
+	&& test -n "$CLI_VERSION" \
+	&& apt-get install -y --no-install-recommends "docker-ce-cli=${CLI_VERSION}" docker-buildx-plugin docker-compose-plugin \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& docker --version && docker buildx version && docker compose version \
+	&& curl https://rclone.org/install.sh | bash
 
 # Install Nixpacks and tsx
 # | VERBOSE=1 VERSION=1.21.0 bash

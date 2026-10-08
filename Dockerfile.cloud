@@ -36,6 +36,7 @@ RUN cp -R /usr/src/app/apps/dokploy/.next /prod/dokploy/.next \
 # Turbopack's links to external server packages point into the monorepo's
 # store; re-point them into the deployed node_modules as seen at /app.
 RUN node scripts/relink-next-externals.mjs /prod/dokploy /app
+RUN node scripts/prune-runtime-deps.mjs /prod/dokploy
 RUN cp -R /usr/src/app/apps/dokploy/dist /prod/dokploy/dist
 
 FROM base AS dokploy
