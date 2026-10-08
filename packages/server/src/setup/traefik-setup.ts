@@ -48,8 +48,14 @@ const restoreContainer = async (docker: Docker, info: ContainerInfo) => {
 	const name = info.Name.replace(/^\//, "");
 	const restored = await docker.createContainer({
 		name,
-		Image: info.Config.Image,
+		// The exact image that ran, even if its tag has moved since.
+		Image: info.Image,
 		Env: info.Config.Env,
+		Cmd: info.Config.Cmd ?? undefined,
+		Entrypoint: info.Config.Entrypoint ?? undefined,
+		Labels: info.Config.Labels,
+		WorkingDir: info.Config.WorkingDir,
+		User: info.Config.User,
 		ExposedPorts: info.Config.ExposedPorts,
 		HostConfig: info.HostConfig,
 		NetworkingConfig: {
@@ -171,6 +177,12 @@ export const initializeStandaloneTraefik = async ({
 			"Traefik could not be recreated, restoring the previous one",
 			error,
 		);
+		// A replacement that was created but failed to start still holds the
+		// name; it has to go or the previous container cannot come back.
+		await docker
+			.getContainer(containerName)
+			.remove({ force: true })
+			.catch(() => undefined);
 		if (previous) await restoreContainer(docker, previous);
 		throw error;
 	}
