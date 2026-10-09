@@ -84,7 +84,17 @@ getent passwd | while IFS=: read -r name _ uid _ _ home shell; do
 	case "$shell" in */nologin|*/false) locked=1 ;; esac
 	keys=$(as_user "$name" cat "$home/.ssh/authorized_keys" 2>/dev/null | grep -cE '^(ssh-|ecdsa-|sk-)' || true)
 	printf 'USER\\t%s\\t%s\\t%s\\t%s\\t%s\\t%s\\t%s\\n' "$name" "$uid" "$shell" "$home" "$admin" "$locked" "\${keys:-0}"
-done`);
+done
+# Who sshd lets in at all: an account outside AllowUsers exists but cannot log in.
+allow=$({ $SUDO sshd -T -C user=nobody,host=localhost,addr=127.0.0.1,laddr=127.0.0.1,lport=1 2>/dev/null || $SUDO sshd -T 2>/dev/null; } | awk '/^allowusers /{ $1=""; print substr($0,2) }' | tr '\\n' ' ')
+printf 'ALLOW\\t%s\\n' "$allow"`);
+
+/** Users sshd admits; empty when there is no AllowUsers restriction. */
+export const parseAllowUsers = (stdout: string) =>
+	(stdout.split("\n").find((line) => line.startsWith("ALLOW\t")) ?? "")
+		.slice(6)
+		.split(/\s+/)
+		.filter(Boolean);
 
 export const parseUsers = (stdout: string): HostUser[] =>
 	stdout
@@ -185,6 +195,17 @@ if $SUDO systemctl is-active --quiet ssh.socket; then $SUDO systemctl restart ss
 $SUDO systemctl restart ssh 2>/dev/null || $SUDO systemctl restart sshd
 echo "PENDING_CONFIRM"`;
 
+/** After a restart that should open a port: undo at once when nothing listens. */
+const expectListening = (port: number, revert: string) => `sleep 2
+if ! $SUDO ss -tlnH "sport = :${port}" | grep -q .; then
+	${revert}
+	$SUDO systemctl daemon-reload
+	if $SUDO systemctl is-active --quiet ssh.socket; then $SUDO systemctl restart ssh.socket; fi
+	$SUDO systemctl restart ssh 2>/dev/null || $SUDO systemctl restart sshd
+	echo "ERROR SSH restarted but nothing listens on port ${port}; the change was undone" >&2
+	exit 8
+fi`;
+
 /** Run from a fresh connection after a restart: proves SSH still works. */
 export const confirmSshScript = () =>
 	script(`$SUDO systemctl stop ${REVERT_UNIT}.timer 2>/dev/null || true
@@ -242,11 +263,14 @@ export const validateRescuePort = (port: number, sshPorts: number[]) => {
 export const enableRescueScript = (input: {
 	port: number;
 	password: string;
+	publicKeys: string[];
 	sshPorts: number[];
 }) => {
 	const sshPorts = input.sshPorts.length ? input.sshPorts : [22];
+	// Key and password both: one leaked secret is not enough to get in.
 	const match = `Match LocalPort ${input.port}
     AllowUsers ${RESCUE_USER}
+    AuthenticationMethods publickey,password
     PasswordAuthentication yes
     KbdInteractiveAuthentication yes
     PermitRootLogin no
@@ -259,9 +283,19 @@ Match User ${RESCUE_USER} LocalPort ${sshPorts.join(",")}
 	// The first Port line anywhere replaces sshd's implicit 22, so the ports
 	// SSH listens on now are listed again unless a file already names them.
 	return script(`set -e
+# A hand-written ssh.socket (ListenStream overrides) ignores Port lines, so
+# the rescue port would never listen; such hosts manage rescue themselves.
+if ls /etc/systemd/system/ssh.socket.d/*.conf >/dev/null 2>&1 || systemctl list-unit-files 2>/dev/null | grep -q '^ssh-.*\\.socket'; then
+	echo "ERROR this server's SSH sockets are configured by hand; set up the rescue login with the tooling that manages them" >&2
+	exit 7
+fi
 id ${RESCUE_USER} >/dev/null 2>&1 || $SUDO useradd --create-home --shell /bin/bash ${RESCUE_USER}
 printf '%s:%s\n' ${RESCUE_USER} ${literal(input.password)} | $SUDO chpasswd
-$SUDO usermod --unlock --expiredate '' -aG "$ADMIN_GROUP" ${RESCUE_USER}
+# No sudo: from rescue, root is one su - (and the root password) away.
+$SUDO usermod --unlock --expiredate '' ${RESCUE_USER}
+for group in sudo wheel admin docker adm; do $SUDO gpasswd -d ${RESCUE_USER} "$group" >/dev/null 2>&1 || true; done
+home=$(getent passwd ${RESCUE_USER} | cut -d: -f6)
+printf '%s\n' ${literal(input.publicKeys.join("\n"))} | as_user ${RESCUE_USER} sh -c "$WRITE_KEYS" _ "$home"
 if [ -f ${RESCUE_DROP_IN} ]; then $SUDO cp ${RESCUE_DROP_IN} ${RESCUE_BACKUP}; else $SUDO rm -f ${RESCUE_BACKUP}; fi
 next=$(mktemp)
 echo "# Managed by Dokploy: emergency login for ${RESCUE_USER} on port ${input.port}." > "$next"
@@ -276,7 +310,8 @@ if $SUDO ufw status 2>/dev/null | grep -q '^Status: active'; then
 	$SUDO ufw allow ${input.port}/tcp comment 'rescue login (Dokploy)' >/dev/null
 fi
 set +e
-${restartSshWithSafetyNet(`if [ -f ${RESCUE_BACKUP} ]; then $SUDO cp ${RESCUE_BACKUP} ${RESCUE_DROP_IN}; else $SUDO rm -f ${RESCUE_DROP_IN}; fi`)}`);
+${restartSshWithSafetyNet(`if [ -f ${RESCUE_BACKUP} ]; then $SUDO cp ${RESCUE_BACKUP} ${RESCUE_DROP_IN}; else $SUDO rm -f ${RESCUE_DROP_IN}; fi`)}
+${expectListening(input.port, `if [ -f ${RESCUE_BACKUP} ]; then $SUDO cp ${RESCUE_BACKUP} ${RESCUE_DROP_IN}; else $SUDO rm -f ${RESCUE_DROP_IN}; fi`)}`);
 };
 
 export const rotateRescuePasswordScript = (password: string) =>

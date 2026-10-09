@@ -304,6 +304,14 @@ const UsersTab = ({ serverId }: { serverId: string }) => {
 					/>
 				}
 			/>
+			{(data?.allowUsers.length ?? 0) > 0 && (
+				<p className="text-xs text-muted-foreground">
+					SSH only admits{" "}
+					<span className="font-mono">{data?.allowUsers.join(", ")}</span>.
+					Other accounts exist but cannot log in until the SSH configuration
+					allows them.
+				</p>
+			)}
 			{isPending ? (
 				<p className="py-3 text-[13px] text-muted-foreground">
 					Reading accounts…
@@ -311,8 +319,9 @@ const UsersTab = ({ serverId }: { serverId: string }) => {
 			) : (
 				<ul className="divide-y">
 					{data?.users.map((user) => {
+						const isRescue = user.name === "rescue";
 						const protectedUser =
-							user.name === "root" || user.name === data.loginUser;
+							user.name === "root" || user.name === data.loginUser || isRescue;
 						return (
 							<li key={user.name} className="flex items-center gap-3 py-2.5">
 								<div className="flex min-w-0 flex-1 flex-col">
@@ -328,6 +337,11 @@ const UsersTab = ({ serverId }: { serverId: string }) => {
 										{user.locked && (
 											<Badge variant="orange" className="text-[10px]">
 												locked
+											</Badge>
+										)}
+										{isRescue && (
+											<Badge variant="secondary" className="text-[10px]">
+												break-glass login
 											</Badge>
 										)}
 										{user.name === data.loginUser && (
@@ -349,6 +363,12 @@ const UsersTab = ({ serverId }: { serverId: string }) => {
 											variant="ghost"
 											size="icon"
 											className="size-8 text-muted-foreground"
+											disabled={protectedUser}
+											title={
+												protectedUser
+													? "Managed elsewhere: Dokploy and other tools log in with these keys"
+													: "Replace SSH keys"
+											}
 											aria-label={`SSH keys for ${user.name}`}
 										>
 											<KeyRound className="size-4" />
@@ -359,7 +379,7 @@ const UsersTab = ({ serverId }: { serverId: string }) => {
 									variant="ghost"
 									size="icon"
 									className="size-8 text-muted-foreground"
-									disabled={protectedUser && !user.locked}
+									disabled={isRescue || (protectedUser && !user.locked)}
 									aria-label={
 										user.locked ? `Unlock ${user.name}` : `Lock ${user.name}`
 									}
@@ -473,6 +493,7 @@ const RescueTab = ({ serverId }: { serverId: string }) => {
 	const rotate = api.hostAccess.rotateRescue.useMutation();
 	const disable = api.hostAccess.disableRescue.useMutation();
 	const [port, setPort] = useState("2299");
+	const [rescueKeys, setRescueKeys] = useState("");
 	const [revealed, setRevealed] = useState<string | null>(null);
 	const refresh = () => utils.hostAccess.rescue.invalidate({ serverId });
 
@@ -485,9 +506,10 @@ const RescueTab = ({ serverId }: { serverId: string }) => {
 	return (
 		<div className="flex flex-col gap-4">
 			<p className="text-[13px] text-muted-foreground">
-				A password login for one user, <code>rescue</code>, on its own port. It
-				works when keys, the secure network or Dokploy itself are not available,
-				and only for that user on that port.
+				A break-glass login for one user, <code>rescue</code>, on its own port.
+				It works when the secure network, your normal keys or Dokploy itself are
+				down. Getting in needs your SSH key <em>and</em> the password, and the
+				account has no admin rights: become root with <code>su -</code>.
 			</p>
 			{revealed && <Secret label="Rescue password" value={revealed} />}
 			{active ? (
@@ -539,35 +561,57 @@ const RescueTab = ({ serverId }: { serverId: string }) => {
 					</div>
 				</div>
 			) : (
-				<div className="flex items-end gap-3">
+				<div className="flex flex-col gap-3">
 					<div className="flex flex-col gap-1.5">
-						<Label htmlFor="rescue-port">Port</Label>
-						<div className="w-28">
-							<Input
-								id="rescue-port"
-								inputMode="numeric"
-								value={port}
-								onChange={(event) => setPort(event.target.value)}
-							/>
-						</div>
+						<Label htmlFor="rescue-keys">Your SSH public key</Label>
+						<Textarea
+							id="rescue-keys"
+							rows={3}
+							className="font-mono text-xs"
+							placeholder="ssh-ed25519 AAAA… you@laptop"
+							value={rescueKeys}
+							onChange={(event) => setRescueKeys(event.target.value)}
+						/>
 					</div>
-					<DialogAction
-						type="default"
-						title="Turn the rescue login on?"
-						description={`SSH restarts with port ${port} added. If Dokploy cannot log in again afterwards, the server undoes the change within three minutes. If this server has a cloud firewall, open port ${port} there too.`}
-						onClick={async () => {
-							await enable
-								.mutateAsync({ serverId, port: Number(port) })
-								.then((result) => {
-									setRevealed(result.password);
-									toast.success(`Rescue login on port ${result.port}`);
-									refresh();
-								})
-								.catch(fail);
-						}}
-					>
-						<Button isLoading={enable.isPending}>Turn on</Button>
-					</DialogAction>
+					<div className="flex items-end gap-3">
+						<div className="flex flex-col gap-1.5">
+							<Label htmlFor="rescue-port">Port</Label>
+							<div className="w-28">
+								<Input
+									id="rescue-port"
+									inputMode="numeric"
+									value={port}
+									onChange={(event) => setPort(event.target.value)}
+								/>
+							</div>
+						</div>
+						<DialogAction
+							type="default"
+							title="Turn the rescue login on?"
+							description={`SSH restarts with port ${port} added. If Dokploy cannot log in again afterwards, the server undoes the change within three minutes. If this server has a cloud firewall, open port ${port} there too.`}
+							onClick={async () => {
+								await enable
+									.mutateAsync({
+										serverId,
+										port: Number(port),
+										publicKeys: rescueKeys,
+									})
+									.then((result) => {
+										setRevealed(result.password);
+										toast.success(`Rescue login on port ${result.port}`);
+										refresh();
+									})
+									.catch(fail);
+							}}
+						>
+							<Button
+								isLoading={enable.isPending}
+								disabled={!rescueKeys.trim()}
+							>
+								Turn on
+							</Button>
+						</DialogAction>
+					</div>
 				</div>
 			)}
 		</div>
