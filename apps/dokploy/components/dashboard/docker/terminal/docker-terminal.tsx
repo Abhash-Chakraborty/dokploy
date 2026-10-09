@@ -1,6 +1,6 @@
+import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import React, { useEffect, useRef } from "react";
-import { FitAddon } from "xterm-addon-fit";
 import "@xterm/xterm/css/xterm.css";
 import { AttachAddon } from "@xterm/addon-attach";
 import { ClipboardAddon } from "@xterm/addon-clipboard";
@@ -52,8 +52,22 @@ export const DockerTerminal: React.FC<Props> = ({
 			}
 			term = new Terminal({
 				cursorBlink: true,
-				lineHeight: 1.4,
-				convertEol: true,
+				lineHeight: 1.25,
+				// Both sides of this socket are PTYs, which already send \r\n.
+				convertEol: false,
+				rescaleOverlappingGlyphs: true,
+				fontFamily: [
+					getComputedStyle(document.documentElement)
+						.getPropertyValue("--font-geist-mono")
+						.trim(),
+					"ui-monospace",
+					"Menlo",
+					"Consolas",
+					"monospace",
+				]
+					.filter(Boolean)
+					.join(", "),
+				fontSize: 13,
 				theme: {
 					cursor: resolvedTheme === "light" ? "#000000" : "transparent",
 					background: "rgba(0, 0, 0, 0)",

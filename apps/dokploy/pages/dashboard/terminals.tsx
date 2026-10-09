@@ -11,10 +11,10 @@ import { appRouter } from "@/server/api/root";
 const Terminals = () => {
 	const [serverId, setServerId] = useState<string>("local");
 	return (
-		// Cap to the viewport so the page itself never scrolls — only the
-		// terminal canvas inside TerminalView scrolls.
-		<div className="flex h-[calc(100dvh-5rem)] min-h-0 w-full flex-col gap-3">
-			<h1 className="text-xl font-semibold tracking-tight">Terminal</h1>
+		// Exactly the space under the top bar (3rem) and inside the page's
+		// padding (0.5rem top; -mb-6 trims the 2.5rem bottom to 1rem), so only the
+		// terminal scrolls.
+		<div className="-mb-6 flex h-[calc(100dvh-4.5rem)] min-h-0 w-full flex-col gap-2 pt-2">
 			<TerminalView
 				serverId={serverId}
 				onServerChange={setServerId}
