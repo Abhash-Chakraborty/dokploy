@@ -11,6 +11,7 @@ import {
 	ShieldCheck,
 	UserMinus,
 } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { AddUserPermissions } from "@/components/dashboard/settings/users/add-permissions";
 import { ChangeRole } from "@/components/dashboard/settings/users/change-role";
@@ -273,128 +274,144 @@ export const MembersTab = () => {
 															role={m.role}
 														/>
 													)}
-													<DropdownMenuItem
-														onSelect={async () => {
-															await pin
-																.mutateAsync({
-																	memberId: m.memberId,
-																	pinned: !m.rolePinned,
-																})
-																.then(refresh)
-																.catch((error: Error) =>
-																	toast.error(error.message),
-																);
-														}}
-													>
-														{m.rolePinned ? (
-															<LockOpen className="size-4" />
-														) : (
-															<Lock className="size-4" />
-														)}
-														<div className="flex flex-col">
-															<span>
-																{m.rolePinned ? "Unlock role" : "Lock role"}
-															</span>
-															<span className="text-xs text-muted-foreground">
-																{m.rolePinned
-																	? "SSO groups can change it again"
-																	: "SSO groups won't change it"}
-															</span>
-														</div>
-													</DropdownMenuItem>
-													{isOwnerMe && !suspended && (
-														<DialogAction
-															title={`Make ${label} the owner?`}
-															description="They get full control of this organization, including billing and deleting it. You stay on as an admin, and only the new owner can undo this."
-															type="destructive"
-															onClick={async () => {
-																await transferOwnership
-																	.mutateAsync({ memberId: m.memberId })
-																	.then(async () => {
-																		await refresh();
-																		toast.success("Ownership transferred");
-																	})
-																	.catch((error: Error) =>
-																		toast.error(error.message),
-																	);
-															}}
-														>
-															<DropdownMenuItem
-																onSelect={(e) => e.preventDefault()}
-															>
-																<Crown className="size-4" />
-																Make owner
-															</DropdownMenuItem>
-														</DialogAction>
-													)}
-													<DropdownMenuSeparator />
-													{suspended ? (
-														<DropdownMenuItem
-															onSelect={async () => {
-																await reactivate
-																	.mutateAsync({ userId: m.userId })
-																	.then(async () => {
-																		await refresh();
-																		toast.success("Member reactivated");
-																	})
-																	.catch((error: Error) =>
-																		toast.error(error.message),
-																	);
-															}}
-														>
-															<RotateCcw className="size-4" />
-															Reactivate
+													{agent ? (
+														<DropdownMenuItem asChild>
+															<Link href="/dashboard/settings/agents">
+																<Bot className="size-4" />
+																<div className="flex flex-col">
+																	<span>Open in Agents</span>
+																	<span className="text-xs text-muted-foreground">
+																		Keys, pause, rename or delete
+																	</span>
+																</div>
+															</Link>
 														</DropdownMenuItem>
 													) : (
-														<DialogAction
-															title={`Suspend ${label}?`}
-															description="They are signed out everywhere, cannot sign in, and their API keys stop working until reactivated. Nothing is deleted."
-															type="destructive"
-															onClick={async () => {
-																await suspend
-																	.mutateAsync({ userId: m.userId })
-																	.then(async () => {
-																		await refresh();
-																		toast.success("Member suspended");
-																	})
-																	.catch((error: Error) =>
-																		toast.error(error.message),
-																	);
-															}}
-														>
+														<>
 															<DropdownMenuItem
-																onSelect={(e) => e.preventDefault()}
+																onSelect={async () => {
+																	await pin
+																		.mutateAsync({
+																			memberId: m.memberId,
+																			pinned: !m.rolePinned,
+																		})
+																		.then(refresh)
+																		.catch((error: Error) =>
+																			toast.error(error.message),
+																		);
+																}}
 															>
-																<Ban className="size-4" />
-																Suspend
+																{m.rolePinned ? (
+																	<LockOpen className="size-4" />
+																) : (
+																	<Lock className="size-4" />
+																)}
+																<div className="flex flex-col">
+																	<span>
+																		{m.rolePinned ? "Unlock role" : "Lock role"}
+																	</span>
+																	<span className="text-xs text-muted-foreground">
+																		{m.rolePinned
+																			? "SSO groups can change it again"
+																			: "SSO groups won't change it"}
+																	</span>
+																</div>
 															</DropdownMenuItem>
-														</DialogAction>
-													)}
-													{canRemove && (
-														<DialogAction
-															title={`Remove ${label}?`}
-															description="They lose access to this organization. Their account is kept if they belong to other organizations."
-															type="destructive"
-															onClick={async () => {
-																await removeMember
-																	.mutateAsync({ memberId: m.memberId })
-																	.then(async () => {
-																		await refresh();
-																		toast.success("Member removed");
-																	})
-																	.catch((error: Error) =>
-																		toast.error(error.message),
-																	);
-															}}
-														>
-															<DropdownMenuItem
-																className="text-destructive focus:text-destructive"
-																onSelect={(e) => e.preventDefault()}
-															>
-																<UserMinus className="size-4" />
-																Remove from organization
-															</DropdownMenuItem>
-														</DialogAction>
+															{isOwnerMe && !suspended && (
+																<DialogAction
+																	title={`Make ${label} the owner?`}
+																	description="They get full control of this organization, including billing and deleting it. You stay on as an admin, and only the new owner can undo this."
+																	type="destructive"
+																	onClick={async () => {
+																		await transferOwnership
+																			.mutateAsync({ memberId: m.memberId })
+																			.then(async () => {
+																				await refresh();
+																				toast.success("Ownership transferred");
+																			})
+																			.catch((error: Error) =>
+																				toast.error(error.message),
+																			);
+																	}}
+																>
+																	<DropdownMenuItem
+																		onSelect={(e) => e.preventDefault()}
+																	>
+																		<Crown className="size-4" />
+																		Make owner
+																	</DropdownMenuItem>
+																</DialogAction>
+															)}
+															<DropdownMenuSeparator />
+															{suspended ? (
+																<DropdownMenuItem
+																	onSelect={async () => {
+																		await reactivate
+																			.mutateAsync({ userId: m.userId })
+																			.then(async () => {
+																				await refresh();
+																				toast.success("Member reactivated");
+																			})
+																			.catch((error: Error) =>
+																				toast.error(error.message),
+																			);
+																	}}
+																>
+																	<RotateCcw className="size-4" />
+																	Reactivate
+																</DropdownMenuItem>
+															) : (
+																<DialogAction
+																	title={`Suspend ${label}?`}
+																	description="They are signed out everywhere, cannot sign in, and their API keys stop working until reactivated. Nothing is deleted."
+																	type="destructive"
+																	onClick={async () => {
+																		await suspend
+																			.mutateAsync({ userId: m.userId })
+																			.then(async () => {
+																				await refresh();
+																				toast.success("Member suspended");
+																			})
+																			.catch((error: Error) =>
+																				toast.error(error.message),
+																			);
+																	}}
+																>
+																	<DropdownMenuItem
+																		onSelect={(e) => e.preventDefault()}
+																	>
+																		<Ban className="size-4" />
+																		Suspend
+																	</DropdownMenuItem>
+																</DialogAction>
+															)}
+															{canRemove && (
+																<DialogAction
+																	title={`Remove ${label}?`}
+																	description="They lose access to this organization. Their account is kept if they belong to other organizations."
+																	type="destructive"
+																	onClick={async () => {
+																		await removeMember
+																			.mutateAsync({ memberId: m.memberId })
+																			.then(async () => {
+																				await refresh();
+																				toast.success("Member removed");
+																			})
+																			.catch((error: Error) =>
+																				toast.error(error.message),
+																			);
+																	}}
+																>
+																	<DropdownMenuItem
+																		className="text-destructive focus:text-destructive"
+																		onSelect={(e) => e.preventDefault()}
+																	>
+																		<UserMinus className="size-4" />
+																		Remove from organization
+																	</DropdownMenuItem>
+																</DialogAction>
+															)}
+														</>
 													)}
 												</DropdownMenuContent>
 											</DropdownMenu>

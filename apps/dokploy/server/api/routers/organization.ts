@@ -461,6 +461,24 @@ export const organizationRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			if (input.role === "owner") {
+				const target = await db.query.member.findFirst({
+					where: eq(member.id, input.memberId),
+					columns: { userId: true },
+				});
+				const isAgent = target
+					? await db.query.abhashAgent.findFirst({
+							where: (row, { eq: equals }) => equals(row.userId, target.userId),
+							columns: { id: true },
+						})
+					: null;
+				if (isAgent) {
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message: "An agent cannot own an organization",
+					});
+				}
+			}
 			// Fetch the target member
 			const target = await db.query.member.findFirst({
 				where: eq(member.id, input.memberId),
