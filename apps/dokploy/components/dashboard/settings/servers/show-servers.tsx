@@ -6,9 +6,11 @@ import {
 	RotateCcw,
 	ServerIcon,
 	Settings2,
+	ShieldCheck,
 	Terminal,
 	Trash2,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import type { ReactNode } from "react";
@@ -40,6 +42,14 @@ import { HandleServers } from "./handle-servers";
 import { SetupServer } from "./setup-server";
 import { ShowMonitoringModal } from "./show-monitoring-modal";
 import { WelcomeSubscription } from "./welcome-stripe/welcome-subscription";
+
+const ServerAccess = dynamic(
+	() =>
+		import("@/components/abhash/host-access/server-access").then(
+			(m) => m.ServerAccess,
+		),
+	{ ssr: false },
+);
 
 type FleetRow = RouterOutputs["server"]["fleetOverview"]["servers"][number];
 type ServerRecord = RouterOutputs["server"]["all"][number];
@@ -236,11 +246,29 @@ export const ShowServers = () => {
 					.filter(Boolean)
 					.join(" · ");
 
+	const accessButton = (serverId: string, name: string) =>
+		isCloud ? (
+			<Slot />
+		) : (
+			// A tooltip here stayed open over the panel it opens.
+			<ServerAccess serverId={serverId} serverName={name}>
+				<Button
+					variant="ghost"
+					size="icon"
+					className={iconButton}
+					title="Access: exposure, users, rescue, commands"
+				>
+					<ShieldCheck className="size-4" />
+				</Button>
+			</ServerAccess>
+		);
+
 	const serverActions = (server: ServerRecord) => {
 		const isBuildServer = server.serverType === "build";
 		if (server.serverStatus !== "active") return null;
 		return (
 			<>
+				{accessButton(server.serverId, server.name)}
 				<Slot>
 					<RowAction
 						label={
@@ -394,6 +422,7 @@ export const ShowServers = () => {
 									{liveCells(hostRow)}
 									<TableCell>
 										<div className="flex justify-end gap-0.5">
+											{accessButton("local", "Dokploy host")}
 											<Slot />
 											<Slot>
 												{permissions?.server.terminal && (

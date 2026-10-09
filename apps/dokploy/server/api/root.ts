@@ -10,6 +10,7 @@ import { abhashEnginesRouter } from "./routers/abhash/engines";
 import { abhashFirewallRouter } from "./routers/abhash/firewall";
 import { abhashFleetRouter } from "./routers/abhash/fleet";
 import { abhashForwardAuthRouter } from "./routers/abhash/forward-auth";
+import { abhashHostAccessRouter } from "./routers/abhash/host-access";
 import { abhashJobsRouter } from "./routers/abhash/jobs";
 import { abhashLicenseKeyRouter } from "./routers/abhash/license-key";
 import { abhashLiveRouter } from "./routers/abhash/live";
@@ -128,6 +129,7 @@ export const appRouter = createTRPCRouter({
 	localTerminal: abhashLocalTerminalRouter,
 	cloudflareCache: abhashCloudflareCacheRouter,
 	platformDefaults: abhashPlatformDefaultsRouter,
+	hostAccess: abhashHostAccessRouter,
 	live: abhashLiveRouter,
 	// SSO, SCIM and forward-auth are unmounted in this fork: their UI was
 	// removed, so leaving them routable exposed API surface nothing could
