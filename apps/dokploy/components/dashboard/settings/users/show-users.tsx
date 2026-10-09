@@ -1,5 +1,6 @@
 import { format } from "date-fns";
-import { Loader2, MoreHorizontal, Users } from "lucide-react";
+import { Bot, Loader2, MoreHorizontal, Users } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { AlertBlock } from "@/components/shared/alert-block";
 import { DialogAction } from "@/components/shared/dialog-action";
@@ -38,6 +39,11 @@ export const ShowUsers = () => {
 	const { data: session } = api.user.session.useQuery();
 
 	const FREE_ROLES = ["owner", "admin", "member"];
+	// Service accounts are members under the hood; they are listed on their
+	// own so they never read as a person with a strange email address.
+	const isAgent = (email: string) => email.endsWith("@agents.invalid");
+	const people = data?.filter((member) => !isAgent(member.user.email));
+	const agents = data?.filter((member) => isAgent(member.user.email));
 	const membersWithCustomRoles = data?.filter(
 		(member) => !FREE_ROLES.includes(member.role),
 	);
@@ -81,7 +87,7 @@ export const ShowUsers = () => {
 								<Table>
 									<TableHeader>
 										<TableRow>
-											<TableHead className="w-[100px]">Email</TableHead>
+											<TableHead>Person</TableHead>
 											<TableHead className="text-center">Role</TableHead>
 											<TableHead className="text-center">2FA</TableHead>
 
@@ -90,7 +96,7 @@ export const ShowUsers = () => {
 										</TableRow>
 									</TableHeader>
 									<TableBody>
-										{data?.map((member) => {
+										{people?.map((member) => {
 											const currentUserRole = data?.find(
 												(m) => m.user.id === session?.user?.id,
 											)?.role;
@@ -138,13 +144,21 @@ export const ShowUsers = () => {
 
 											return (
 												<TableRow key={member.id}>
-													<TableCell className="w-[100px]">
-														{member.user.email}
-														{member.user.id === session?.user?.id && (
-															<span className="text-muted-foreground ml-1">
-																(You)
+													<TableCell>
+														<div className="flex flex-col">
+															<span className="font-medium">
+																{`${member.user.firstName ?? ""} ${member.user.lastName ?? ""}`.trim() ||
+																	member.user.email}
+																{member.user.id === session?.user?.id && (
+																	<span className="ml-1 font-normal text-muted-foreground">
+																		(you)
+																	</span>
+																)}
 															</span>
-														)}
+															<span className="text-xs text-muted-foreground">
+																{member.user.email}
+															</span>
+														</div>
 													</TableCell>
 													<TableCell className="text-center">
 														<Badge
@@ -310,6 +324,45 @@ export const ShowUsers = () => {
 										})}
 									</TableBody>
 								</Table>
+								{(agents?.length ?? 0) > 0 && (
+									<section className="flex flex-col gap-2 border-t pt-6">
+										<div className="flex items-end justify-between gap-4">
+											<div>
+												<h2 className="text-[15px] font-semibold tracking-tight">
+													Agents
+												</h2>
+												<p className="text-[13px] text-muted-foreground">
+													Service accounts that act through API keys. They
+													cannot sign in and never see secret values.
+												</p>
+											</div>
+											<Button variant="ghost" size="sm" asChild>
+												<Link href="/dashboard/settings/agents">Manage</Link>
+											</Button>
+										</div>
+										<ul className="divide-y">
+											{agents?.map((member) => (
+												<li
+													key={member.id}
+													className="flex items-center gap-3 py-3"
+												>
+													<span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+														<Bot className="size-4" />
+													</span>
+													<span className="font-medium">
+														{member.user.firstName || "Unnamed agent"}
+													</span>
+													<Badge variant="secondary" className="text-[10px]">
+														{member.role}
+													</Badge>
+													<span className="ml-auto text-xs text-muted-foreground">
+														added {format(new Date(member.createdAt), "PP")}
+													</span>
+												</li>
+											))}
+										</ul>
+									</section>
+								)}
 							</div>
 						)}
 					</>

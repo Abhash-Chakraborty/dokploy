@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from "date-fns";
-import { Check, Copy, Plus, Trash2, X } from "lucide-react";
+import { Bot, Check, Copy, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DialogAction } from "@/components/shared/dialog-action";
@@ -32,27 +32,55 @@ type ApprovalMode = "destructive" | "all" | "none";
 
 const fail = (error: Error) => toast.error(error.message);
 
-const CreateAgent = () => {
+/** Creates an agent, or edits one when `agent` is given. */
+const AgentDialog = ({ agent }: { agent?: Agent }) => {
 	const utils = api.useUtils();
 	const [open, setOpen] = useState(false);
-	const [name, setName] = useState("");
-	const [description, setDescription] = useState("");
-	const [role, setRole] = useState<"member" | "admin">("member");
+	const [name, setName] = useState(agent?.name ?? "");
+	const [description, setDescription] = useState(agent?.description ?? "");
+	const [role, setRole] = useState<"member" | "admin">(
+		agent?.role === "admin" ? "admin" : "member",
+	);
 	const create = api.agents.create.useMutation();
+	const update = api.agents.update.useMutation();
+	const reset = () => {
+		setName(agent?.name ?? "");
+		setDescription(agent?.description ?? "");
+		setRole(agent?.role === "admin" ? "admin" : "member");
+	};
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
+		<Dialog
+			open={open}
+			onOpenChange={(next) => {
+				setOpen(next);
+				if (next) reset();
+			}}
+		>
 			<DialogTrigger asChild>
-				<Button>
-					<Plus className="size-4" />
-					New agent
-				</Button>
+				{agent ? (
+					<Button
+						variant="ghost"
+						size="icon"
+						className="size-8 text-muted-foreground"
+						aria-label={`Edit ${agent.name}`}
+					>
+						<Pencil className="size-4" />
+					</Button>
+				) : (
+					<Button>
+						<Plus className="size-4" />
+						New agent
+					</Button>
+				)}
 			</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>New agent</DialogTitle>
+					<DialogTitle>
+						{agent ? `Edit ${agent.name}` : "New agent"}
+					</DialogTitle>
 					<DialogDescription>
-						A service account with its own keys. Give it access like a person:
-						teams and per-project roles.
+						A service account with its own keys. It shows up as an agent, never
+						as a person, everywhere in the dashboard.
 					</DialogDescription>
 				</DialogHeader>
 				<div className="flex flex-col gap-3">
@@ -92,21 +120,23 @@ const CreateAgent = () => {
 				</div>
 				<DialogFooter>
 					<Button
-						isLoading={create.isPending}
+						disabled={!name.trim()}
+						isLoading={create.isPending || update.isPending}
 						onClick={async () => {
-							await create
-								.mutateAsync({ name, description, role })
+							const done = agent
+								? update.mutateAsync({ id: agent.id, name, description, role })
+								: create.mutateAsync({ name, description, role });
+							await done
 								.then(async () => {
-									toast.success(`${name} created`);
+									toast.success(agent ? "Saved" : `${name} created`);
 									await utils.agents.list.invalidate();
+									await utils.user.all.invalidate();
 									setOpen(false);
-									setName("");
-									setDescription("");
 								})
 								.catch(fail);
 						}}
 					>
-						Create
+						{agent ? "Save" : "Create"}
 					</Button>
 				</DialogFooter>
 			</DialogContent>
@@ -123,6 +153,7 @@ const NewKey = ({ agent }: { agent: Agent }) => {
 	const [allow, setAllow] = useState("");
 	const [ips, setIps] = useState("");
 	const [expiresInDays, setExpiresInDays] = useState("90");
+	const [perMinute, setPerMinute] = useState("");
 	const [issued, setIssued] = useState<string | null>(null);
 	const create = api.agents.createKey.useMutation();
 	const split = (value: string) =>
@@ -183,6 +214,15 @@ const NewKey = ({ agent }: { agent: Agent }) => {
 								/>
 							</div>
 						</div>
+						<div className="flex flex-col gap-1.5">
+							<Label>Requests per minute (blank = no limit)</Label>
+							<Input
+								value={perMinute}
+								inputMode="numeric"
+								placeholder="No limit"
+								onChange={(e) => setPerMinute(e.target.value)}
+							/>
+						</div>
 						<div className="flex items-center justify-between py-3 border-b border-border/60 last:border-b-0">
 							<div>
 								<p className="text-sm font-medium">Read-only</p>
@@ -238,6 +278,7 @@ const NewKey = ({ agent }: { agent: Agent }) => {
 										agentId: agent.id,
 										name,
 										expiresInDays: expiresInDays ? Number(expiresInDays) : null,
+										requestsPerMinute: perMinute ? Number(perMinute) : null,
 										policy: {
 											readOnly,
 											approvalMode,
@@ -334,27 +375,36 @@ export const AgentsSettings = () => {
 			<PageHeader
 				title="Agents"
 				description="Service accounts with scoped keys. They never see secret values."
-				actions={<CreateAgent />}
+				actions={<AgentDialog />}
 			/>
 
 			<Approvals />
 
 			<ul className="divide-y divide-border/60">
 				{agents?.length === 0 && (
-					<li className="p-6 text-center text-sm text-muted-foreground">
-						No agents yet.
-					</li>
+					<li className="py-6 text-sm text-muted-foreground">No agents yet.</li>
 				)}
 				{agents?.map((agent) => (
-					<li key={agent.id} className="flex flex-col gap-2 px-4 py-3">
-						<div className="flex flex-wrap items-center gap-2">
-							<span className="font-medium">{agent.name}</span>
-							{!agent.enabled && <Badge variant="orange">paused</Badge>}
-							<span className="text-xs text-muted-foreground">
-								{agent.description}
+					<li key={agent.id} className="flex flex-col gap-2 py-4">
+						<div className="flex flex-wrap items-center gap-3">
+							<span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+								<Bot className="size-4" />
 							</span>
-							<div className="ml-auto flex items-center gap-2">
+							<div className="flex min-w-0 flex-col">
+								<span className="flex items-center gap-2">
+									<span className="font-medium">{agent.name}</span>
+									<Badge variant="secondary" className="text-[10px]">
+										{agent.role === "admin" ? "Admin" : "Member"}
+									</Badge>
+									{!agent.enabled && <Badge variant="orange">paused</Badge>}
+								</span>
+								<span className="truncate text-xs text-muted-foreground">
+									{agent.description || "No description"}
+								</span>
+							</div>
+							<div className="ml-auto flex items-center gap-1">
 								<NewKey agent={agent} />
+								<AgentDialog agent={agent} />
 								<Button
 									variant="ghost"
 									size="sm"
@@ -386,7 +436,7 @@ export const AgentsSettings = () => {
 									<Button
 										variant="ghost"
 										size="icon"
-										className="text-destructive hover:text-destructive"
+										className="size-8 text-muted-foreground hover:text-destructive"
 										aria-label={`Delete ${agent.name}`}
 									>
 										<Trash2 className="size-4" />
@@ -395,11 +445,16 @@ export const AgentsSettings = () => {
 							</div>
 						</div>
 						{agent.keys.length > 0 && (
-							<ul className="flex flex-col gap-1 text-xs text-muted-foreground">
+							<ul className="ml-11 flex flex-col gap-1 text-xs text-muted-foreground">
 								{agent.keys.map((key) => (
 									<li key={key.id} className="flex items-center gap-2">
 										<code>{key.start}…</code>
 										<span>{key.name}</span>
+										<span>
+											{key.rateLimitEnabled
+												? `${key.rateLimitMax}/min`
+												: "no rate limit"}
+										</span>
 										<span>
 											{key.lastRequest
 												? `last used ${formatDistanceToNow(new Date(key.lastRequest), { addSuffix: true })}`

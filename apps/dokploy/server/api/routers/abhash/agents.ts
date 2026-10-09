@@ -81,6 +81,7 @@ export const abhashAgentsRouter = createTRPCRouter({
 				name: z.string().trim().min(1).max(60).optional(),
 				description: z.string().trim().max(300).optional(),
 				enabled: z.boolean().optional(),
+				role: z.enum(["member", "admin"]).optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -130,6 +131,14 @@ export const abhashAgentsRouter = createTRPCRouter({
 				agentId: z.string(),
 				name: z.string().trim().min(1).max(60),
 				expiresInDays: z.number().int().min(1).max(3650).nullable().default(90),
+				// null: no request cap beyond the key policy.
+				requestsPerMinute: z
+					.number()
+					.int()
+					.min(1)
+					.max(10_000)
+					.nullable()
+					.default(null),
 				policy: policyInput,
 			}),
 		)
@@ -140,6 +149,7 @@ export const abhashAgentsRouter = createTRPCRouter({
 					agentId: input.agentId,
 					name: input.name,
 					expiresInDays: input.expiresInDays,
+					requestsPerMinute: input.requestsPerMinute,
 					policy: input.policy,
 				});
 				await audit(ctx, {
