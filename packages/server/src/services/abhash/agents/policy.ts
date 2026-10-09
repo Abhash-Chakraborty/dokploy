@@ -56,6 +56,28 @@ const ipInCidr = (ip: string, cidr: string) => {
 export type PolicyDenial = { code: "FORBIDDEN"; message: string };
 
 /**
+ * What an agent may never do, whatever its role or key policy: change who
+ * controls the organization, or mint credentials (new agents and keys),
+ * which would let it outlive or widen the access a person gave it.
+ */
+export const AGENT_FORBIDDEN = [
+	// Members, teams, roles and grants: who may do what is a person's call.
+	"access.*",
+	"organization.updateMemberRole",
+	"organization.removeMember",
+	"organization.create",
+	"organization.delete",
+	"organization.update",
+	"agents.*",
+	"user.createApiKey",
+	"user.deleteApiKey",
+	"user.remove",
+	"user.update",
+	"abhashSso.*",
+	"abhashScim.*",
+];
+
+/**
  * Extra limits a key carries on top of its owner's permissions: read-only,
  * an allow-list of procedures, and an IP allow-list. Returns a denial
  * instead of throwing so the caller can map it to its own error type.
@@ -75,6 +97,12 @@ export const checkKeyPolicy = async (
 		});
 		if (agent && !agent.enabled) {
 			return { code: "FORBIDDEN", message: "This agent is paused" };
+		}
+		if (AGENT_FORBIDDEN.some((pattern) => matchesPattern(pattern, path))) {
+			return {
+				code: "FORBIDDEN",
+				message: `Agents may not call ${path}; a person has to do this`,
+			};
 		}
 	}
 	if (!policy) return null;

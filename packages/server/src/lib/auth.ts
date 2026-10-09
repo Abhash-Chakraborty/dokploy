@@ -533,6 +533,23 @@ const { handler, api } = betterAuth({
 				enabled: true,
 				maximumRolesPerOrganization: 10,
 			},
+			organizationHooks: {
+				// Nobody can sign in as an agent, so an agent owner would leave the
+				// organization without anyone able to take it back.
+				beforeUpdateMemberRole: async ({ member, newRole }) => {
+					const roles = Array.isArray(newRole) ? newRole : [newRole];
+					if (!roles.includes("owner")) return;
+					const agent = await db.query.abhashAgent.findFirst({
+						where: eq(schema.abhashAgent.userId, member.userId),
+						columns: { id: true },
+					});
+					if (agent) {
+						throw new APIError("BAD_REQUEST", {
+							message: "An agent cannot own an organization",
+						});
+					}
+				},
+			},
 		}),
 		admin(
 			IS_CLOUD

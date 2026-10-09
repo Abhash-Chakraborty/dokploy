@@ -424,6 +424,20 @@ const bindingsRouter = createTRPCRouter({
  * The member being acted on, checked against the caller: never the owner,
  * never yourself, and only the owner may act on another admin.
  */
+/** Agents are managed on the Agents page; people-only actions refuse them. */
+const refuseAgent = async (userId: string, action: string) => {
+	const agent = await db.query.abhashAgent.findFirst({
+		where: (row, { eq: equals }) => equals(row.userId, userId),
+		columns: { id: true },
+	});
+	if (agent) {
+		throw new TRPCError({
+			code: "BAD_REQUEST",
+			message: `An agent cannot be ${action}. Manage it on the Agents page.`,
+		});
+	}
+};
+
 const targetMember = async (
 	ctx: {
 		session: { activeOrganizationId: string };
@@ -521,6 +535,7 @@ const membersRouter = createTRPCRouter({
 		)
 		.mutation(async ({ ctx, input }) => {
 			await targetMember(ctx, { userId: input.userId });
+			await refuseAgent(input.userId, "suspended (pause it instead)");
 			await suspendUser({
 				userId: input.userId,
 				actorId: ctx.user.id,
@@ -559,6 +574,10 @@ const membersRouter = createTRPCRouter({
 				),
 			});
 			if (!row) throw notFound("Member");
+			await refuseAgent(
+				row.userId,
+				"pinned to an SSO role (SSO never manages it)",
+			);
 			await db
 				.insert(abhashMemberMeta)
 				.values({ memberId: row.id, rolePinned: input.pinned })
@@ -584,6 +603,8 @@ const membersRouter = createTRPCRouter({
 		.input(z.object({ memberId: z.string() }))
 		.mutation(async ({ ctx, input }) => {
 			const row = await targetMember(ctx, { memberId: input.memberId });
+			// Removing only the membership would leave the agent and its keys behind.
+			await refuseAgent(row.userId, "removed here (delete it instead)");
 			const orgId = ctx.session.activeOrganizationId;
 			await db.transaction(async (tx) => {
 				const orgTeams = tx
@@ -642,6 +663,9 @@ const membersRouter = createTRPCRouter({
 				with: { user: { columns: { banned: true } } },
 			});
 			if (!next) throw notFound("Member");
+			// An organization must be owned by a person: nobody can sign in as an
+			// agent to hand it back.
+			await refuseAgent(next.userId, "made the owner");
 			if (next.userId === ctx.user.id) {
 				throw new TRPCError({
 					code: "BAD_REQUEST",

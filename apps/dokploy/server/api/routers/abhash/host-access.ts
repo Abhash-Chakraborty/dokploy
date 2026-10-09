@@ -16,6 +16,7 @@ import {
 	hostCommandScript,
 	listUsersScript,
 	lockUserScript,
+	parseAllowUsers,
 	parseRescueStatus,
 	parseUsers,
 	RESCUE_USER,
@@ -106,6 +107,7 @@ export const abhashHostAccessRouter = createTRPCRouter({
 		const result = await run(input.serverId, listUsersScript());
 		return {
 			loginUser: target.loginUser,
+			allowUsers: parseAllowUsers(result.stdout),
 			users: parseUsers(result.stdout),
 		};
 	}),
@@ -152,10 +154,17 @@ export const abhashHostAccessRouter = createTRPCRouter({
 				input.serverId,
 			);
 			const keys = validatePublicKeys(input.publicKeys);
-			if (input.name === target.loginUser && keys.length === 0) {
+			// Replacing these keys would drop Dokploy's own key or the owner's.
+			if (input.name === target.loginUser || input.name === "root") {
 				throw new TRPCError({
 					code: "BAD_REQUEST",
-					message: `Dokploy logs in as ${input.name}; removing every key would lock it out`,
+					message: `${input.name}'s keys are not replaced from here: Dokploy and other tools log in with them`,
+				});
+			}
+			if (input.name === RESCUE_USER) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "The rescue login is managed on the Rescue tab",
 				});
 			}
 			await run(input.serverId, setKeysScript(input.name, keys));
@@ -176,12 +185,16 @@ export const abhashHostAccessRouter = createTRPCRouter({
 				input.serverId,
 			);
 			if (
-				input.locked &&
-				(input.name === "root" || input.name === target.loginUser)
+				input.name === RESCUE_USER ||
+				(input.locked &&
+					(input.name === "root" || input.name === target.loginUser))
 			) {
 				throw new TRPCError({
 					code: "BAD_REQUEST",
-					message: `Locking ${input.name} would cut Dokploy off from this server`,
+					message:
+						input.name === RESCUE_USER
+							? "The rescue login is the way back in when everything else fails; it is managed on the Rescue tab"
+							: `Locking ${input.name} would cut Dokploy off from this server`,
 				});
 			}
 			await run(input.serverId, lockUserScript(input.name, input.locked));
@@ -205,10 +218,17 @@ export const abhashHostAccessRouter = createTRPCRouter({
 				ctx.session.activeOrganizationId,
 				input.serverId,
 			);
-			if (input.name === "root" || input.name === target.loginUser) {
+			if (
+				input.name === "root" ||
+				input.name === target.loginUser ||
+				input.name === RESCUE_USER
+			) {
 				throw new TRPCError({
 					code: "BAD_REQUEST",
-					message: `${input.name} cannot be deleted: Dokploy needs it to reach this server`,
+					message:
+						input.name === RESCUE_USER
+							? "The rescue login is the way back in when everything else fails; it is never deleted from here"
+							: `${input.name} cannot be deleted: Dokploy needs it to reach this server`,
 				});
 			}
 			await run(input.serverId, deleteUserScript(input.name, input.removeHome));
@@ -232,6 +252,7 @@ export const abhashHostAccessRouter = createTRPCRouter({
 			serverInput.extend({
 				port: z.number().int(),
 				password: z.string().min(12).max(128).optional(),
+				publicKeys: z.string().min(1),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -252,12 +273,21 @@ export const abhashHostAccessRouter = createTRPCRouter({
 				input.port,
 				status.sshPorts.filter((entry) => entry !== status.port),
 			);
+			const rescueKeys = validatePublicKeys(input.publicKeys);
+			if (rescueKeys.length === 0) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message:
+						"Add at least one SSH public key: the rescue login needs a key and the password",
+				});
+			}
 			const password = input.password ?? generatePassword();
 			await run(
 				input.serverId,
 				enableRescueScript({
 					port,
 					password,
+					publicKeys: rescueKeys,
 					sshPorts: status.sshPorts.filter((entry) => entry !== status.port),
 				}),
 			);
@@ -430,7 +460,9 @@ export const abhashHostAccessRouter = createTRPCRouter({
 				let problem: string | null;
 				try {
 					const plan = await planFirewall(input.serverId, organizationId);
-					const hasMesh = plan.rules.some((rule) => rule.origin === "auto:mesh");
+					const hasMesh = plan.rules.some(
+						(rule) => rule.origin === "auto:mesh",
+					);
 					problem =
 						plan.lockout ??
 						(input.level === "private" && !hasMesh

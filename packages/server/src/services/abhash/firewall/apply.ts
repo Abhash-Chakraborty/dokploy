@@ -18,6 +18,7 @@ import {
 	meshSubnetFor,
 	wouldLockOut,
 } from "./compile";
+import { cidrContains } from "./cidr";
 import {
 	applyScript,
 	confirmScript,
@@ -34,7 +35,7 @@ export const contextFor = async (
 ): Promise<CompileContext> => {
 	const row = await db.query.server.findFirst({
 		where: eq(server.serverId, serverId),
-		columns: { port: true },
+		columns: { port: true, ipAddress: true },
 	});
 	const meta = await db.query.abhashServerMeta.findFirst({
 		where: eq(abhashServerMeta.serverId, serverId),
@@ -47,7 +48,14 @@ export const contextFor = async (
 		meshSubnet,
 		// Dokploy reaches the server over the mesh or its public address; the
 		// SSH rule must cover whichever it is.
-		controlAddress: meta?.connectVia === "mesh" ? meshSubnet : null,
+		// A server registered by its mesh address (NetBird and Tailscale both
+		// hand out 100.64.0.0/10) is reached over the mesh whatever the stored
+		// default says.
+		controlAddress:
+			meta?.connectVia === "mesh" ||
+			(row?.ipAddress && cidrContains("100.64.0.0/10", row.ipAddress))
+				? meshSubnet
+				: null,
 	};
 };
 
