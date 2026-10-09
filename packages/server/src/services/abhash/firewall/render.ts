@@ -161,12 +161,19 @@ ufw default allow outgoing >/dev/null
 ${rendered.ufw.join("\n")}
 ufw --force enable >/dev/null
 
-# 4. Published container ports, which never reach ufw's chains.
+# 4. Published container ports, which never reach ufw's chains. The block
+#    declares DOCKER-USER, and a declaration empties the chain, so it goes at
+#    the top of after.rules: appended at the end it wiped any DOCKER-USER
+#    rules other tools had written earlier in the file.
 AFTER=/etc/ufw/after.rules
 sed -i '/${BEGIN}/,/${END}/d' "$AFTER" 2>/dev/null || true
-cat >> "$AFTER" <<'DOCKERBLOCK'
+NEXT="$DIR/after.rules.next"
+cat > "$NEXT" <<'DOCKERBLOCK'
 ${rendered.dockerBlock}
 DOCKERBLOCK
+cat "$AFTER" >> "$NEXT" 2>/dev/null || true
+cat "$NEXT" > "$AFTER"
+rm -f "$NEXT"
 ufw reload >/dev/null 2>&1 || true
 echo "${rendered.hash}" > "$DIR/applied.hash"
 echo "APPLIED ${rendered.hash}"
