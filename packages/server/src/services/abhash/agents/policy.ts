@@ -98,10 +98,7 @@ export const checkKeyPolicy = async (
 		if (agent && !agent.enabled) {
 			return { code: "FORBIDDEN", message: "This agent is paused" };
 		}
-		if (
-			type !== "query" &&
-			AGENT_FORBIDDEN.some((pattern) => matchesPattern(pattern, path))
-		) {
+		if (AGENT_FORBIDDEN.some((pattern) => matchesPattern(pattern, path))) {
 			return {
 				code: "FORBIDDEN",
 				message: `Agents may not call ${path}; a person has to do this`,

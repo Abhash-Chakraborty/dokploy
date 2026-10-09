@@ -197,12 +197,14 @@ echo "PENDING_CONFIRM"`;
 
 /** After a restart that should open a port: undo at once when nothing listens. */
 const expectListening = (port: number, revert: string) => `sleep 2
-if ! $SUDO ss -tlnH "sport = :${port}" | grep -q .; then
+# The listener must be SSH's own (sshd, or systemd for a socket-activated
+# sshd); another program on the port would make the login a dead end.
+if ! $SUDO ss -tlnpH "sport = :${port}" | grep -qE '"(sshd|systemd)"'; then
 	${revert}
 	$SUDO systemctl daemon-reload
 	if $SUDO systemctl is-active --quiet ssh.socket; then $SUDO systemctl restart ssh.socket; fi
 	$SUDO systemctl restart ssh 2>/dev/null || $SUDO systemctl restart sshd
-	echo "ERROR SSH restarted but nothing listens on port ${port}; the change was undone" >&2
+	echo "ERROR SSH restarted but does not answer on port ${port}; the change was undone" >&2
 	exit 8
 fi`;
 
@@ -218,6 +220,10 @@ export type RescueStatus = {
 	managed: boolean;
 	sshPorts: number[];
 	firewall: "ufw" | "none";
+	/** The login asks for a key as well as the password. */
+	keyRequired: boolean;
+	/** The rescue account can become root without the root password. */
+	admin: boolean;
 };
 
 export const rescueStatusScript = () =>
@@ -228,11 +234,19 @@ port=$($SUDO grep -rhoiE '^Match LocalPort [0-9]+' /etc/ssh/sshd_config.d/ 2>/de
 # connection to evaluate; the port list is global, so any connection will do.
 ports=$({ $SUDO sshd -T -C user=root,host=localhost,addr=127.0.0.1,laddr=127.0.0.1,lport=1 2>/dev/null || $SUDO sshd -T 2>/dev/null; } | awk '/^port /{print $2}' | tr '\\n' ',')
 fw=none; $SUDO ufw status 2>/dev/null | grep -q '^Status: active' && fw=ufw
-printf 'RESCUE\\t%s\\t%s\\t%s\\t%s\\t%s\\n' "$exists" "\${port:-}" "$managed" "$ports" "$fw"`);
+keyed=0; $SUDO grep -rqsiE '^[[:space:]]*AuthenticationMethods[[:space:]]+publickey,password' /etc/ssh/sshd_config.d/ && keyed=1
+admin=0
+if [ "$exists" = 1 ]; then
+	id -nG ${RESCUE_USER} | tr ' ' '\\n' | grep -qxE 'sudo|wheel|admin|docker' && admin=1
+	$SUDO grep -rqsE '^[[:space:]]*${RESCUE_USER}[[:space:]]' /etc/sudoers /etc/sudoers.d/ && admin=1
+fi
+printf 'RESCUE\\t%s\\t%s\\t%s\\t%s\\t%s\\t%s\\t%s\\n' "$exists" "\${port:-}" "$managed" "$ports" "$fw" "$keyed" "$admin"`);
 
 export const parseRescueStatus = (stdout: string): RescueStatus => {
 	const line = stdout.split("\n").find((entry) => entry.startsWith("RESCUE\t"));
-	const [, exists, port, managed, ports, firewall] = (line ?? "").split("\t");
+	const [, exists, port, managed, ports, firewall, keyed, admin] = (
+		line ?? ""
+	).split("\t");
 	return {
 		userExists: exists === "1",
 		port: port ? Number(port) : null,
@@ -243,6 +257,8 @@ export const parseRescueStatus = (stdout: string): RescueStatus => {
 			.map(Number)
 			.filter(Number.isFinite),
 		firewall: firewall === "ufw" ? "ufw" : "none",
+		keyRequired: keyed === "1",
+		admin: admin === "1",
 	};
 };
 
@@ -288,6 +304,10 @@ Match User ${RESCUE_USER} LocalPort ${sshPorts.join(",")}
 if ls /etc/systemd/system/ssh.socket.d/*.conf >/dev/null 2>&1 || systemctl list-unit-files 2>/dev/null | grep -q '^ssh-.*\\.socket'; then
 	echo "ERROR this server's SSH sockets are configured by hand; set up the rescue login with the tooling that manages them" >&2
 	exit 7
+fi
+if $SUDO ss -tlnpH "sport = :${input.port}" | grep -vqE '"(sshd|systemd)"' && $SUDO ss -tlnH "sport = :${input.port}" | grep -q .; then
+	echo "ERROR port ${input.port} is already used by another program" >&2
+	exit 9
 fi
 id ${RESCUE_USER} >/dev/null 2>&1 || $SUDO useradd --create-home --shell /bin/bash ${RESCUE_USER}
 printf '%s:%s\n' ${RESCUE_USER} ${literal(input.password)} | $SUDO chpasswd

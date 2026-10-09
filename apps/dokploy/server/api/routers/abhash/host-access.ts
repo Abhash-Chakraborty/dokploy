@@ -186,7 +186,8 @@ export const abhashHostAccessRouter = createTRPCRouter({
 			);
 			if (
 				input.name === RESCUE_USER ||
-				(input.locked && (input.name === "root" || input.name === target.loginUser))
+				(input.locked &&
+					(input.name === "root" || input.name === target.loginUser))
 			) {
 				throw new TRPCError({
 					code: "BAD_REQUEST",
@@ -272,13 +273,21 @@ export const abhashHostAccessRouter = createTRPCRouter({
 				input.port,
 				status.sshPorts.filter((entry) => entry !== status.port),
 			);
+			const rescueKeys = validatePublicKeys(input.publicKeys);
+			if (rescueKeys.length === 0) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message:
+						"Add at least one SSH public key: the rescue login needs a key and the password",
+				});
+			}
 			const password = input.password ?? generatePassword();
 			await run(
 				input.serverId,
 				enableRescueScript({
 					port,
 					password,
-					publicKeys: validatePublicKeys(input.publicKeys),
+					publicKeys: rescueKeys,
 					sshPorts: status.sshPorts.filter((entry) => entry !== status.port),
 				}),
 			);
@@ -451,7 +460,9 @@ export const abhashHostAccessRouter = createTRPCRouter({
 				let problem: string | null;
 				try {
 					const plan = await planFirewall(input.serverId, organizationId);
-					const hasMesh = plan.rules.some((rule) => rule.origin === "auto:mesh");
+					const hasMesh = plan.rules.some(
+						(rule) => rule.origin === "auto:mesh",
+					);
 					problem =
 						plan.lockout ??
 						(input.level === "private" && !hasMesh

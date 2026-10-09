@@ -524,6 +524,18 @@ const RescueTab = ({ serverId }: { serverId: string }) => {
 							</Badge>
 						)}
 					</div>
+					{!data.keyRequired && (
+						<AlertBlock type="warning">
+							This login accepts the password alone. Turn it off and on again to
+							require your SSH key as well.
+						</AlertBlock>
+					)}
+					{data.admin && (
+						<AlertBlock type="warning">
+							The rescue account has admin rights (sudo, docker or a sudoers
+							rule), so its password alone is enough to control the server.
+						</AlertBlock>
+					)}
 					<div className="flex flex-wrap gap-2">
 						<Button
 							variant="outline"

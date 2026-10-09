@@ -41,12 +41,16 @@ describe("host access scripts", () => {
 	});
 
 	it("parses the rescue status", () => {
-		expect(parseRescueStatus("RESCUE\t1\t2299\t1\t22,2299,\tufw\n")).toEqual({
+		expect(
+			parseRescueStatus("RESCUE\t1\t2299\t1\t22,2299,\tufw\t1\t0\n"),
+		).toEqual({
 			userExists: true,
 			port: 2299,
 			managed: true,
 			sshPorts: [22, 2299],
 			firewall: "ufw",
+			keyRequired: true,
+			admin: false,
 		});
 		expect(parseRescueStatus("")).toMatchObject({
 			userExists: false,
