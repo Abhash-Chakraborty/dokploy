@@ -27,6 +27,16 @@ export const listAgents = async (organizationId: string) => {
 	return Promise.all(
 		agents.map(async (agent) => ({
 			...agent,
+			role:
+				(
+					await db.query.member.findFirst({
+						where: and(
+							eq(member.userId, agent.userId),
+							eq(member.organizationId, organizationId),
+						),
+						columns: { role: true },
+					})
+				)?.role ?? "member",
 			keys: await db.query.apikey.findMany({
 				where: eq(apikey.referenceId, agent.userId),
 				columns: {
@@ -37,6 +47,8 @@ export const listAgents = async (organizationId: string) => {
 					lastRequest: true,
 					expiresAt: true,
 					createdAt: true,
+					rateLimitEnabled: true,
+					rateLimitMax: true,
 				},
 			}),
 		})),
@@ -54,7 +66,9 @@ export const createAgent = async (input: {
 	return db.transaction(async (tx) => {
 		await tx.insert(user).values({
 			id: userId,
-			name: input.name,
+			// Member lists read firstName; without it they showed only the
+			// generated address.
+			firstName: input.name,
 			email: serviceAccountEmail(input.organizationId),
 			emailVerified: false,
 			createdAt: new Date(),
@@ -96,10 +110,38 @@ export const findAgent = async (organizationId: string, id: string) => {
 export const updateAgent = async (
 	organizationId: string,
 	id: string,
-	values: { name?: string; description?: string; enabled?: boolean },
+	values: {
+		name?: string;
+		description?: string;
+		enabled?: boolean;
+		role?: "member" | "admin";
+	},
 ) => {
 	const agent = await findAgent(organizationId, id);
-	await db.update(abhashAgent).set(values).where(eq(abhashAgent.id, agent.id));
+	const { role, ...agentValues } = values;
+	if (Object.keys(agentValues).length > 0) {
+		await db
+			.update(abhashAgent)
+			.set(agentValues)
+			.where(eq(abhashAgent.id, agent.id));
+	}
+	if (role) {
+		await db
+			.update(member)
+			.set({ role } as never)
+			.where(
+				and(
+					eq(member.userId, agent.userId),
+					eq(member.organizationId, organizationId),
+				),
+			);
+	}
+	if (values.name) {
+		await db
+			.update(user)
+			.set({ firstName: values.name } as never)
+			.where(eq(user.id, agent.userId));
+	}
 	forgetAgentCache();
 	return findAgent(organizationId, id);
 };
@@ -124,9 +166,11 @@ export const issueAgentKey = async (input: {
 	agentId: string;
 	name: string;
 	expiresInDays?: number | null;
+	requestsPerMinute?: number | null;
 	policy: KeyPolicyInput;
 }) => {
 	const agent = await findAgent(input.organizationId, input.agentId);
+	// Leaving these out kept the plugin's default of ten requests a day.
 	const key = await createApiKey(agent.userId, {
 		name: input.name,
 		prefix: "dkp_agent",
@@ -134,6 +178,9 @@ export const issueAgentKey = async (input: {
 			? input.expiresInDays * 24 * 60 * 60
 			: undefined,
 		metadata: { organizationId: input.organizationId },
+		rateLimitEnabled: !!input.requestsPerMinute,
+		rateLimitTimeWindow: 60_000,
+		rateLimitMax: input.requestsPerMinute ?? undefined,
 	});
 	await db
 		.insert(abhashApiKeyPolicy)

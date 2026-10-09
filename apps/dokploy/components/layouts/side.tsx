@@ -368,7 +368,7 @@ const MENU: Menu = {
 						!!(auth?.role === "owner" || auth?.role === "admin") && !isCloud,
 				},
 				{
-					title: "Service accounts",
+					title: "Agents",
 					url: "/dashboard/settings/agents",
 					description:
 						"Service accounts with scoped API keys. They never see secret values.",
