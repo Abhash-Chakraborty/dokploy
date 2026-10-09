@@ -178,7 +178,7 @@ const KeysDialog = ({
 	const [open, setOpen] = useState(false);
 	const [name, setName] = useState("");
 	const [keys, setKeys] = useState("");
-	const [sudo, setSudo] = useState<"none" | "password" | "nopasswd">("none");
+	const [sudo, setSudo] = useState<"none" | "nopasswd">("none");
 	const create = api.hostAccess.createUser.useMutation();
 	const setUserKeys = api.hostAccess.setKeys.useMutation();
 	return (
@@ -219,9 +219,6 @@ const KeysDialog = ({
 									</SelectTrigger>
 									<SelectContent>
 										<SelectItem value="none">None</SelectItem>
-										<SelectItem value="password">
-											sudo with a password
-										</SelectItem>
 										<SelectItem value="nopasswd">
 											sudo without a password
 										</SelectItem>

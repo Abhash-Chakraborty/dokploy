@@ -62,10 +62,12 @@ const targetFor = async (organizationId: string, serverId: string) => {
 	return { name: row.name, loginUser: row.username };
 };
 
-const run = async (serverId: string, script: string, fresh = false) => {
+const run = async (serverId: string, script: string) => {
 	let result: HostResult;
 	try {
-		result = await runOnHost(serverId, script, { fresh });
+		// Every call opens its own SSH connection, so a check after an sshd
+		// restart proves that new logins still work.
+		result = await runOnHost(serverId, script);
 	} catch (error) {
 		throw new TRPCError({
 			code: "BAD_REQUEST",
@@ -82,7 +84,7 @@ const run = async (serverId: string, script: string, fresh = false) => {
 const confirmSsh = async (serverId: string) => {
 	await new Promise((resolve) => setTimeout(resolve, 3000));
 	try {
-		await run(serverId, confirmSshScript(), true);
+		await run(serverId, confirmSshScript());
 	} catch {
 		throw new TRPCError({
 			code: "BAD_REQUEST",
@@ -113,7 +115,7 @@ export const abhashHostAccessRouter = createTRPCRouter({
 			serverInput.extend({
 				name: z.string().trim(),
 				publicKeys: z.string().min(1),
-				sudo: z.enum(["none", "password", "nopasswd"]),
+				sudo: z.enum(["none", "nopasswd"]),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -419,19 +421,27 @@ export const abhashHostAccessRouter = createTRPCRouter({
 				})
 				.where(eq(abhashServerFirewall.serverId, input.serverId));
 
+			const restore = () =>
+				db
+					.update(abhashServerFirewall)
+					.set({ ...previous, updatedAt: new Date() })
+					.where(eq(abhashServerFirewall.serverId, input.serverId));
 			if (input.level !== "open") {
-				const plan = await planFirewall(input.serverId, organizationId);
-				const hasMesh = plan.rules.some((rule) => rule.origin === "auto:mesh");
-				const problem =
-					plan.lockout ??
-					(input.level === "private" && !hasMesh
-						? "Private needs the server on the secure network first; otherwise SSH would stay open to the internet."
-						: null);
+				let problem: string | null;
+				try {
+					const plan = await planFirewall(input.serverId, organizationId);
+					const hasMesh = plan.rules.some((rule) => rule.origin === "auto:mesh");
+					problem =
+						plan.lockout ??
+						(input.level === "private" && !hasMesh
+							? "Private needs the server on the secure network first; otherwise SSH would stay open to the internet."
+							: null);
+				} catch (error) {
+					await restore();
+					throw error;
+				}
 				if (problem) {
-					await db
-						.update(abhashServerFirewall)
-						.set({ ...previous, updatedAt: new Date() })
-						.where(eq(abhashServerFirewall.serverId, input.serverId));
+					await restore();
 					throw new TRPCError({ code: "BAD_REQUEST", message: problem });
 				}
 			}

@@ -1,8 +1,4 @@
-import {
-	execAsyncRemote,
-	findServerById,
-	getWebServerSettings,
-} from "@dokploy/server";
+import { findServerById, getWebServerSettings } from "@dokploy/server";
 import { getLocalSsh } from "@dokploy/server/services/abhash/local-terminal";
 import { Client, type ConnectConfig } from "ssh2";
 import { setupLocalServerSSHKey } from "../wss/utils";
@@ -10,14 +6,11 @@ import { getDockerHost } from "./docker";
 
 export type HostResult = { code: number; stdout: string; stderr: string };
 
-// The script travels base64-encoded so no quoting survives into the remote
-// shell's parsing of the command line.
-const wrap = (script: string) =>
-	`printf %s '${Buffer.from(script).toString("base64")}' | base64 -d | sh`;
-
+// The script is fed on stdin to `sh -s`: on the command line it would show in
+// the server's process list, rescue passwords included.
 const sshRun = (
 	config: ConnectConfig,
-	command: string,
+	script: string,
 	timeoutMs: number,
 ): Promise<HostResult> =>
 	new Promise((resolve, reject) => {
@@ -28,7 +21,7 @@ const sshRun = (
 		}, timeoutMs);
 		conn
 			.once("ready", () => {
-				conn.exec(command, (error, stream) => {
+				conn.exec("sh -s", (error, stream) => {
 					if (error) {
 						clearTimeout(timer);
 						conn.end();
@@ -38,10 +31,15 @@ const sshRun = (
 					let stdout = "";
 					let stderr = "";
 					stream
-						.on("close", (code: number) => {
+						.on("close", (code?: number | null) => {
 							clearTimeout(timer);
 							conn.end();
-							resolve({ code: code ?? 0, stdout, stderr });
+							// No status means the shell died from a signal.
+							resolve({
+								code: typeof code === "number" ? code : 255,
+								stdout,
+								stderr,
+							});
 						})
 						.on("data", (data: Buffer) => {
 							stdout += data.toString();
@@ -49,6 +47,7 @@ const sshRun = (
 						.stderr.on("data", (data: Buffer) => {
 							stderr += data.toString();
 						});
+					stream.end(script);
 				});
 			})
 			.once("error", (error) => {
@@ -92,38 +91,13 @@ const remoteConfig = async (serverId: string): Promise<ConnectConfig> => {
 export const runOnHost = async (
 	serverId: string,
 	script: string,
-	options: { timeoutMs?: number; fresh?: boolean } = {},
-): Promise<HostResult> => {
-	const command = wrap(script);
-	const timeoutMs = options.timeoutMs ?? 120_000;
-	if (serverId === "local") {
-		return sshRun(await localConfig(), command, timeoutMs);
-	}
-	// A pooled connection outlives an sshd restart, so it cannot prove that
-	// new logins still work; a fresh one can.
-	if (options.fresh) {
-		return sshRun(await remoteConfig(serverId), command, timeoutMs);
-	}
-	try {
-		const { stdout, stderr } = await execAsyncRemote(serverId, command);
-		return { code: 0, stdout, stderr };
-	} catch (error) {
-		const failed = error as {
-			exitCode?: number;
-			stdout?: string;
-			stderr?: string;
-			message?: string;
-		};
-		if (typeof failed.exitCode === "number") {
-			return {
-				code: failed.exitCode,
-				stdout: failed.stdout ?? "",
-				stderr: failed.stderr ?? "",
-			};
-		}
-		throw error;
-	}
-};
+	options: { timeoutMs?: number } = {},
+): Promise<HostResult> =>
+	sshRun(
+		serverId === "local" ? await localConfig() : await remoteConfig(serverId),
+		script,
+		options.timeoutMs ?? 120_000,
+	);
 
 /** The first "ERROR ..." line a script printed, for a readable message. */
 export const scriptError = (result: HostResult) =>

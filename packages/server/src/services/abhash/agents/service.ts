@@ -119,29 +119,33 @@ export const updateAgent = async (
 ) => {
 	const agent = await findAgent(organizationId, id);
 	const { role, ...agentValues } = values;
-	if (Object.keys(agentValues).length > 0) {
-		await db
-			.update(abhashAgent)
-			.set(agentValues)
-			.where(eq(abhashAgent.id, agent.id));
-	}
-	if (role) {
-		await db
-			.update(member)
-			.set({ role } as never)
-			.where(
-				and(
-					eq(member.userId, agent.userId),
-					eq(member.organizationId, organizationId),
-				),
-			);
-	}
-	if (values.name) {
-		await db
-			.update(user)
-			.set({ firstName: values.name } as never)
-			.where(eq(user.id, agent.userId));
-	}
+	// One transaction: a rename that reached the agent but not its user row
+	// is exactly how member lists ended up showing the generated address.
+	await db.transaction(async (tx) => {
+		if (Object.keys(agentValues).length > 0) {
+			await tx
+				.update(abhashAgent)
+				.set(agentValues)
+				.where(eq(abhashAgent.id, agent.id));
+		}
+		if (values.name) {
+			await tx
+				.update(user)
+				.set({ firstName: values.name } as never)
+				.where(eq(user.id, agent.userId));
+		}
+		if (role) {
+			await tx
+				.update(member)
+				.set({ role } as never)
+				.where(
+					and(
+						eq(member.userId, agent.userId),
+						eq(member.organizationId, organizationId),
+					),
+				);
+		}
+	});
 	forgetAgentCache();
 	return findAgent(organizationId, id);
 };

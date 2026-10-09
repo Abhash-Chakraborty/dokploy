@@ -48,7 +48,14 @@ if [ "$(id -u)" -ne 0 ]; then
 	fi
 	SUDO="sudo -n"
 fi
-ADMIN_GROUP=$(getent group sudo >/dev/null && echo sudo || echo wheel)`;
+ADMIN_GROUP=$(getent group sudo >/dev/null && echo sudo || echo wheel)
+# Anything inside a user's home runs as that user: as root, a symlink the
+# user planted (say ~/.ssh/authorized_keys -> /etc/shadow) would be followed.
+as_user() {
+	target="$1"; shift
+	if [ "$(id -u)" -eq 0 ]; then runuser -u "$target" -- "$@"; else sudo -n -u "$target" -- "$@"; fi
+}
+WRITE_KEYS='umask 077; mkdir -p "$1/.ssh" && cat > "$1/.ssh/authorized_keys.dokploy" && mv -f "$1/.ssh/authorized_keys.dokploy" "$1/.ssh/authorized_keys"'`;
 
 const script = (body: string) => `${PRELUDE}\n${body}\n`;
 
@@ -75,7 +82,7 @@ getent passwd | while IFS=: read -r name _ uid _ _ home shell; do
 		[ "$at" -le "$now" ] && locked=1
 	fi
 	case "$shell" in */nologin|*/false) locked=1 ;; esac
-	keys=$($SUDO cat "$home/.ssh/authorized_keys" 2>/dev/null | grep -cE '^(ssh-|ecdsa-|sk-)' || true)
+	keys=$(as_user "$name" cat "$home/.ssh/authorized_keys" 2>/dev/null | grep -cE '^(ssh-|ecdsa-|sk-)' || true)
 	printf 'USER\\t%s\\t%s\\t%s\\t%s\\t%s\\t%s\\t%s\\n' "$name" "$uid" "$shell" "$home" "$admin" "$locked" "\${keys:-0}"
 done`);
 
@@ -96,7 +103,9 @@ export const parseUsers = (stdout: string): HostUser[] =>
 			};
 		});
 
-export type SudoMode = "none" | "password" | "nopasswd";
+// No "sudo with a password" mode: these accounts log in with keys and have
+// no password, so such a user could never use sudo.
+export type SudoMode = "none" | "nopasswd";
 
 const sudoersFile = (name: string) => `/etc/sudoers.d/90-dokploy-${name}`;
 
@@ -111,10 +120,7 @@ export const createUserScript = (input: {
 if id ${name} >/dev/null 2>&1; then echo "ERROR ${name} already exists" >&2; exit 3; fi
 $SUDO useradd --create-home --shell /bin/bash ${name}
 home=$(getent passwd ${name} | cut -d: -f6)
-$SUDO install -d -m 700 -o ${name} -g ${name} "$home/.ssh"
-printf '%s\\n' ${literal(keys)} | $SUDO tee "$home/.ssh/authorized_keys" >/dev/null
-$SUDO chown ${name}:${name} "$home/.ssh/authorized_keys"
-$SUDO chmod 600 "$home/.ssh/authorized_keys"
+printf '%s\\n' ${literal(keys)} | as_user ${name} sh -c "$WRITE_KEYS" _ "$home"
 ${input.sudo === "none" ? "" : `$SUDO usermod -aG "$ADMIN_GROUP" ${name}`}
 ${
 	input.sudo === "nopasswd"
@@ -131,10 +137,7 @@ export const setKeysScript = (name: string, publicKeys: string[]) => {
 	return script(`set -e
 home=$(getent passwd ${name} | cut -d: -f6)
 [ -n "$home" ] || { echo "ERROR no user ${name}" >&2; exit 3; }
-$SUDO install -d -m 700 -o ${name} -g "$(id -gn ${name})" "$home/.ssh"
-printf '%s\\n' ${literal(publicKeys.join("\n"))} | $SUDO tee "$home/.ssh/authorized_keys" >/dev/null
-$SUDO chown ${name}:"$(id -gn ${name})" "$home/.ssh/authorized_keys"
-$SUDO chmod 600 "$home/.ssh/authorized_keys"
+printf '%s\\n' ${literal(publicKeys.join("\n"))} | as_user ${name} sh -c "$WRITE_KEYS" _ "$home"
 echo "OK keys set for ${name}"`);
 };
 
@@ -171,7 +174,12 @@ const restartSshWithSafetyNet = (revert: string) => `if ! $SUDO sshd -t; then
 	exit 5
 fi
 $SUDO systemctl stop ${REVERT_UNIT}.timer 2>/dev/null || true
-$SUDO systemd-run --quiet --on-active=180 --unit=${REVERT_UNIT} sh -c ${shellQuote(`${revert.replaceAll("$SUDO ", "")}; systemctl daemon-reload; systemctl restart ssh.socket 2>/dev/null; systemctl restart ssh 2>/dev/null || systemctl restart sshd`)}
+$SUDO systemctl reset-failed ${REVERT_UNIT}.service 2>/dev/null || true
+if ! $SUDO systemd-run --quiet --on-active=180 --unit=${REVERT_UNIT} sh -c ${shellQuote(`${revert.replaceAll("$SUDO ", "")}; systemctl daemon-reload; systemctl restart ssh.socket 2>/dev/null; systemctl restart ssh 2>/dev/null || systemctl restart sshd`)}; then
+	${revert}
+	echo "ERROR could not arm the automatic undo, so SSH was not restarted" >&2
+	exit 6
+fi
 $SUDO systemctl daemon-reload
 if $SUDO systemctl is-active --quiet ssh.socket; then $SUDO systemctl restart ssh.socket; fi
 $SUDO systemctl restart ssh 2>/dev/null || $SUDO systemctl restart sshd
